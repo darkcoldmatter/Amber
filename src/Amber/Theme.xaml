@@ -257,19 +257,20 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- 6×28 dark bar with a 1.5 px white outline outside it. -->
     <Style x:Key="SliderThumb" TargetType="Thumb">
-        <Setter Property="Width" Value="6" />
-        <Setter Property="Height" Value="28" />
+        <Setter Property="Width" Value="9" />
+        <Setter Property="Height" Value="31" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border CornerRadius="3" Background="{StaticResource InkBrush}" BorderBrush="White" BorderThickness="1.5" />
+                    <Border CornerRadius="4.5" Background="{StaticResource InkBrush}" BorderBrush="White" BorderThickness="1.5" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
     <Style x:Key="LevelSlider" TargetType="controls:LevelSlider">
-        <Setter Property="Height" Value="28" />
+        <Setter Property="Height" Value="31" />
         <Setter Property="Minimum" Value="0" />
         <Setter Property="Maximum" Value="100" />
         <Setter Property="SmallChange" Value="1" />
@@ -279,7 +280,8 @@
                 <ControlTemplate TargetType="controls:LevelSlider">
                     <Grid Background="Transparent">
                         <Border Height="24" CornerRadius="8" Background="{StaticResource SurfaceBrush}" />
-                        <Track x:Name="PART_Track">
+                        <!-- LevelSlider handles all mouse input; the parts only draw. -->
+                        <Track x:Name="PART_Track" IsHitTestVisible="False">
                             <Track.DecreaseRepeatButton>
                                 <RepeatButton Style="{StaticResource SliderFill}" Background="{StaticResource AccentBrush}" />
                             </Track.DecreaseRepeatButton>

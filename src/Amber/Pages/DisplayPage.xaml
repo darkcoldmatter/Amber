@@ -42,7 +42,7 @@
                        FontWeight="Bold" Foreground="{StaticResource FaintBrush}" />
             <TextBlock Text="Intensity" Style="{StaticResource LabelText}" />
         </DockPanel>
-        <controls:LevelSlider Style="{StaticResource LevelSlider}" AutomationProperties.Name="Intensity" Value="{Binding Level}" Margin="0,11,0,0" />
+        <controls:LevelSlider Style="{StaticResource LevelSlider}" AutomationProperties.Name="Intensity" Value="{Binding Level}" Margin="0,9,0,0" />
 
         <DockPanel Margin="0,31,0,0">
             <ToggleButton DockPanel.Dock="Right" Style="{StaticResource Switch}" IsChecked="{Binding ScheduleEnabled}" AutomationProperties.Name="Use a schedule" />

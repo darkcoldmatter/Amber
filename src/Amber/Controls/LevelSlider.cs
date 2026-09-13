@@ -28,9 +28,21 @@ public class LevelSlider : Slider
         ReleaseMouseCapture();
     }
 
+    /// <summary>
+    /// The value whose thumb center sits at <paramref name="x"/>. Depends only on the pointer position,
+    /// never on the current value, so repeated clicks on one spot always give the same result.
+    /// </summary>
+    public static double ValueAt(double x, double trackWidth, double thumbWidth, double minimum, double maximum)
+    {
+        var travel = trackWidth - thumbWidth;
+        if (travel <= 0) return minimum;
+        var ratio = Math.Clamp((x - thumbWidth / 2) / travel, 0, 1);
+        return minimum + ratio * (maximum - minimum);
+    }
+
     void MoveTo(MouseEventArgs e)
     {
-        if (GetTemplateChild("PART_Track") is Track track)
-            Value = track.ValueFromPoint(e.GetPosition(track));
+        if (GetTemplateChild("PART_Track") is not Track track) return;
+        Value = ValueAt(e.GetPosition(track).X, track.ActualWidth, track.Thumb?.ActualWidth ?? 0, Minimum, Maximum);
     }
 }

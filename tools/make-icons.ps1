@@ -45,4 +45,4 @@ function Write-Ico([string]$fileName, [string]$top, [string]$bottom) {
 
 New-Item -ItemType Directory -Force $outDir | Out-Null
 Write-Ico 'amber.ico' '#DFE2EB' '#FEDA79'      # on (also the app icon)
-Write-Ico 'amber-off.ico' '#DFE2EB' '#9AA0AD'  # off: grey
+Write-Ico 'amber-off.ico' '#9C9EA5' '#6C7079'  # off: grey

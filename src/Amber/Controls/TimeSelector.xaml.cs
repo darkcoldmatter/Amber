@@ -4,7 +4,7 @@ using System.Windows.Controls;
 
 namespace Amber.Controls;
 
-/// <summary>Time picker made of dropdowns: "9:00" + "PM", or a single "21:00", following the Windows clock format.</summary>
+/// <summary>Hour and minute dropdowns, plus AM/PM when Windows uses a 12-hour clock.</summary>
 public partial class TimeSelector : UserControl
 {
     public static readonly DependencyProperty TimeProperty = DependencyProperty.Register(
@@ -12,21 +12,26 @@ public partial class TimeSelector : UserControl
         new FrameworkPropertyMetadata(TimeOnly.MinValue, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
             (d, _) => ((TimeSelector)d).ShowTime()));
 
-    readonly TimeSlots _slots = new(CultureInfo.CurrentCulture);
+    readonly ClockFormat _clock = new(CultureInfo.CurrentCulture);
     bool _showingTime;
 
     public TimeSelector()
     {
         InitializeComponent();
-        ClockBox.ItemsSource = _slots.ClockLabels;
-        if (_slots.Is24Hour)
+        HourBox.ItemsSource = _clock.HourLabels;
+        MinuteBox.ItemsSource = _clock.MinuteLabels;
+
+        // Both layouts fill the same 172 px as the Figma design.
+        if (_clock.Is24Hour)
         {
-            ClockBox.Width = 172;
+            HourBox.Width = MinuteBox.Width = 84;
             PeriodBox.Visibility = Visibility.Collapsed;
         }
         else
         {
-            PeriodBox.ItemsSource = _slots.PeriodLabels;
+            HourBox.Width = MinuteBox.Width = 52;
+            PeriodBox.Width = 60;
+            PeriodBox.ItemsSource = _clock.PeriodLabels;
         }
         ShowTime();
     }
@@ -40,13 +45,13 @@ public partial class TimeSelector : UserControl
     void ShowTime()
     {
         _showingTime = true;
-        (ClockBox.SelectedIndex, PeriodBox.SelectedIndex) = _slots.IndexesOf(Time);
+        (HourBox.SelectedIndex, MinuteBox.SelectedIndex, PeriodBox.SelectedIndex) = _clock.IndexesOf(Time);
         _showingTime = false;
     }
 
     void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_showingTime) return;
-        Time = _slots.TimeAt(ClockBox.SelectedIndex, PeriodBox.SelectedIndex);
+        Time = _clock.TimeAt(HourBox.SelectedIndex, MinuteBox.SelectedIndex, PeriodBox.SelectedIndex);
     }
 }

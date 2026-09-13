@@ -87,34 +87,74 @@
         <Setter Property="Opacity" Value="0.6" />
     </Style>
 
+    <!--
+        Animated states: each look (hover, checked, …) is a layer whose Opacity the VisualStateManager
+        fades in 0.3 s. Layers instead of color changes keep "hover OR checked" logic simple.
+    -->
+
     <!-- Side navigation item. Tag = icon geometry. -->
     <Style x:Key="NavButton" TargetType="RadioButton">
         <Setter Property="Width" Value="140" />
         <Setter Property="Height" Value="36" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
-        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Grid>
-                        <Border x:Name="Fill" CornerRadius="18" Background="White" />
-                        <Border x:Name="HoverRing" CornerRadius="18" BorderThickness="1.5" BorderBrush="{StaticResource HoverRingBrush}" Visibility="Collapsed" />
-                        <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5"
-                              Width="24" Height="24" Margin="8,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                        <ContentPresenter Margin="38,0,0,0" VerticalAlignment="Center" />
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverLook" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverLook" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="CheckedFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedLook" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="HoverRing" CornerRadius="18" BorderThickness="1.5" BorderBrush="{StaticResource HoverRingBrush}" Opacity="0" />
+                        <Border x:Name="CheckedFill" CornerRadius="18" Background="{StaticResource AccentBrush}" Opacity="0" />
+                        <Grid>
+                            <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{StaticResource MutedBrush}" StrokeThickness="1.5"
+                                  Width="24" Height="24" Margin="8,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <ContentPresenter Margin="38,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{StaticResource MutedBrush}" />
+                        </Grid>
+                        <Grid x:Name="HoverLook" Opacity="0">
+                            <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{StaticResource InkBrush}" StrokeThickness="1.5"
+                                  Width="24" Height="24" Margin="8,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <ContentPresenter Margin="38,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{StaticResource InkBrush}" />
+                        </Grid>
+                        <Grid x:Name="CheckedLook" Opacity="0">
+                            <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{StaticResource InkBrush}" StrokeThickness="1.5"
+                                  Width="24" Height="24" Margin="8,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                            <ContentPresenter Margin="38,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{StaticResource InkBrush}" />
+                        </Grid>
                     </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HoverRing" Property="Visibility" Value="Visible" />
-                            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource AccentBrush}" />
-                            <Setter TargetName="HoverRing" Property="Visibility" Value="Collapsed" />
-                            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -128,19 +168,48 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Grid>
-                        <Path x:Name="Dome" Data="{StaticResource PowerDome}" Fill="{StaticResource SurfaceBrush}" />
-                        <TextBlock x:Name="Label" Text="OFF" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}"
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="OnDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="OnLabel" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="OffLabel" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Path Data="{StaticResource PowerDome}" Fill="{StaticResource SurfaceBrush}" />
+                        <Path x:Name="HoverDome" Data="{StaticResource PowerDome}" Fill="{StaticResource PowerOffHoverBrush}" Opacity="0" />
+                        <Path x:Name="OnDome" Data="{StaticResource PowerDome}" Fill="{StaticResource PowerOnBrush}" Opacity="0" />
+                        <TextBlock x:Name="OffLabel" Text="OFF" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0" />
+                        <TextBlock x:Name="OnLabel" Text="ON" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}" Opacity="0"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0" />
                     </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Dome" Property="Fill" Value="{StaticResource PowerOffHoverBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Dome" Property="Fill" Value="{StaticResource PowerOnBrush}" />
-                            <Setter TargetName="Label" Property="Text" Value="ON" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -154,26 +223,51 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Grid>
-                        <Border x:Name="HoverRing" Margin="-4" CornerRadius="15" BorderThickness="2" BorderBrush="{StaticResource HoverRingBrush}" Visibility="Collapsed" />
-                        <Grid x:Name="Card" Background="White">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="CheckedFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Outline" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="HoverRing" Margin="-4" CornerRadius="15" BorderThickness="2" BorderBrush="{StaticResource HoverRingBrush}" Opacity="0" />
+                        <Grid Background="White">
                             <Grid.Clip>
                                 <RectangleGeometry Rect="0,0,120,140" RadiusX="12" RadiusY="12" />
                             </Grid.Clip>
+                            <Border x:Name="CheckedFill" Background="{StaticResource SurfaceBrush}" Opacity="0" />
                             <Ellipse Width="100" Height="100" Margin="61,-41,-41,0" HorizontalAlignment="Left" VerticalAlignment="Top"
                                      Fill="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
                             <ContentPresenter Margin="15,0,0,15" VerticalAlignment="Bottom" />
                         </Grid>
                         <Border x:Name="Outline" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource LineBrush}" />
                     </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="HoverRing" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Card" Property="Background" Value="{StaticResource SurfaceBrush}" />
-                            <Setter TargetName="Outline" Property="Visibility" Value="Collapsed" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -198,26 +292,61 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
-                    <Grid>
-                        <Border x:Name="Track" CornerRadius="10" Background="{StaticResource LineBrush}" />
-                        <Border x:Name="Knob" Width="24" Height="16" CornerRadius="8" Margin="2,0" Background="White" HorizontalAlignment="Left" />
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverTrack" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="KnobHover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverTrack" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="KnobHover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3">
+                                        <VisualTransition.GeneratedEasingFunction>
+                                            <CubicEase EasingMode="EaseInOut" />
+                                        </VisualTransition.GeneratedEasingFunction>
+                                    </VisualTransition>
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="CheckedTrack" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="KnobCheckedLayer" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="12" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border CornerRadius="10" Background="{StaticResource LineBrush}" />
+                        <Border x:Name="HoverTrack" CornerRadius="10" Background="{StaticResource LineHoverBrush}" Opacity="0" />
+                        <Border x:Name="CheckedTrack" CornerRadius="10" Background="{StaticResource InkBrush}" Opacity="0" />
+                        <Grid x:Name="Knob" Width="24" Height="16" Margin="2,0" HorizontalAlignment="Left">
+                            <Grid.RenderTransform>
+                                <TranslateTransform />
+                            </Grid.RenderTransform>
+                            <Border CornerRadius="8" Background="White" />
+                            <!-- Knob turns light grey only when hovered AND checked: a hover layer inside a checked layer. -->
+                            <Grid x:Name="KnobCheckedLayer" Opacity="0">
+                                <Border x:Name="KnobHover" CornerRadius="8" Background="{StaticResource HoverRingBrush}" Opacity="0" />
+                            </Grid>
+                        </Grid>
                     </Grid>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Track" Property="Background" Value="{StaticResource LineHoverBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Track" Property="Background" Value="{StaticResource InkBrush}" />
-                            <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsChecked" Value="True" />
-                                <Condition Property="IsMouseOver" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="Knob" Property="Background" Value="{StaticResource HoverRingBrush}" />
-                        </MultiTrigger>
-                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -232,14 +361,31 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Fill" CornerRadius="12" Background="{StaticResource InkBrush}">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border CornerRadius="12" Background="{StaticResource InkBrush}" />
+                        <Border x:Name="HoverFill" CornerRadius="12" Background="{StaticResource InkHoverBrush}" Opacity="0" />
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource InkHoverBrush}" />
-                        </Trigger>
-                    </ControlTemplate.Triggers>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -336,15 +482,43 @@
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Box" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Background="White" />
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource FaintBrush}" />
-                                        </Trigger>
-                                        <Trigger Property="IsChecked" Value="True">
-                                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource InkBrush}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
+                                    <Grid>
+                                        <VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualStateGroup.Transitions>
+                                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                                </VisualStateGroup.Transitions>
+                                                <VisualState x:Name="Normal" />
+                                                <VisualState x:Name="MouseOver">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="HoverBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                                    </Storyboard>
+                                                </VisualState>
+                                                <VisualState x:Name="Pressed">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="HoverBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                                    </Storyboard>
+                                                </VisualState>
+                                                <VisualState x:Name="Disabled" />
+                                            </VisualStateGroup>
+                                            <VisualStateGroup x:Name="CheckStates">
+                                                <VisualStateGroup.Transitions>
+                                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                                </VisualStateGroup.Transitions>
+                                                <VisualState x:Name="Checked">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="OpenBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                                    </Storyboard>
+                                                </VisualState>
+                                                <VisualState x:Name="Unchecked" />
+                                                <VisualState x:Name="Indeterminate" />
+                                            </VisualStateGroup>
+                                        </VisualStateManager.VisualStateGroups>
+
+                                        <Border CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource LineBrush}" Background="White" />
+                                        <Border x:Name="HoverBorder" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource FaintBrush}" Opacity="0" />
+                                        <Border x:Name="OpenBorder" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource InkBrush}" Opacity="0" />
+                                    </Grid>
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>

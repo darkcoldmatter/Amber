@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- Tray icons are loaded from files next to the exe. -->
     <None Update="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Licenses.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
 </Project>

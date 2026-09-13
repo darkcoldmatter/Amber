@@ -16,13 +16,24 @@ public class SettingsTests : IDisposable
     [Fact]
     public void Saved_settings_load_back()
     {
-        new Settings { IsOn = true, Mode = TintMode.Astronomic, Level = 73.5 }.Save(SettingsPath);
+        new Settings
+        {
+            IsOn = true,
+            Mode = TintMode.Astronomic,
+            Level = 73.5,
+            ScheduleEnabled = true,
+            ScheduleStart = new TimeOnly(22, 15),
+            ScheduleEnd = new TimeOnly(6, 45),
+        }.Save(SettingsPath);
 
         var loaded = Settings.Load(SettingsPath);
 
         Assert.True(loaded.IsOn);
         Assert.Equal(TintMode.Astronomic, loaded.Mode);
         Assert.Equal(73.5, loaded.Level);
+        Assert.True(loaded.ScheduleEnabled);
+        Assert.Equal(new TimeOnly(22, 15), loaded.ScheduleStart);
+        Assert.Equal(new TimeOnly(6, 45), loaded.ScheduleEnd);
     }
 
     [Fact]
@@ -59,5 +70,8 @@ public class SettingsTests : IDisposable
         Assert.False(settings.IsOn);
         Assert.Equal(TintMode.GoldenHour, settings.Mode);
         Assert.Equal(50, settings.Level);
+        Assert.False(settings.ScheduleEnabled);
+        Assert.Equal(new TimeOnly(21, 0), settings.ScheduleStart);
+        Assert.Equal(new TimeOnly(7, 0), settings.ScheduleEnd);
     }
 }

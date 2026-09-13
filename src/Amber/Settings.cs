@@ -22,6 +22,9 @@ public sealed class Settings : INotifyPropertyChanged
     public bool IsOn { get; set => Set(ref field, value); }
     public TintMode Mode { get; set => Set(ref field, value); }
     public double Level { get; set => Set(ref field, value); } = 50;
+    public bool ScheduleEnabled { get; set => Set(ref field, value); }
+    public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(21, 0);
+    public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(7, 0);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

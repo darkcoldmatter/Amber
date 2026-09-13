@@ -9,7 +9,7 @@ namespace Amber;
 public partial class App : Application
 {
     // Windows starts Amber with this at sign-in: stay in the tray, no window.
-    const string TrayArgument = "--tray";
+    internal const string TrayArgument = "--tray";
 
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -36,6 +36,9 @@ public partial class App : Application
             return;
         }
         ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) => Dispatcher.InvokeAsync(ShowWindow), null, Timeout.Infinite, false);
+
+        // Keep the sign-in entry pointing at this exe, in case Amber was moved or updated.
+        if (StartupRegistration.IsEnabled) StartupRegistration.IsEnabled = true;
 
         // Never leave the screen tinted if the app crashes.
         DispatcherUnhandledException += (_, _) => ScreenTint.Reset();

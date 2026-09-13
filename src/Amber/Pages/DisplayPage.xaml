@@ -1,0 +1,69 @@
+﻿<UserControl x:Class="Amber.Pages.DisplayPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Amber.Controls"
+             xmlns:tint="clr-namespace:Amber.Tint">
+    <StackPanel Margin="0,24,0,0">
+        <Grid Height="60">
+            <StackPanel Margin="0,7,0,0">
+                <TextBlock Text="Display mode" Style="{StaticResource PageTitle}" />
+                <TextBlock Text="Choose a tint for your screen" Style="{StaticResource SecondaryText}" Margin="0,5,0,0" />
+            </StackPanel>
+            <ToggleButton Style="{StaticResource PowerButton}" IsChecked="{Binding IsOn}" AutomationProperties.Name="Tint on or off"
+                          HorizontalAlignment="Right" VerticalAlignment="Top" />
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" Margin="0,33,0,0">
+            <RadioButton Style="{StaticResource ModeCard}" Tag="{StaticResource GoldenHourBrush}" AutomationProperties.Name="Golden hour"
+                         IsChecked="{Binding Mode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static tint:TintMode.GoldenHour}}">
+                <StackPanel>
+                    <TextBlock Text="Golden hour" Style="{StaticResource CardTitle}" />
+                    <TextBlock Text="Everyday use" Style="{StaticResource CardSubtitle}" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton Style="{StaticResource ModeCard}" Tag="{StaticResource AmberBrush}" AutomationProperties.Name="Amber" Margin="12,0,0,0"
+                         IsChecked="{Binding Mode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static tint:TintMode.Amber}}">
+                <StackPanel>
+                    <TextBlock Text="Amber" Style="{StaticResource CardTitle}" />
+                    <TextBlock Text="Before bed" Style="{StaticResource CardSubtitle}" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton Style="{StaticResource ModeCard}" Tag="{StaticResource AstronomicBrush}" AutomationProperties.Name="Astronomic" Margin="12,0,0,0"
+                         IsChecked="{Binding Mode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static tint:TintMode.Astronomic}}">
+                <StackPanel>
+                    <TextBlock Text="Astronomic" Style="{StaticResource CardTitle}" />
+                    <TextBlock Text="For late nights" Style="{StaticResource CardSubtitle}" />
+                </StackPanel>
+            </RadioButton>
+        </StackPanel>
+
+        <DockPanel Margin="0,28,0,0">
+            <TextBlock DockPanel.Dock="Right" Text="{Binding Level, StringFormat=N0}" Style="{StaticResource LabelText}"
+                       FontWeight="Bold" Foreground="{StaticResource FaintBrush}" />
+            <TextBlock Text="Intensity" Style="{StaticResource LabelText}" />
+        </DockPanel>
+        <controls:LevelSlider Style="{StaticResource LevelSlider}" AutomationProperties.Name="Intensity" Value="{Binding Level}" Margin="0,11,0,0" />
+
+        <DockPanel Margin="0,31,0,0">
+            <ToggleButton DockPanel.Dock="Right" Style="{StaticResource Switch}" IsChecked="{Binding ScheduleEnabled}" AutomationProperties.Name="Use a schedule" />
+            <TextBlock Text="Use a schedule" Style="{StaticResource LabelText}" />
+        </DockPanel>
+        <StackPanel Visibility="{Binding ScheduleEnabled, Converter={StaticResource BoolToVisibility}}">
+            <Rectangle Style="{StaticResource Divider}" Margin="0,24,0,0" />
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="212" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Turn on at" Style="{StaticResource SecondaryText}" />
+                    <controls:TimeSelector Time="{Binding ScheduleStart}" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Turn off at" Style="{StaticResource SecondaryText}" />
+                    <controls:TimeSelector Time="{Binding ScheduleEnd}" Margin="0,6,0,0" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

@@ -1,12 +1,21 @@
-﻿<Window x:Class="Amber.MainWindow"
+<Window x:Class="Amber.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Amber"
-        mc:Ignorable="d"
-        Title="Amber" Height="450" Width="800">
-    <Grid>
+        Title="Amber" Width="360" SizeToContent="Height" ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen" Loaded="OnLoaded">
+    <!-- Temporary test screen for the color engine. Replaced by the Figma design in step 3. -->
+    <StackPanel Margin="24">
+        <CheckBox x:Name="OnSwitch" Content="On" Checked="OnSettingChanged" Unchecked="OnSettingChanged" />
 
-    </Grid>
+        <TextBlock Text="Mode" Margin="0,20,0,6" FontWeight="SemiBold" />
+        <RadioButton x:Name="GoldenHourOption" Content="Golden hour" IsChecked="True" Checked="OnSettingChanged" />
+        <RadioButton x:Name="AmberOption" Content="Amber" Margin="0,4,0,0" Checked="OnSettingChanged" />
+        <RadioButton x:Name="AstronomicOption" Content="Astronomic" Margin="0,4,0,0" Checked="OnSettingChanged" />
+
+        <DockPanel Margin="0,20,0,6">
+            <TextBlock x:Name="LevelText" DockPanel.Dock="Right" />
+            <TextBlock Text="Level" FontWeight="SemiBold" />
+        </DockPanel>
+        <Slider x:Name="LevelSlider" Minimum="0" Maximum="100" Value="50" ValueChanged="OnLevelChanged" />
+    </StackPanel>
 </Window>

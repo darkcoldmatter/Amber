@@ -168,48 +168,19 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Grid>
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.3" />
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="MouseOver">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Pressed">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Disabled" />
-                            </VisualStateGroup>
-                            <VisualStateGroup x:Name="CheckStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.3" />
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Checked">
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="OnDome" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                        <DoubleAnimation Storyboard.TargetName="OnLabel" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
-                                        <DoubleAnimation Storyboard.TargetName="OffLabel" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Unchecked" />
-                                <VisualState x:Name="Indeterminate" />
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-
-                        <Path Data="{StaticResource PowerDome}" Fill="{StaticResource SurfaceBrush}" />
-                        <Path x:Name="HoverDome" Data="{StaticResource PowerDome}" Fill="{StaticResource PowerOffHoverBrush}" Opacity="0" />
-                        <Path x:Name="OnDome" Data="{StaticResource PowerDome}" Fill="{StaticResource PowerOnBrush}" Opacity="0" />
-                        <TextBlock x:Name="OffLabel" Text="OFF" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0" />
-                        <TextBlock x:Name="OnLabel" Text="ON" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}" Opacity="0"
+                        <Path x:Name="Dome" Data="{StaticResource PowerDome}" Fill="{StaticResource SurfaceBrush}" />
+                        <TextBlock x:Name="Label" Text="OFF" FontSize="20" FontWeight="Bold" Foreground="{StaticResource InkBrush}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0" />
                     </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Dome" Property="Fill" Value="{StaticResource PowerOffHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Dome" Property="Fill" Value="{StaticResource PowerOnBrush}" />
+                            <Setter TargetName="Label" Property="Text" Value="ON" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -453,7 +424,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
                     <Border x:Name="Fill" CornerRadius="8" Padding="{TemplateBinding Padding}" Background="Transparent">
-                        <ContentPresenter VerticalAlignment="Center" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">

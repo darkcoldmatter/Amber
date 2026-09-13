@@ -5,30 +5,27 @@ namespace Amber;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    readonly Settings _settings;
+
+    public MainWindow(Settings settings)
     {
         InitializeComponent();
+        _settings = settings;
+        DataContext = settings;
+
+        var selected = settings.Mode switch
+        {
+            TintMode.Amber => AmberOption,
+            TintMode.Astronomic => AstronomicOption,
+            _ => GoldenHourOption,
+        };
+        selected.IsChecked = true;
     }
 
-    void OnLoaded(object sender, RoutedEventArgs e) => UpdateTint();
-    void OnSettingChanged(object sender, RoutedEventArgs e) => UpdateTint();
-    void OnLevelChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => UpdateTint();
-
-    void UpdateTint()
+    void OnModeChecked(object sender, RoutedEventArgs e)
     {
-        if (!IsLoaded) return; // Controls raise change events while the window is still being built.
-
-        LevelText.Text = Math.Round(LevelSlider.Value).ToString();
-
-        if (OnSwitch.IsChecked != true)
-        {
-            ScreenTint.Reset();
-            return;
-        }
-
-        var mode = AmberOption.IsChecked == true ? TintMode.Amber
-            : AstronomicOption.IsChecked == true ? TintMode.Astronomic
+        _settings.Mode = sender == AmberOption ? TintMode.Amber
+            : sender == AstronomicOption ? TintMode.Astronomic
             : TintMode.GoldenHour;
-        ScreenTint.Apply(TintMatrix.Build(mode, LevelSlider.Value));
     }
 }

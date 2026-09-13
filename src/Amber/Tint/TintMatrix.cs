@@ -15,7 +15,7 @@ public static class TintMatrix
     // Look at level 0 (weakest) and level 100 (strongest). The level blends between them.
     static (Look Weak, Look Strong) Range(TintMode mode) => mode switch
     {
-        TintMode.GoldenHour => (new(1.00, 0.96, 0.88, 0.00), new(1.00, 0.76, 0.40, 0.00)),
+        TintMode.GoldenHour => (new(1.00, 0.96, 0.88, 0.00), new(1.00, 0.68, 0.15, 0.00)),
         TintMode.Amber => (new(1.00, 0.93, 0.82, 0.00), new(1.00, 0.45, 0.02, 0.85)),
         TintMode.Astronomic => (new(1.00, 0.92, 0.90, 0.15), new(1.00, 0.25, 0.05, 1.00)),
         _ => throw new ArgumentOutOfRangeException(nameof(mode)),

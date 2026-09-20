@@ -52,6 +52,7 @@ public partial class SimpleView : UserControl
                 break;
             case nameof(Settings.ScheduleEnabled):
                 Root.Height = _settings.ScheduleEnabled ? ScheduleHeight : PlainHeight;
+                ApplyScheduleColor();
                 ShowSchedule();
                 break;
             case nameof(Settings.ScheduleStart):
@@ -92,14 +93,20 @@ public partial class SimpleView : UserControl
         ModeNameFront.BeginAnimation(OpacityProperty, fade);
     }
 
+    static readonly Brush ScheduleOffBrush = new SolidColorBrush(Color.FromRgb(0x85, 0x81, 0x81));
+
     void ApplyModeColors(TintMode mode)
     {
         var accent = (Brush)FindResource(mode + "Accent");
         ModeNameBack.Foreground = LabelBrush(mode);
-        ScheduleToggle.Foreground = LabelBrush(mode);
         Level.Foreground = accent;
         Bar.Accent = accent;
+        ApplyScheduleColor();
     }
+
+    /// <summary>The Schedule pill is grey until the schedule is on, then it takes the mode's color.</summary>
+    void ApplyScheduleColor() =>
+        ScheduleToggle.Foreground = _settings.ScheduleEnabled ? LabelBrush(_settings.Mode) : ScheduleOffBrush;
 
     Brush LabelBrush(TintMode mode) => (Brush)FindResource(mode + "Label");
 

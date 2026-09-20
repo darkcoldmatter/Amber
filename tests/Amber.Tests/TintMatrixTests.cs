@@ -28,6 +28,24 @@ public class TintMatrixTests
     }
 
     [Fact]
+    public void A_fade_runs_from_an_untinted_screen_to_the_full_look()
+    {
+        var full = TintMatrix.Build(TintMode.Amber, 80);
+
+        var identity = TintMatrix.Identity;
+        var none = TintMatrix.Blend(TintMode.Amber, 80, 0);
+        var all = TintMatrix.Blend(TintMode.Amber, 80, 1);
+        var half = TintMatrix.Blend(TintMode.Amber, 80, 0.5);
+
+        for (var k = 0; k < 25; k++)
+        {
+            Assert.Equal(identity[k], none[k], 0.0001f);
+            Assert.Equal(full[k], all[k], 0.0001f);
+            Assert.Equal((identity[k] + full[k]) / 2, half[k], 0.0001f);   // half way between the two
+        }
+    }
+
+    [Fact]
     public void White_never_blows_out()
     {
         foreach (var mode in Modes)

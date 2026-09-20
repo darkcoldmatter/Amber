@@ -18,7 +18,7 @@ public partial class App : Application
     readonly DispatcherTimer _scheduleTimer = new();
     Mutex? _singleInstance;
     bool _previewing;
-    double _shownLevel = -1;
+    double _shownStrength = -1, _shownLevel = -1;
     TintMode? _shownMode;
     TrayIcon? _tray;
     MainWindow? _window;
@@ -100,12 +100,13 @@ public partial class App : Application
     /// </summary>
     void ApplyTint()
     {
-        var level = LevelNow();
-        if (Math.Abs(level - _shownLevel) >= 0.25 || _settings.Mode != _shownMode)
+        var strength = StrengthNow();
+        if (Math.Abs(strength - _shownStrength) >= 0.004 || _settings.Level != _shownLevel || _settings.Mode != _shownMode)
         {
-            if (level > 0) ScreenTint.Apply(TintMatrix.Build(_settings.Mode, level));
+            if (strength > 0) ScreenTint.Apply(TintMatrix.Blend(_settings.Mode, _settings.Level, strength));
             else ScreenTint.Reset();
-            _shownLevel = level;
+            _shownStrength = strength;
+            _shownLevel = _settings.Level;
             _shownMode = _settings.Mode;
         }
 
@@ -113,14 +114,15 @@ public partial class App : Application
         RunScheduleTimer();
     }
 
-    double LevelNow()
+    /// <summary>0 = untinted, 1 = the full tint, in between while a scheduled fade runs.</summary>
+    double StrengthNow()
     {
-        if (_previewing) return _settings.Level;
+        if (_previewing) return 1;
         if (!_settings.IsOn) return 0;
-        if (!_settings.ScheduleEnabled) return _settings.Level;
+        if (!_settings.ScheduleEnabled) return 1;
 
-        return Schedule.LevelAt(TimeOnly.FromDateTime(DateTime.Now),
-            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.Level, _settings.TransitionMinutes);
+        return Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
+            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
     }
 
     /// <summary>Checks often while a fade is running, rarely when the level is steady, and not at all without a schedule.</summary>

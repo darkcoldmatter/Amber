@@ -30,6 +30,19 @@ public static class TintMatrix
         0, 0, 0, 0, 1,
     ];
 
+    /// <summary>
+    /// The mode's look at <paramref name="level"/>, mixed with "no tint at all" by <paramref name="strength"/>
+    /// (0 = untinted screen, 1 = the full look). Fades run on this, not on the level: level 0 is already a visible tint.
+    /// </summary>
+    public static float[] Blend(TintMode mode, double level, double strength)
+    {
+        var t = Math.Clamp(strength, 0, 1);
+        var identity = Identity;
+        var target = Build(mode, level);
+        for (var k = 0; k < target.Length; k++) target[k] = (float)(identity[k] + (target[k] - identity[k]) * t);
+        return target;
+    }
+
     /// <param name="level">0 (weakest) to 100 (strongest).</param>
     public static float[] Build(TintMode mode, double level)
     {

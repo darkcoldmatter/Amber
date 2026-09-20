@@ -19,12 +19,18 @@ public sealed class Settings : INotifyPropertyChanged
         Converters = { new JsonStringEnumConverter() },
     };
 
+    /// <summary>Which app mode the window shows: simple (default) or advanced.</summary>
+    public bool IsAdvanced { get; set => Set(ref field, value); }
+
     public bool IsOn { get; set => Set(ref field, value); }
     public TintMode Mode { get; set => Set(ref field, value); }
     public double Level { get; set => Set(ref field, value); } = 50;
     public bool ScheduleEnabled { get; set => Set(ref field, value); }
-    public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(21, 0);
-    public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(7, 0);
+    public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(20, 0);
+    public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(8, 0);
+
+    /// <summary>Fade length in minutes; 0 means a short 10-second fade.</summary>
+    public int TransitionMinutes { get; set => Set(ref field, value); }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

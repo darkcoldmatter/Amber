@@ -1,9 +1,0 @@
-<UserControl x:Class="Amber.Controls.TimeSelector"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel Orientation="Horizontal">
-        <ComboBox x:Name="HourBox" Style="{StaticResource TimeBox}" SelectionChanged="OnSelectionChanged" AutomationProperties.Name="Hour" />
-        <ComboBox x:Name="MinuteBox" Style="{StaticResource TimeBox}" Margin="4,0,0,0" SelectionChanged="OnSelectionChanged" AutomationProperties.Name="Minutes" />
-        <ComboBox x:Name="PeriodBox" Style="{StaticResource TimeBox}" Margin="4,0,0,0" SelectionChanged="OnSelectionChanged" AutomationProperties.Name="AM or PM" />
-    </StackPanel>
-</UserControl>

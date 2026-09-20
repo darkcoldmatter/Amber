@@ -1,44 +1,33 @@
 <Window x:Class="Amber.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:pages="clr-namespace:Amber.Pages"
-        Title="Amber" SizeToContent="WidthAndHeight" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen"
-        Background="White" FontFamily="{StaticResource AppFont}" UseLayoutRounding="True">
-    <Grid Width="692">
-        <!-- 433 px tall; 545 px while the schedule times are shown. -->
-        <Grid.Style>
-            <Style TargetType="Grid">
-                <Setter Property="Height" Value="433" />
-                <Style.Triggers>
-                    <MultiDataTrigger>
-                        <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding IsChecked, ElementName=DisplayNav}" Value="True" />
-                            <Condition Binding="{Binding ScheduleEnabled}" Value="True" />
-                        </MultiDataTrigger.Conditions>
-                        <Setter Property="Height" Value="545" />
-                    </MultiDataTrigger>
-                </Style.Triggers>
-            </Style>
-        </Grid.Style>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="188" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
+        Title="Amber" Width="690" SizeToContent="Height" MaxHeight="800" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Background="White" FontFamily="{StaticResource AppFont}" UseLayoutRounding="True">
+    <Grid>
+        <Grid x:Name="ModeLayer">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="67" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <Canvas Width="114" Height="25" Margin="30,24,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <Path Data="{StaticResource LogoSun}" Fill="{StaticResource GoldenHourBrush}" />
-            <Path Data="{StaticResource LogoWord}" Fill="{StaticResource InkBrush}" />
-        </Canvas>
-        <StackPanel Margin="24,89,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <RadioButton x:Name="DisplayNav" Style="{StaticResource NavButton}" Tag="{StaticResource IconDisplay}" Content="Display mode" IsChecked="True" />
-            <RadioButton x:Name="SettingsNav" Style="{StaticResource NavButton}" Tag="{StaticResource IconGear}" Content="Settings" Margin="0,8,0,0" />
-            <RadioButton x:Name="AboutNav" Style="{StaticResource NavButton}" Tag="{StaticResource IconInfo}" Content="About" Margin="0,8,0,0" />
-        </StackPanel>
+            <Canvas>
+                <Canvas Canvas.Left="30" Canvas.Top="20" Width="116" Height="25">
+                    <Path Data="{StaticResource LogoSun}" Fill="{StaticResource LogoSunBrush}" />
+                    <Path Data="{StaticResource LogoWord}" Fill="{StaticResource InkBrush}" />
+                </Canvas>
+                <Button x:Name="AppModeButton" Canvas.Left="462" Canvas.Top="14" Width="106" Style="{StaticResource PillButton}"
+                        Content="Advanced" Click="OnSwitchAppMode" />
+                <Button Canvas.Left="584" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconGear}"
+                        Click="OnOpenSettings" AutomationProperties.Name="Settings" />
+                <Button Canvas.Left="624" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconInfo}"
+                        Click="OnOpenAbout" AutomationProperties.Name="About" />
+            </Canvas>
 
-        <Grid Grid.Column="1" Margin="60,0">
-            <pages:DisplayPage Visibility="{Binding IsChecked, ElementName=DisplayNav, Converter={StaticResource BoolToVisibility}}" />
-            <pages:SettingsPage Visibility="{Binding IsChecked, ElementName=SettingsNav, Converter={StaticResource BoolToVisibility}}" />
-            <pages:AboutPage Visibility="{Binding IsChecked, ElementName=AboutNav, Converter={StaticResource BoolToVisibility}}" />
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ContentControl x:Name="ModeHost" />
+            </ScrollViewer>
         </Grid>
+
+        <ContentControl x:Name="OverlayHost" Background="White" Visibility="Collapsed" />
     </Grid>
 </Window>

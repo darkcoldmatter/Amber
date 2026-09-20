@@ -1,0 +1,58 @@
+<UserControl x:Class="Amber.Views.SimpleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Amber.Controls">
+    <Canvas x:Name="Root" Width="690" Height="263">
+        <Border Canvas.Left="30" Canvas.Top="0" Width="630" Height="180" CornerRadius="16" ClipToBounds="True">
+            <Grid>
+                <Image x:Name="HeroBack" Stretch="UniformToFill" />
+                <Image x:Name="HeroFront" Stretch="UniformToFill" Opacity="0" />
+
+                <Button Style="{StaticResource HeroArrow}" Tag="{StaticResource ChevronLeft}" HorizontalAlignment="Left"
+                        Margin="10,0,0,0" Click="OnPreviousMode" AutomationProperties.Name="Previous mode" />
+                <Button Style="{StaticResource HeroArrow}" Tag="{StaticResource ChevronRight}" HorizontalAlignment="Right"
+                        Margin="0,0,10,0" Click="OnNextMode" AutomationProperties.Name="Next mode" />
+
+                <ToggleButton Style="{StaticResource DomeButton}" IsChecked="{Binding IsOn}" Margin="0,0,0,19"
+                              AutomationProperties.Name="Tint on or off" />
+
+                <TextBlock x:Name="ModeNameBack" FontSize="16" FontWeight="Medium" HorizontalAlignment="Center"
+                           VerticalAlignment="Bottom" Margin="0,0,0,19" />
+                <TextBlock x:Name="ModeNameFront" FontSize="16" FontWeight="Medium" HorizontalAlignment="Center"
+                           VerticalAlignment="Bottom" Margin="0,0,0,19" Opacity="0" />
+            </Grid>
+        </Border>
+
+        <ToggleButton x:Name="ScheduleToggle" Canvas.Left="30" Canvas.Top="204" Style="{StaticResource SchedulePill}"
+                      IsChecked="{Binding ScheduleEnabled}" AutomationProperties.Name="Schedule" />
+
+        <TextBlock Canvas.Left="212" Canvas.Top="213" Text="Level" Style="{StaticResource LabelText}" />
+        <controls:LevelSlider x:Name="Level" Canvas.Left="266" Canvas.Top="216" Width="351"
+                              Style="{StaticResource LevelSlider}" Value="{Binding Level}" AutomationProperties.Name="Level" />
+        <TextBlock Canvas.Left="600" Canvas.Top="213" Width="60" TextAlignment="Right" Style="{StaticResource ValueText}"
+                   Text="{Binding Level, StringFormat=N0}" />
+
+        <StackPanel x:Name="SchedulePanel" Canvas.Left="30" Canvas.Top="258"
+                    Visibility="{Binding ScheduleEnabled, Converter={StaticResource BoolToVisibility}}">
+            <controls:ScheduleBar x:Name="Bar" Width="630" Height="66"
+                                  Start="{Binding ScheduleStart}" End="{Binding ScheduleEnd}"
+                                  AutomationProperties.Name="Schedule bar" />
+            <Grid Width="630" Margin="0,20,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <ComboBox x:Name="StartHour" Style="{StaticResource TimeBox}" AutomationProperties.Name="Start hour" />
+                    <TextBlock Text=":" Style="{StaticResource BodyText}" Margin="8,0" VerticalAlignment="Center" />
+                    <ComboBox x:Name="StartMinute" Style="{StaticResource TimeBox}" AutomationProperties.Name="Start minutes" />
+                    <Rectangle Width="16" Height="1" Fill="{StaticResource LineBrush}" Margin="18,0" VerticalAlignment="Center" />
+                    <ComboBox x:Name="EndHour" Style="{StaticResource TimeBox}" AutomationProperties.Name="End hour" />
+                    <TextBlock Text=":" Style="{StaticResource BodyText}" Margin="8,0" VerticalAlignment="Center" />
+                    <ComboBox x:Name="EndMinute" Style="{StaticResource TimeBox}" AutomationProperties.Name="End minutes" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="Transition" Style="{StaticResource BodyText}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                    <ComboBox x:Name="Transition" Style="{StaticResource TimeBox}" AutomationProperties.Name="Transition minutes" />
+                    <TextBlock Text="min" Style="{StaticResource BodyText}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Canvas>
+</UserControl>

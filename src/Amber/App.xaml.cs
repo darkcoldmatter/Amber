@@ -14,6 +14,7 @@ public partial class App : Application
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     Mutex? _singleInstance;
+    bool _previewing;
     TrayIcon? _tray;
     MainWindow? _window;
 
@@ -70,9 +71,25 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    /// <summary>App instance, for views that need to talk to it.</summary>
+    public static new App Current => (App)Application.Current;
+
+    /// <summary>While the user drags a level, the screen shows that tint whatever the on/off state.</summary>
+    public void StartPreview()
+    {
+        _previewing = true;
+        ApplyTint();
+    }
+
+    public void EndPreview()
+    {
+        _previewing = false;
+        ApplyTint();
+    }
+
     void ApplyTint()
     {
-        if (_settings.IsOn) ScreenTint.Apply(TintMatrix.Build(_settings.Mode, _settings.Level));
+        if (_settings.IsOn || _previewing) ScreenTint.Apply(TintMatrix.Build(_settings.Mode, _settings.Level));
         else ScreenTint.Reset();
         _tray?.SetOn(_settings.IsOn);
     }

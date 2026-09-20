@@ -7,11 +7,16 @@ namespace Amber.Controls;
 /// <summary>A slider you can press anywhere and keep dragging, not only by its thumb.</summary>
 public class LevelSlider : Slider
 {
+    /// <summary>Raised while the user drags, so the screen can show the level being set.</summary>
+    public event EventHandler? PreviewStarted;
+    public event EventHandler? PreviewEnded;
+
     protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnPreviewMouseLeftButtonDown(e);
         Focus();
         CaptureMouse();
+        PreviewStarted?.Invoke(this, EventArgs.Empty);
         MoveTo(e);
         e.Handled = true;
     }
@@ -26,6 +31,7 @@ public class LevelSlider : Slider
     {
         base.OnPreviewMouseLeftButtonUp(e);
         ReleaseMouseCapture();
+        PreviewEnded?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

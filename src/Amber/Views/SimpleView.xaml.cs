@@ -120,7 +120,7 @@ public partial class SimpleView : UserControl
         EndHour.SelectedIndex = _settings.ScheduleEnd.Hour;
         EndMinute.SelectedIndex = _settings.ScheduleEnd.Minute / TimeOptions.ScheduleStep;
 
-        var length = Controls.ScheduleBar.Length(MinutesOf(_settings.ScheduleStart), MinutesOf(_settings.ScheduleEnd));
+        var length = ScheduleRange.Length(ScheduleRange.Minutes(_settings.ScheduleStart), ScheduleRange.Minutes(_settings.ScheduleEnd));
         var choices = TimeOptions.Transitions(length);
         Transition.ItemsSource = choices;
         if (_settings.TransitionMinutes > choices[^1]) _settings.TransitionMinutes = choices[^1];
@@ -140,8 +140,6 @@ public partial class SimpleView : UserControl
 
     static TimeOnly TimeFrom(ComboBox hours, ComboBox minutes) =>
         new(Math.Max(hours.SelectedIndex, 0), Math.Max(minutes.SelectedIndex, 0) * TimeOptions.ScheduleStep);
-
-    static int MinutesOf(TimeOnly time) => time.Hour * 60 + time.Minute;
 
     static string NameOf(TintMode mode) => mode switch
     {

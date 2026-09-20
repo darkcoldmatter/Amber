@@ -12,9 +12,6 @@ namespace Amber.Controls;
 /// </summary>
 public class ScheduleBar : FrameworkElement
 {
-    public const int SnapMinutes = 15;
-    public const int DayMinutes = 24 * 60;
-
     const double BarTop = 34, BarHeight = 32, CornerRadius = 6, GrabWidth = 8;
     const double LabelCenterY = 10.5, TickBottom = 28, LongTick = 9, ShortTick = 6;
 
@@ -41,37 +38,6 @@ public class ScheduleBar : FrameworkElement
     public TimeOnly End { get => (TimeOnly)GetValue(EndProperty); set => SetValue(EndProperty, value); }
     public Brush Accent { get => (Brush)GetValue(AccentProperty); set => SetValue(AccentProperty, value); }
 
-    /// <summary>Minutes since midnight under the pointer, snapped and wrapped into one day.</summary>
-    public static int MinutesAt(double x, double width)
-    {
-        var raw = (int)Math.Round(x / width * DayMinutes / SnapMinutes) * SnapMinutes;
-        return ((raw % DayMinutes) + DayMinutes) % DayMinutes;
-    }
-
-    /// <summary>Length of a range in minutes; start == end means the whole day.</summary>
-    public static int Length(int start, int end)
-    {
-        var length = ((end - start) % DayMinutes + DayMinutes) % DayMinutes;
-        return length == 0 ? DayMinutes : length;
-    }
-
-    /// <summary>
-    /// Moves one edge to <paramref name="target"/>, keeping the range between 15 minutes and a full day.
-    /// An edge never jumps over the other one — that would turn a short range into an almost-full day in one step;
-    /// dragging the long way round is how you fill the whole day.
-    /// </summary>
-    public static (int Start, int End) MoveEdge(int start, int end, bool movingStart, int target)
-    {
-        var current = Length(start, end);
-        var wanted = movingStart ? Length(target, end) : Length(start, target);
-        if (Math.Abs(wanted - current) > DayMinutes / 2) return (start, end);
-
-        var length = Math.Clamp(wanted, SnapMinutes, DayMinutes);
-        return movingStart
-            ? (((end - length) % DayMinutes + DayMinutes) % DayMinutes, end)
-            : (start, (start + length) % DayMinutes);
-    }
-
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
@@ -79,9 +45,10 @@ public class ScheduleBar : FrameworkElement
 
         if (_dragging)
         {
-            var (start, end) = MoveEdge(Minutes(Start), Minutes(End), _draggingStart, MinutesAt(x, ActualWidth));
-            Start = Time(start);
-            End = Time(end);
+            var (start, end) = ScheduleRange.MoveEdge(
+                ScheduleRange.Minutes(Start), ScheduleRange.Minutes(End), _draggingStart, ScheduleRange.MinutesAt(x, ActualWidth));
+            Start = ScheduleRange.Time(start);
+            End = ScheduleRange.Time(end);
             return;
         }
 
@@ -109,8 +76,8 @@ public class ScheduleBar : FrameworkElement
     /// <summary>True when the pointer is near the start edge, false for the end edge, null when it is near neither.</summary>
     bool? EdgeAt(double x)
     {
-        var startX = Minutes(Start) / (double)DayMinutes * ActualWidth;
-        var endX = Minutes(End) / (double)DayMinutes * ActualWidth;
+        var startX = ScheduleRange.Minutes(Start) / (double)ScheduleRange.DayMinutes * ActualWidth;
+        var endX = ScheduleRange.Minutes(End) / (double)ScheduleRange.DayMinutes * ActualWidth;
         if (Math.Abs(x - startX) <= GrabWidth) return true;
         if (Math.Abs(x - endX) <= GrabWidth) return false;
         return null;
@@ -137,25 +104,27 @@ public class ScheduleBar : FrameworkElement
 
         dc.DrawRoundedRectangle(TrackBrush, null, new Rect(0, BarTop, width, BarHeight), CornerRadius, CornerRadius);
 
-        var start = Minutes(Start);
-        var end = Minutes(End);
-        if (Length(start, end) == DayMinutes)
+        var startMinutes = ScheduleRange.Minutes(Start);
+        var endMinutes = ScheduleRange.Minutes(End);
+        if (ScheduleRange.Length(startMinutes, endMinutes) == ScheduleRange.DayMinutes)
         {
             DrawSegment(dc, 0, width);
         }
-        else if (start < end)
+        else if (startMinutes < endMinutes)
         {
-            DrawSegment(dc, start / (double)DayMinutes * width, end / (double)DayMinutes * width);
+            DrawSegment(dc, X(startMinutes, width), X(endMinutes, width));
         }
         else
         {
-            DrawSegment(dc, start / (double)DayMinutes * width, width);
-            DrawSegment(dc, 0, end / (double)DayMinutes * width);
+            DrawSegment(dc, X(startMinutes, width), width);
+            DrawSegment(dc, 0, X(endMinutes, width));
         }
 
-        DrawGrip(dc, start / (double)DayMinutes * width, isStart: true);
-        DrawGrip(dc, end / (double)DayMinutes * width, isStart: false);
+        DrawGrip(dc, X(startMinutes, width), isStart: true);
+        DrawGrip(dc, X(endMinutes, width), isStart: false);
     }
+
+    static double X(int minutes, double width) => minutes / (double)ScheduleRange.DayMinutes * width;
 
     void DrawSegment(DrawingContext dc, double left, double right) =>
         dc.DrawRoundedRectangle(Accent, null, new Rect(left, BarTop, Math.Max(right - left, 1), BarHeight), CornerRadius, CornerRadius);
@@ -163,13 +132,9 @@ public class ScheduleBar : FrameworkElement
     /// <summary>The white handle line, tucked 4 px inside its edge of the bar.</summary>
     void DrawGrip(DrawingContext dc, double edgeX, bool isStart)
     {
-        var x = isStart ? edgeX + 4 : edgeX - 7;
-        x = Math.Clamp(x, 0, Math.Max(ActualWidth - 3, 0));
+        var x = Math.Clamp(isStart ? edgeX + 4 : edgeX - 7, 0, Math.Max(ActualWidth - 3, 0));
         dc.DrawRoundedRectangle(Brushes.White, null, new Rect(x, BarTop + 8, 3, 16), 1.5, 1.5);
     }
-
-    static int Minutes(TimeOnly time) => time.Hour * 60 + time.Minute;
-    static TimeOnly Time(int minutes) => new(minutes / 60 % 24, minutes % 60);
 
     static Brush Frozen(string hex)
     {

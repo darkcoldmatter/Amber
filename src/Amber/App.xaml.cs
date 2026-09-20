@@ -11,10 +11,15 @@ public partial class App : Application
     // Windows starts Amber with this at sign-in: stay in the tray, no window.
     internal const string TrayArgument = "--tray";
 
+    static readonly TimeSpan FadeTick = TimeSpan.FromMilliseconds(500), IdleTick = TimeSpan.FromSeconds(15);
+
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    readonly DispatcherTimer _scheduleTimer = new();
     Mutex? _singleInstance;
     bool _previewing;
+    double _shownLevel = -1;
+    TintMode? _shownMode;
     TrayIcon? _tray;
     MainWindow? _window;
 
@@ -51,6 +56,7 @@ public partial class App : Application
         _tray.QuitRequested += () => Shutdown();
 
         _saveTimer.Tick += (_, _) => SaveSettings();
+        _scheduleTimer.Tick += (_, _) => ApplyTint();
         _settings.PropertyChanged += (_, _) =>
         {
             ApplyTint();
@@ -66,6 +72,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         ScreenTint.Reset();
+        _scheduleTimer.Stop();
         if (_saveTimer.IsEnabled) SaveSettings();
         _tray?.Dispose();
         base.OnExit(e);
@@ -87,11 +94,48 @@ public partial class App : Application
         ApplyTint();
     }
 
+    /// <summary>
+    /// Shows the tint the settings ask for right now: the level being previewed, the plain level,
+    /// or what the schedule says at this moment (0 outside its hours).
+    /// </summary>
     void ApplyTint()
     {
-        if (_settings.IsOn || _previewing) ScreenTint.Apply(TintMatrix.Build(_settings.Mode, _settings.Level));
-        else ScreenTint.Reset();
+        var level = LevelNow();
+        if (Math.Abs(level - _shownLevel) >= 0.25 || _settings.Mode != _shownMode)
+        {
+            if (level > 0) ScreenTint.Apply(TintMatrix.Build(_settings.Mode, level));
+            else ScreenTint.Reset();
+            _shownLevel = level;
+            _shownMode = _settings.Mode;
+        }
+
         _tray?.SetOn(_settings.IsOn);
+        RunScheduleTimer();
+    }
+
+    double LevelNow()
+    {
+        if (_previewing) return _settings.Level;
+        if (!_settings.IsOn) return 0;
+        if (!_settings.ScheduleEnabled) return _settings.Level;
+
+        return Schedule.LevelAt(TimeOnly.FromDateTime(DateTime.Now),
+            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.Level, _settings.TransitionMinutes);
+    }
+
+    /// <summary>Checks often while a fade is running, rarely when the level is steady, and not at all without a schedule.</summary>
+    void RunScheduleTimer()
+    {
+        if (!_settings.IsOn || !_settings.ScheduleEnabled || _previewing)
+        {
+            _scheduleTimer.Stop();
+            return;
+        }
+
+        var fading = Schedule.IsFading(TimeOnly.FromDateTime(DateTime.Now),
+            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
+        _scheduleTimer.Interval = fading ? FadeTick : IdleTick;
+        _scheduleTimer.Start();
     }
 
     void ShowWindow()

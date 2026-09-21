@@ -7,7 +7,7 @@ namespace Amber;
 /// </summary>
 public static class AdvancedSchedule
 {
-    public const double FadeSeconds = 30;
+    public const double FadeSeconds = Fade.DefaultSeconds;
     const double DaySeconds = 24 * 60 * 60;
 
     /// <summary>Every filter that is showing at <paramref name="now"/>, with how strongly (0–1).</summary>

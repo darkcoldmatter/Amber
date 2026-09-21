@@ -3,9 +3,9 @@ using Amber.Tint;
 namespace Amber;
 
 /// <summary>
-/// Turns "what the settings ask for" into "what the screen shows". Advanced mode eases in and out over
-/// 30 s, so switching it on, or a filter's time arriving, never snaps. Simple mode and the live preview
-/// are shown as they are — simple mode does its own fades from the schedule's transition setting.
+/// Turns "what the settings ask for" into "what the screen shows". The tint eases in and out, so
+/// switching a mode on — or a filter's time arriving — never snaps. The live preview is shown as it is,
+/// and releasing it snaps straight back to the real state.
 /// </summary>
 public sealed class TintPlan
 {
@@ -17,10 +17,17 @@ public sealed class TintPlan
     /// <summary>True while a fade still has some way to go.</summary>
     public bool IsFading => Fade is > 0 and < 1;
 
+    /// <summary>Jumps straight to <paramref name="target"/>, with no fade — used when a preview ends.</summary>
+    public void SnapTo(float[]? target)
+    {
+        _lastTint = target;
+        Fade = target is null ? 0 : 1;
+    }
+
     /// <param name="target">the tint the settings ask for, or null for none</param>
-    /// <param name="eased">advanced mode: ease the change instead of applying it at once</param>
+    /// <param name="eased">ease the change instead of applying it at once</param>
     /// <param name="seconds">time since the last step</param>
-    public float[]? Next(float[]? target, bool eased, double seconds, double fadeSeconds = AdvancedSchedule.FadeSeconds)
+    public float[]? Next(float[]? target, bool eased, double seconds, double fadeSeconds = Amber.Fade.DefaultSeconds)
     {
         if (!eased)
         {

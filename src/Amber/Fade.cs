@@ -6,6 +6,10 @@ namespace Amber;
 /// </summary>
 public static class Fade
 {
+    /// <summary>How long a plain fade takes, in seconds — on/off in both modes, and between filters.</summary>
+    public const double DefaultSeconds = 2;
+
+
     /// <param name="current">where the fade is now</param>
     /// <param name="wanted">true while there is a tint to show</param>
     /// <param name="seconds">time since the last step</param>

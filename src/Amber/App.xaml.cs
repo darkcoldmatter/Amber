@@ -116,6 +116,7 @@ public partial class App : Application
     {
         _previewing = false;
         _previewMode = null;
+        _plan.SnapTo(TintNow());   // straight back to the real state, no leftover preview tint
         ApplyTint();
     }
 
@@ -169,7 +170,7 @@ public partial class App : Application
         var now = DateTime.UtcNow;
         var seconds = (now - _lastFadeStep).TotalSeconds;
         _lastFadeStep = now;
-        return _plan.Next(target, eased: _settings.IsAdvanced && !_previewing, seconds);
+        return _plan.Next(target, eased: !_previewing, seconds);
     }
 
     /// <summary>Skips tiny changes, so a slow fade doesn't hammer the display pipeline.</summary>
@@ -185,7 +186,7 @@ public partial class App : Application
     void RunScheduleTimer()
     {
         // Keep ticking while a fade finishes, even after the mode was switched off.
-        var easing = _settings.IsAdvanced && !_previewing && _plan.IsFading;
+        var easing = !_previewing && _plan.IsFading;
         var scheduled = IsOn && !_previewing && (_settings.IsAdvanced ? _settings.Filters.Count > 0 : _settings.ScheduleEnabled);
         if (!scheduled && !easing)
         {

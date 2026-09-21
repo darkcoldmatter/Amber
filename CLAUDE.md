@@ -18,7 +18,7 @@ The UI follows **Design 2.0** in Figma (file `yq4CMAFmPnS3ZclM1kvkAy`, page "Des
 - Hero slider picks the mode; arrows crossfade the background and the mode name, nothing else moves. Hero images are exported PNGs (`Assets/Heroes`, 2x).
 - Schedule and level belong to the screen, not to the mode: switching mode **keeps** the schedule and level.
 - Schedule: one range, drag either edge, snaps to 15 min, wraps past midnight (bar splits, drag continues). Minimum length 15 min; start = end means the whole 24 h.
-- **Transition** is a dropdown in minutes: 0 means a 10-second fade; maximum 30 min, and never more than half the scheduled length (15 min range → 7 min max).
+- **Transition** is a dropdown in minutes: 0 means the default short fade; maximum 30 min, and never more than half the scheduled length (15 min range → 7 min max).
 - Level slider, schedule bar and mode name are colored per mode.
 
 ## Advanced mode
@@ -28,7 +28,9 @@ The UI follows **Design 2.0** in Figma (file `yq4CMAFmPnS3ZclM1kvkAy`, page "Des
 - Each bar draws a white line showing its level/curve, inset ~4 px from the bar's top and bottom so 0 and 100 stay visible.
 - Card: mode, start/end fields, level slider, delete, and a curve button. Curve and flat level are **two separate settings**: expanding applies the curve, collapsing goes back to the flat level but remembers the curve.
 - Curve editor: grid of the range's hours (skip every other label when tight), left click adds a point, right click removes; first and last points are locked to the ends (vertical only); points snap to 15 min and lightly to levels (within ~3); dragging shows a dark value box to the **left** of the point, never clipped; points and 40 %-opacity fill take the filter's color.
-- **Boundaries:** a gap between bars = normal 30 s fade out/in. Two bars that touch = the earlier tint runs 30 s longer while the next starts 30 s early and fades in, so the screen never flashes back to blue.
+- **Boundaries:** a gap between bars = a normal fade out/in. Two bars that touch = the earlier tint runs on a little longer while the next starts early and fades in, so the screen never flashes back to blue.
+- **Fade length:** one constant, `Fade.DefaultSeconds` (currently **2 s**, owner's choice "for now"). It covers on/off in both modes, filter boundaries, and a transition of 0 minutes.
+- **Preview:** releasing the level slider snaps straight back to the real state — no leftover preview tint.
 
 ## Window & shell
 - 690 px wide, not resizable; grows to at most 800 px, header (logo row + advanced-mode timeline) fixed, the rest scrolls.

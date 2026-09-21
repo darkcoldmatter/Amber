@@ -4,7 +4,7 @@ namespace Amber;
 public static class Schedule
 {
     /// <summary>A transition of 0 minutes still fades, just quickly.</summary>
-    public const double InstantFadeSeconds = 10;
+    public const double InstantFadeSeconds = Fade.DefaultSeconds;
 
     const double DaySeconds = 24 * 60 * 60;
 

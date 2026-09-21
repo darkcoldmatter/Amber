@@ -7,7 +7,9 @@ namespace Amber;
 /// </summary>
 public static class AdvancedSchedule
 {
-    public const double FadeSeconds = Fade.DefaultSeconds;
+    // Not const: the fade length is meant to be changed in one place without the compiler
+    // folding it away and declaring the fade code unreachable.
+    public static readonly double FadeSeconds = Fade.DefaultSeconds;
     const double DaySeconds = 24 * 60 * 60;
 
     /// <summary>Every filter that is showing at <paramref name="now"/>, with how strongly (0–1).</summary>

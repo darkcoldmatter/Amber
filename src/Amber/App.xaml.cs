@@ -20,7 +20,9 @@ public partial class App : Application
     bool _previewing;
     TintMode? _previewMode;
     double _previewLevel;
+    readonly TintPlan _plan = new();
     float[]? _shown;
+    DateTime _lastFadeStep = DateTime.UtcNow;
     TrayIcon? _tray;
     MainWindow? _window;
 
@@ -123,7 +125,7 @@ public partial class App : Application
     /// </summary>
     void ApplyTint()
     {
-        var wanted = TintNow();
+        var wanted = Faded(TintNow());
         if (Changed(wanted))
         {
             if (wanted is null) ScreenTint.Reset();
@@ -162,6 +164,14 @@ public partial class App : Application
         return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength) : null;
     }
 
+    float[]? Faded(float[]? target)
+    {
+        var now = DateTime.UtcNow;
+        var seconds = (now - _lastFadeStep).TotalSeconds;
+        _lastFadeStep = now;
+        return _plan.Next(target, eased: _settings.IsAdvanced && !_previewing, seconds);
+    }
+
     /// <summary>Skips tiny changes, so a slow fade doesn't hammer the display pipeline.</summary>
     bool Changed(float[]? wanted)
     {
@@ -174,17 +184,19 @@ public partial class App : Application
     /// <summary>Checks often while a fade is running, rarely when the tint is steady, and not at all without a schedule.</summary>
     void RunScheduleTimer()
     {
+        // Keep ticking while a fade finishes, even after the mode was switched off.
+        var easing = _settings.IsAdvanced && !_previewing && _plan.IsFading;
         var scheduled = IsOn && !_previewing && (_settings.IsAdvanced ? _settings.Filters.Count > 0 : _settings.ScheduleEnabled);
-        if (!scheduled)
+        if (!scheduled && !easing)
         {
             _scheduleTimer.Stop();
             return;
         }
 
         var now = TimeOnly.FromDateTime(DateTime.Now);
-        var fading = _settings.IsAdvanced
+        var fading = easing || (_settings.IsAdvanced
             ? AdvancedSchedule.IsFading(_settings.Filters, now)
-            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
+            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes));
         _scheduleTimer.Interval = fading ? FadeTick : IdleTick;
         _scheduleTimer.Start();
     }

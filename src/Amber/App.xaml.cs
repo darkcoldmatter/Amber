@@ -18,8 +18,9 @@ public partial class App : Application
     readonly DispatcherTimer _scheduleTimer = new();
     Mutex? _singleInstance;
     bool _previewing;
-    double _shownStrength = -1, _shownLevel = -1;
-    TintMode? _shownMode;
+    TintMode? _previewMode;
+    double _previewLevel;
+    float[]? _shown;
     TrayIcon? _tray;
     MainWindow? _window;
 
@@ -52,13 +53,21 @@ public partial class App : Application
 
         _tray = new TrayIcon();
         _tray.OpenRequested += ShowWindow;
-        _tray.ToggleRequested += () => _settings.IsOn = !_settings.IsOn;
+        _tray.ToggleRequested += () =>
+        {
+            if (_settings.IsAdvanced) _settings.AdvancedIsOn = !_settings.AdvancedIsOn;
+            else _settings.IsOn = !_settings.IsOn;
+        };
         _tray.QuitRequested += () => Shutdown();
 
         _saveTimer.Tick += (_, _) => SaveSettings();
         _scheduleTimer.Tick += (_, _) => ApplyTint();
-        _settings.PropertyChanged += (_, _) =>
+        _settings.PropertyChanged += (_, e) =>
         {
+            // Only one mode runs at a time: switching one on switches the other off.
+            if (e.PropertyName == nameof(Settings.IsOn) && _settings.IsOn) _settings.AdvancedIsOn = false;
+            if (e.PropertyName == nameof(Settings.AdvancedIsOn) && _settings.AdvancedIsOn) _settings.IsOn = false;
+
             ApplyTint();
             _saveTimer.Stop(); // Save once changes settle, not on every slider step.
             _saveTimer.Start();
@@ -81,16 +90,30 @@ public partial class App : Application
     /// <summary>App instance, for views that need to talk to it.</summary>
     public static new App Current => (App)Application.Current;
 
-    /// <summary>While the user drags a level, the screen shows that tint whatever the on/off state.</summary>
-    public void StartPreview()
+    /// <summary>
+    /// While the user drags a level, the screen shows that tint whatever the on/off state.
+    /// Advanced cards pass their own mode and level; simple mode uses the screen's.
+    /// </summary>
+    public void StartPreview(TintMode? mode = null, double level = 0)
     {
         _previewing = true;
+        _previewMode = mode;
+        _previewLevel = level;
+        ApplyTint();
+    }
+
+    public void UpdatePreview(TintMode mode, double level)
+    {
+        if (!_previewing) return;
+        _previewMode = mode;
+        _previewLevel = level;
         ApplyTint();
     }
 
     public void EndPreview()
     {
         _previewing = false;
+        _previewMode = null;
         ApplyTint();
     }
 
@@ -100,42 +123,68 @@ public partial class App : Application
     /// </summary>
     void ApplyTint()
     {
-        var strength = StrengthNow();
-        if (Math.Abs(strength - _shownStrength) >= 0.004 || _settings.Level != _shownLevel || _settings.Mode != _shownMode)
+        var wanted = TintNow();
+        if (Changed(wanted))
         {
-            if (strength > 0) ScreenTint.Apply(TintMatrix.Blend(_settings.Mode, _settings.Level, strength));
-            else ScreenTint.Reset();
-            _shownStrength = strength;
-            _shownLevel = _settings.Level;
-            _shownMode = _settings.Mode;
+            if (wanted is null) ScreenTint.Reset();
+            else ScreenTint.Apply(wanted);
+            _shown = wanted;
         }
 
-        _tray?.SetOn(_settings.IsOn);
+        _tray?.SetOn(IsOn);
         RunScheduleTimer();
     }
 
-    /// <summary>0 = untinted, 1 = the full tint, in between while a scheduled fade runs.</summary>
-    double StrengthNow()
-    {
-        if (_previewing) return 1;
-        if (!_settings.IsOn) return 0;
-        if (!_settings.ScheduleEnabled) return 1;
+    /// <summary>Whether the mode the user is in is switched on.</summary>
+    bool IsOn => _settings.IsAdvanced ? _settings.AdvancedIsOn : _settings.IsOn;
 
-        return Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
+    /// <summary>The color matrix the screen should show right now, or null for no tint.</summary>
+    float[]? TintNow()
+    {
+        if (_previewing)
+            return TintMatrix.Build(_previewMode ?? _settings.Mode, _previewMode is null ? _settings.Level : _previewLevel);
+
+        if (!IsOn) return null;
+
+        if (_settings.IsAdvanced)
+        {
+            var now = TimeOnly.FromDateTime(DateTime.Now);
+            var showing = AdvancedSchedule.Weights(_settings.Filters, now);
+            if (showing.Count == 0) return null;
+            return TintMatrix.Mix(showing.Select(s =>
+                (TintMatrix.Build(s.Filter.Mode, AdvancedSchedule.LevelAt(s.Filter, now)), s.Weight)));
+        }
+
+        if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level);
+
+        var strength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
             _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
+        return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength) : null;
     }
 
-    /// <summary>Checks often while a fade is running, rarely when the level is steady, and not at all without a schedule.</summary>
+    /// <summary>Skips tiny changes, so a slow fade doesn't hammer the display pipeline.</summary>
+    bool Changed(float[]? wanted)
+    {
+        if (wanted is null || _shown is null) return wanted is not null || _shown is not null;
+        for (var k = 0; k < wanted.Length; k++)
+            if (Math.Abs(wanted[k] - _shown[k]) >= 0.002f) return true;
+        return false;
+    }
+
+    /// <summary>Checks often while a fade is running, rarely when the tint is steady, and not at all without a schedule.</summary>
     void RunScheduleTimer()
     {
-        if (!_settings.IsOn || !_settings.ScheduleEnabled || _previewing)
+        var scheduled = IsOn && !_previewing && (_settings.IsAdvanced ? _settings.Filters.Count > 0 : _settings.ScheduleEnabled);
+        if (!scheduled)
         {
             _scheduleTimer.Stop();
             return;
         }
 
-        var fading = Schedule.IsFading(TimeOnly.FromDateTime(DateTime.Now),
-            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
+        var now = TimeOnly.FromDateTime(DateTime.Now);
+        var fading = _settings.IsAdvanced
+            ? AdvancedSchedule.IsFading(_settings.Filters, now)
+            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
         _scheduleTimer.Interval = fading ? FadeTick : IdleTick;
         _scheduleTimer.Start();
     }

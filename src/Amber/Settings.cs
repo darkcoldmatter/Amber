@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -19,8 +20,24 @@ public sealed class Settings : INotifyPropertyChanged
         Converters = { new JsonStringEnumConverter() },
     };
 
+    public Settings()
+    {
+        // Any change to a filter, or to the list itself, counts as a settings change.
+        Filters.CollectionChanged += (_, e) =>
+        {
+            foreach (var filter in e.OldItems?.Cast<Filter>() ?? []) filter.PropertyChanged -= OnFilterChanged;
+            foreach (var filter in e.NewItems?.Cast<Filter>() ?? []) filter.PropertyChanged += OnFilterChanged;
+            Announce(nameof(Filters));
+        };
+    }
+
     /// <summary>Which app mode the window shows: simple (default) or advanced.</summary>
     public bool IsAdvanced { get; set => Set(ref field, value); }
+
+    /// <summary>Advanced mode has its own on/off, and turning it on turns simple mode off.</summary>
+    public bool AdvancedIsOn { get; set => Set(ref field, value); }
+
+    public ObservableCollection<Filter> Filters { get; } = [];
 
     public bool IsOn { get; set => Set(ref field, value); }
     public TintMode Mode { get; set => Set(ref field, value); }
@@ -53,10 +70,14 @@ public sealed class Settings : INotifyPropertyChanged
         File.WriteAllText(path, JsonSerializer.Serialize(this, JsonOptions));
     }
 
+    void OnFilterChanged(object? sender, PropertyChangedEventArgs e) => Announce(nameof(Filters));
+
+    void Announce(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     void Set<T>(ref T storage, T value, [CallerMemberName] string name = "")
     {
         if (EqualityComparer<T>.Default.Equals(storage, value)) return;
         storage = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        Announce(name);
     }
 }

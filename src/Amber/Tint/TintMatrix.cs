@@ -31,6 +31,29 @@ public static class TintMatrix
     ];
 
     /// <summary>
+    /// Mixes several looks by weight, filling any leftover weight with an untinted screen.
+    /// Used where two filters overlap while one fades out and the next fades in.
+    /// </summary>
+    public static float[] Mix(IEnumerable<(float[] Matrix, double Weight)> looks)
+    {
+        var identity = Identity;
+        var mixed = Identity;
+        var used = 0.0;
+        foreach (var (matrix, weight) in looks)
+        {
+            if (weight <= 0) continue;
+            used += weight;
+            for (var k = 0; k < mixed.Length; k++) mixed[k] += (float)((matrix[k] - identity[k]) * weight);
+        }
+
+        // More than a full weight means two looks overlap: share them out instead of piling up.
+        if (used <= 1) return mixed;
+
+        for (var k = 0; k < mixed.Length; k++) mixed[k] = (float)(identity[k] + (mixed[k] - identity[k]) / used);
+        return mixed;
+    }
+
+    /// <summary>
     /// The mode's look at <paramref name="level"/>, mixed with "no tint at all" by <paramref name="strength"/>
     /// (0 = untinted screen, 1 = the full look). Fades run on this, not on the level: level 0 is already a visible tint.
     /// </summary>

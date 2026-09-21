@@ -1,0 +1,41 @@
+<UserControl x:Class="Amber.Views.FilterCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Amber.Controls">
+    <Border Background="White" CornerRadius="16" Width="630" Height="130">
+        <Canvas>
+            <Canvas Canvas.Left="24" Canvas.Top="32" Width="28" Height="19">
+                <Path x:Name="ModeIcon">
+                    <Path.RenderTransform>
+                        <ScaleTransform ScaleX="0.78" ScaleY="0.78" />
+                    </Path.RenderTransform>
+                </Path>
+            </Canvas>
+            <TextBlock x:Name="ModeName" Canvas.Left="65" Canvas.Top="30" FontSize="20" FontWeight="Medium"
+                       Foreground="{StaticResource InkBrush}" />
+
+            <StackPanel Canvas.Left="207" Canvas.Top="24" Orientation="Horizontal">
+                <ComboBox x:Name="StartHour" Style="{StaticResource TimeBox}" AutomationProperties.Name="Start hour" />
+                <TextBlock Text=":" Style="{StaticResource BodyText}" Margin="8,0" VerticalAlignment="Center" />
+                <ComboBox x:Name="StartMinute" Style="{StaticResource TimeBox}" AutomationProperties.Name="Start minutes" />
+            </StackPanel>
+            <Rectangle Canvas.Left="375" Canvas.Top="42" Width="16" Height="1" Fill="{StaticResource LineBrush}" />
+            <StackPanel Canvas.Left="407" Canvas.Top="24" Orientation="Horizontal">
+                <ComboBox x:Name="EndHour" Style="{StaticResource TimeBox}" AutomationProperties.Name="End hour" />
+                <TextBlock Text=":" Style="{StaticResource BodyText}" Margin="8,0" VerticalAlignment="Center" />
+                <ComboBox x:Name="EndMinute" Style="{StaticResource TimeBox}" AutomationProperties.Name="End minutes" />
+            </StackPanel>
+
+            <Button Canvas.Left="578" Canvas.Top="24" Style="{StaticResource IconButton}" Tag="{StaticResource IconRemove}"
+                    Click="OnDelete" AutomationProperties.Name="Delete filter" />
+
+            <TextBlock Canvas.Left="24" Canvas.Top="85" Text="Level" Style="{StaticResource LabelText}" />
+            <ToggleButton x:Name="CurveToggle" Canvas.Left="72" Canvas.Top="77" Style="{StaticResource CurveButton}"
+                          IsChecked="{Binding CurveEnabled}" AutomationProperties.Name="Curve" />
+            <controls:LevelSlider x:Name="Level" Canvas.Left="207" Canvas.Top="88" Width="351"
+                                  Style="{StaticResource LevelSlider}" Value="{Binding Level}" AutomationProperties.Name="Level" />
+            <TextBlock Canvas.Left="546" Canvas.Top="85" Width="60" TextAlignment="Right" Style="{StaticResource ValueText}"
+                       Text="{Binding Level, StringFormat=N0}" />
+        </Canvas>
+    </Border>
+</UserControl>

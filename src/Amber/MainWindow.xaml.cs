@@ -25,7 +25,9 @@ public partial class MainWindow : Window
     void ShowAppMode()
     {
         AppModeButton.Content = _settings.IsAdvanced ? "Simple" : "Advanced";
-        ModeHost.Content = _settings.IsAdvanced ? AdvancedPlaceholder() : new SimpleView(_settings);
+        AppModeButton.Width = _settings.IsAdvanced ? 82 : 106;
+        Canvas.SetLeft(AppModeButton, _settings.IsAdvanced ? 474 : 462);
+        ModeHost.Content = _settings.IsAdvanced ? new AdvancedView(_settings) : new SimpleView(_settings);
     }
 
     void OnOpenSettings(object sender, RoutedEventArgs e)
@@ -56,11 +58,4 @@ public partial class MainWindow : Window
         ModeLayer.Visibility = Visibility.Visible;
     }
 
-    // Advanced mode is built in the next step.
-    static UIElement AdvancedPlaceholder() => new TextBlock
-    {
-        Text = "Advanced mode is coming in the next step.",
-        Margin = new Thickness(30, 40, 30, 60),
-        FontSize = 14,
-    };
 }

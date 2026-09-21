@@ -23,9 +23,8 @@
                         Click="OnOpenAbout" AutomationProperties.Name="About" />
             </Canvas>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ContentControl x:Name="ModeHost" />
-            </ScrollViewer>
+            <!-- Each mode does its own scrolling: advanced keeps its timeline fixed. -->
+            <ContentControl x:Name="ModeHost" Grid.Row="1" />
         </Grid>
 
         <ContentControl x:Name="OverlayHost" Background="White" Visibility="Collapsed" />

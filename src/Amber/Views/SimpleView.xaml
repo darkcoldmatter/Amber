@@ -29,8 +29,9 @@
         <TextBlock Canvas.Left="212" Canvas.Top="213" Text="Level" Style="{StaticResource LabelText}" />
         <controls:LevelSlider x:Name="Level" Canvas.Left="266" Canvas.Top="216" Width="351"
                               Style="{StaticResource LevelSlider}" Value="{Binding Level}" AutomationProperties.Name="Level" />
-        <TextBlock Canvas.Left="600" Canvas.Top="213" Width="60" TextAlignment="Right" Style="{StaticResource ValueText}"
-                   Text="{Binding Level, StringFormat=N0}" />
+        <!-- Sits over the end of the slider, so it must not take the mouse. -->
+        <TextBlock Canvas.Left="600" Canvas.Top="213" Width="60" TextAlignment="Right" IsHitTestVisible="False"
+                   Style="{StaticResource ValueText}" Text="{Binding Level, StringFormat=N0}" />
 
         <StackPanel x:Name="SchedulePanel" Canvas.Left="30" Canvas.Top="258"
                     Visibility="{Binding ScheduleEnabled, Converter={StaticResource BoolToVisibility}}">

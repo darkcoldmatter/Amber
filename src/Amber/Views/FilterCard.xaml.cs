@@ -70,6 +70,7 @@ public partial class FilterCard : UserControl
         Fade(Level, show ? 0 : 1, animate);
         Fade(LevelValue, show ? 0 : 1, animate);
         Level.IsHitTestVisible = !show;
+        Curve.IsHitTestVisible = show;
     }
 
     static void Fade(UIElement element, double to, bool animate) =>

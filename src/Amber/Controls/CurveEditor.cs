@@ -12,7 +12,9 @@ namespace Amber.Controls;
 /// </summary>
 public class CurveEditor : FrameworkElement
 {
-    const double PlotLeft = 28, PlotTop = 24, PlotWidth = 554, PlotHeight = 140, ValueInset = 4.5;
+    // The plot fills whatever room the card gives it, leaving a column for the level labels
+    // and a row for the hour labels. The filter's range is then spread across that width.
+    const double PlotLeft = 28, PlotTop = 24, ValueInset = 4.5;
     const double PointRadius = 5, GrabRadius = 9, MinLabelGap = 28;
 
     static readonly Brush GridBrush = Frozen("#EFF1F5");
@@ -205,14 +207,17 @@ public class CurveEditor : FrameworkElement
         return -1;
     }
 
-    static bool InPlot(Point position) =>
+    double PlotWidth => Math.Max(ActualWidth - PlotLeft, 1);
+    double PlotHeight => Math.Max(ActualHeight - PlotTop, 1);
+
+    bool InPlot(Point position) =>
         position.X >= PlotLeft && position.X <= PlotLeft + PlotWidth && position.Y >= PlotTop && position.Y <= PlotTop + PlotHeight;
 
     double X(int minutes) => PlotLeft + minutes / (double)Math.Max(_filter!.LengthMinutes, 1) * PlotWidth;
-    static double Y(double level) => PlotTop + ValueInset + (1 - Math.Clamp(level, 0, 100) / 100) * (PlotHeight - 2 * ValueInset);
+    double Y(double level) => PlotTop + ValueInset + (1 - Math.Clamp(level, 0, 100) / 100) * (PlotHeight - 2 * ValueInset);
 
     double MinutesAt(double x) => (x - PlotLeft) / PlotWidth * _filter!.LengthMinutes;
-    static double LevelAt(double y) => (1 - (y - PlotTop - ValueInset) / (PlotHeight - 2 * ValueInset)) * 100;
+    double LevelAt(double y) => (1 - (y - PlotTop - ValueInset) / (PlotHeight - 2 * ValueInset)) * 100;
 
     static FormattedText Text(string text, FontFamily family, double size, FontWeight weight, Brush brush, double dpi) =>
         new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,

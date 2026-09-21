@@ -33,11 +33,11 @@ public class ScheduleTests
     }
 
     [Fact]
-    public void Transition_0_still_fades_over_the_default_two_seconds()
+    public void Transition_0_turns_the_tint_on_at_once()
     {
         var start = new TimeOnly(20, 0);
-        Assert.Equal(0.5, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(1)), start, End, 0), 3);
-        Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(2)), start, End, 0), 3);
+        Assert.Equal(1, Schedule.StrengthAt(start, start, End, 0), 3);
+        Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(1)), start, End, 0), 3);
     }
 
     [Fact]

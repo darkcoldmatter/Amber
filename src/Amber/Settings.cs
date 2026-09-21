@@ -37,6 +37,8 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>Advanced mode has its own on/off, and turning it on turns simple mode off.</summary>
     public bool AdvancedIsOn { get; set => Set(ref field, value); }
 
+    /// <summary>Populate: the list is read-only, so the reader has to add into it rather than replace it.</summary>
+    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public ObservableCollection<Filter> Filters { get; } = [];
 
     public bool IsOn { get; set => Set(ref field, value); }

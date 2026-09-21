@@ -6,8 +6,11 @@ namespace Amber;
 /// </summary>
 public static class Fade
 {
-    /// <summary>How long a plain fade takes, in seconds — on/off in both modes, and between filters.</summary>
-    public const double DefaultSeconds = 2;
+    /// <summary>
+    /// How long a plain fade takes, in seconds — on/off in both modes, and between filters.
+    /// 0 means no fade at all (the owner's choice for now).
+    /// </summary>
+    public const double DefaultSeconds = 0;
 
 
     /// <param name="current">where the fade is now</param>

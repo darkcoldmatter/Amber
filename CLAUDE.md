@@ -29,7 +29,7 @@ The UI follows **Design 2.0** in Figma (file `yq4CMAFmPnS3ZclM1kvkAy`, page "Des
 - Card: mode, start/end fields, level slider, delete, and a curve button. Curve and flat level are **two separate settings**: expanding applies the curve, collapsing goes back to the flat level but remembers the curve.
 - Curve editor: grid of the range's hours (skip every other label when tight), left click adds a point, right click removes; first and last points are locked to the ends (vertical only); points snap to 15 min and lightly to levels (within ~3); dragging shows a dark value box to the **left** of the point, never clipped; points and 40 %-opacity fill take the filter's color.
 - **Boundaries:** a gap between bars = a normal fade out/in. Two bars that touch = the earlier tint runs on a little longer while the next starts early and fades in, so the screen never flashes back to blue.
-- **Fade length:** one constant, `Fade.DefaultSeconds` (currently **2 s**, owner's choice "for now"). It covers on/off in both modes, filter boundaries, and a transition of 0 minutes.
+- **Fade length:** one constant, `Fade.DefaultSeconds` (currently **0 — no fade**, owner's choice "for now"). It covers on/off in both modes, filter boundaries, and a transition of 0 minutes. The schedule's own transition setting still fades over the minutes it names.
 - **Preview:** releasing the level slider snaps straight back to the real state — no leftover preview tint.
 
 ## Window & shell

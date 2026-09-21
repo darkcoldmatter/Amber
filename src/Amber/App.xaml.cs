@@ -11,7 +11,7 @@ public partial class App : Application
     // Windows starts Amber with this at sign-in: stay in the tray, no window.
     internal const string TrayArgument = "--tray";
 
-    static readonly TimeSpan FadeTick = TimeSpan.FromMilliseconds(500), IdleTick = TimeSpan.FromSeconds(15);
+    static readonly TimeSpan FadeTick = TimeSpan.FromMilliseconds(500), IdleTick = TimeSpan.FromSeconds(5);
 
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };

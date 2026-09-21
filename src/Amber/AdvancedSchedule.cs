@@ -42,6 +42,7 @@ public static class AdvancedSchedule
     {
         var length = filter.LengthMinutes * 60.0;
         var elapsed = SecondsSince(filter.Start, now);
+        if (FadeSeconds <= 0) return elapsed <= length ? 1 : 0;
 
         // The 30 s before the start read as a negative elapsed time near the end of the day.
         var beforeStart = DaySeconds - elapsed;

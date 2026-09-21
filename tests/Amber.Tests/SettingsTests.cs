@@ -37,6 +37,28 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void Advanced_filters_are_saved_and_read_back()
+    {
+        var settings = new Settings { IsAdvanced = true, AdvancedIsOn = true };
+        var filter = new Filter { Mode = TintMode.Astronomic, Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0), Level = 70 };
+        filter.ResetCurve();
+        filter.Curve = CurveMath.Add(filter.Curve, 180, 90, filter.LengthMinutes);
+        settings.Filters.Add(filter);
+        settings.Save(SettingsPath);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.True(loaded.IsAdvanced);
+        Assert.True(loaded.AdvancedIsOn);
+        var read = Assert.Single(loaded.Filters);
+        Assert.Equal(TintMode.Astronomic, read.Mode);
+        Assert.Equal(new TimeOnly(8, 0), read.Start);
+        Assert.Equal(new TimeOnly(16, 0), read.End);
+        Assert.Equal(70, read.Level);
+        Assert.Equal([new CurvePoint(0, 70), new CurvePoint(180, 90), new CurvePoint(480, 70)], read.Curve);
+    }
+
+    [Fact]
     public void Missing_file_gives_defaults()
     {
         AssertDefaults(Settings.Load(SettingsPath));

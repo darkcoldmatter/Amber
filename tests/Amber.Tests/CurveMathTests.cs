@@ -1,0 +1,101 @@
+namespace Amber.Tests;
+
+public class CurveMathTests
+{
+    const int Length = 480;   // an 8 hour range
+    static List<CurvePoint> Flat(double level = 50) => CurveMath.Flat(Length, level);
+
+    [Fact]
+    public void Times_land_on_15_minute_marks_inside_the_range()
+    {
+        Assert.Equal(60, CurveMath.SnapTime(57, Length));
+        Assert.Equal(45, CurveMath.SnapTime(50, Length));
+        Assert.Equal(0, CurveMath.SnapTime(-20, Length));
+        Assert.Equal(Length, CurveMath.SnapTime(999, Length));
+    }
+
+    [Fact]
+    public void A_level_close_to_a_neighbour_lines_up_with_it()
+    {
+        Assert.Equal(75, CurveMath.SnapLevel(73, [75]));
+        Assert.Equal(70, CurveMath.SnapLevel(70, [75]));     // 5 apart: left alone
+        Assert.Equal(100, CurveMath.SnapLevel(140, []));     // clamped
+    }
+
+    [Fact]
+    public void A_new_curve_is_flat_at_the_current_level()
+    {
+        Assert.Equal([new CurvePoint(0, 40), new CurvePoint(Length, 40)], CurveMath.Flat(Length, 40));
+    }
+
+    [Fact]
+    public void Clicking_adds_a_point_in_time_order()
+    {
+        var curve = CurveMath.Add(Flat(), 130, 80, Length);
+
+        Assert.Equal(3, curve.Count);
+        Assert.Equal(new CurvePoint(135, 80), curve[1]);
+    }
+
+    [Fact]
+    public void Points_cannot_be_added_on_top_of_the_ends_or_of_each_other()
+    {
+        Assert.Equal(2, CurveMath.Add(Flat(), 0, 80, Length).Count);
+        Assert.Equal(2, CurveMath.Add(Flat(), Length, 80, Length).Count);
+
+        var curve = CurveMath.Add(Flat(), 120, 80, Length);
+        Assert.Equal(3, CurveMath.Add(curve, 120, 20, Length).Count);
+    }
+
+    [Fact]
+    public void Right_click_removes_a_point_but_never_an_end()
+    {
+        var curve = CurveMath.Add(Flat(), 120, 80, Length);
+
+        Assert.Equal(2, CurveMath.Remove(curve, 1).Count);
+        Assert.Equal(3, CurveMath.Remove(curve, 0).Count);
+        Assert.Equal(3, CurveMath.Remove(curve, 2).Count);
+    }
+
+    [Fact]
+    public void The_first_and_last_points_only_move_up_and_down()
+    {
+        var moved = CurveMath.Move(Flat(), 0, 200, 90, Length);
+
+        Assert.Equal(new CurvePoint(0, 90), moved[0]);
+        Assert.Equal(new CurvePoint(Length, 50), moved[1]);
+    }
+
+    [Fact]
+    public void A_middle_point_stays_between_its_neighbours()
+    {
+        var curve = CurveMath.Add(Flat(), 240, 80, Length);
+
+        var pushedLeft = CurveMath.Move(curve, 1, -100, 80, Length);
+        Assert.Equal(CurveMath.StepMinutes, pushedLeft[1].Minutes);
+
+        var pushedRight = CurveMath.Move(curve, 1, 900, 80, Length);
+        Assert.Equal(Length - CurveMath.StepMinutes, pushedRight[1].Minutes);
+    }
+
+    [Fact]
+    public void A_dragged_point_snaps_level_with_its_neighbour()
+    {
+        var curve = CurveMath.Add(Flat(50), 240, 80, Length);
+
+        var moved = CurveMath.Move(curve, 1, 240, 52, Length);
+        Assert.Equal(50, moved[1].Level);
+    }
+
+    [Fact]
+    public void A_shorter_range_drops_the_points_that_fall_outside()
+    {
+        var curve = CurveMath.Add(Flat(), 300, 80, Length);
+
+        var fitted = CurveMath.Fit(curve, 240, 50);
+
+        Assert.Equal(2, fitted.Count);
+        Assert.Equal(0, fitted[0].Minutes);
+        Assert.Equal(240, fitted[^1].Minutes);
+    }
+}

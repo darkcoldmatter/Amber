@@ -11,8 +11,18 @@ public sealed record CurvePoint(int Minutes, double Level);
 public sealed class Filter : INotifyPropertyChanged
 {
     public TintMode Mode { get; set => Set(ref field, value); }
-    public TimeOnly Start { get; set => Set(ref field, value); }
-    public TimeOnly End { get; set => Set(ref field, value); } = new(1, 0);
+
+    public TimeOnly Start
+    {
+        get;
+        set { if (Set(ref field, value)) FitCurve(); }
+    }
+
+    public TimeOnly End
+    {
+        get;
+        set { if (Set(ref field, value)) FitCurve(); }
+    } = new(1, 0);
     public double Level { get; set => Set(ref field, value); } = 50;
 
     /// <summary>The curve replaces the flat level while this is on; turning it off keeps the curve for later.</summary>
@@ -42,12 +52,19 @@ public sealed class Filter : INotifyPropertyChanged
     }
 
     /// <summary>A fresh curve is just a flat line at the current level, from one end of the range to the other.</summary>
-    public void ResetCurve() => Curve = [new CurvePoint(0, Level), new CurvePoint(LengthMinutes, Level)];
+    public void ResetCurve() => Curve = CurveMath.Flat(LengthMinutes, Level);
 
-    void Set<T>(ref T storage, T value, [CallerMemberName] string name = "")
+    /// <summary>After the range moves, the curve keeps its ends and drops anything that no longer fits.</summary>
+    void FitCurve()
     {
-        if (EqualityComparer<T>.Default.Equals(storage, value)) return;
+        if (Curve.Count > 0) Curve = CurveMath.Fit(Curve, LengthMinutes, Level);
+    }
+
+    bool Set<T>(ref T storage, T value, [CallerMemberName] string name = "")
+    {
+        if (EqualityComparer<T>.Default.Equals(storage, value)) return false;
         storage = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        return true;
     }
 }

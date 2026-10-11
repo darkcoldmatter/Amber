@@ -11,11 +11,14 @@ public class LevelSlider : Slider
     public event EventHandler? PreviewStarted;
     public event EventHandler? PreviewEnded;
 
+    bool _previewing;
+
     protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnPreviewMouseLeftButtonDown(e);
         Focus();
         CaptureMouse();
+        _previewing = true;
         PreviewStarted?.Invoke(this, EventArgs.Empty);
         MoveTo(e);
         e.Handled = true;
@@ -31,6 +34,20 @@ public class LevelSlider : Slider
     {
         base.OnPreviewMouseLeftButtonUp(e);
         ReleaseMouseCapture();
+        EndPreview();
+    }
+
+    /// <summary>Losing the mouse mid-drag (Alt+Tab, a window popping up) must end the preview too, or the tint would stay.</summary>
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        EndPreview();
+    }
+
+    void EndPreview()
+    {
+        if (!_previewing) return;
+        _previewing = false;
         PreviewEnded?.Invoke(this, EventArgs.Empty);
     }
 

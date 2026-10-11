@@ -1,32 +1,49 @@
 <Window x:Class="Amber.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Amber" Width="690" SizeToContent="Height" MaxHeight="800" ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen" Background="White" FontFamily="{StaticResource AppFont}" UseLayoutRounding="True">
-    <Grid>
+        xmlns:controls="clr-namespace:Amber.Controls"
+        Title="Amber" SizeToContent="WidthAndHeight" MaxHeight="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource PageBrush}" FontFamily="{StaticResource AppFont}" UseLayoutRounding="True"
+        TextOptions.TextRenderingMode="Grayscale">
+    <!--
+        The content sets the window's size: 724 wide in Simple, 848 in Advanced (Figma frames = client area).
+        Text is anti-aliased in grey, not ClearType, so it looks like Figma's.
+    -->
+    <Grid x:Name="Root" Width="724">
+        <controls:Glow x:Name="Glow" IsHitTestVisible="False" />
+
         <Grid x:Name="ModeLayer">
             <Grid.RowDefinitions>
-                <RowDefinition Height="67" />
+                <RowDefinition Height="66" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
+            <!-- Header, shared by both modes -->
             <Canvas>
-                <Canvas Canvas.Left="30" Canvas.Top="20" Width="116" Height="25">
-                    <Path Data="{StaticResource LogoSun}" Fill="{StaticResource LogoSunBrush}" />
-                    <Path Data="{StaticResource LogoWord}" Fill="{StaticResource InkBrush}" />
-                </Canvas>
-                <Button x:Name="AppModeButton" Canvas.Left="462" Canvas.Top="14" Width="106" Style="{StaticResource PillButton}"
-                        Content="Advanced" Click="OnSwitchAppMode" />
-                <Button Canvas.Left="584" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconGear}"
-                        Click="OnOpenSettings" AutomationProperties.Name="Settings" />
-                <Button Canvas.Left="624" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconInfo}"
-                        Click="OnOpenAbout" AutomationProperties.Name="About" />
+                <Button Canvas.Left="23" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconGear}"
+                        Foreground="{StaticResource InkBrush}" Click="OnOpenSettings" AutomationProperties.Name="Settings" />
+                <Button Canvas.Left="67" Canvas.Top="15" Style="{StaticResource IconButton}" Tag="{StaticResource IconInfo}"
+                        Foreground="{StaticResource InkBrush}" Click="OnOpenAbout" AutomationProperties.Name="About" />
+                <ToggleButton Canvas.Left="127" Canvas.Top="23" Style="{StaticResource Switch}" Content="Advanced"
+                              IsChecked="{Binding IsAdvanced}" AutomationProperties.Name="Advanced" />
+                <ToggleButton x:Name="ScheduleButton" Canvas.Left="460" Canvas.Top="12" Style="{StaticResource ScheduleButton}"
+                              IsChecked="{Binding ScheduleEnabled}" AutomationProperties.Name="Schedule" />
+                <ToggleButton x:Name="PowerButton" Canvas.Right="24" Canvas.Top="15" Style="{StaticResource PowerButton}"
+                              AutomationProperties.Name="Tint on or off" />
             </Canvas>
 
-            <!-- Each mode does its own scrolling: advanced keeps its timeline fixed. -->
-            <ContentControl x:Name="ModeHost" Grid.Row="1" />
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+                <Grid>
+                    <ContentControl x:Name="ModeHost" Focusable="False" />
+                    <!-- Until the new Advanced mode arrives (step 5b) -->
+                    <Grid x:Name="AdvancedPlaceholder" Height="225" Visibility="Collapsed">
+                        <TextBlock Text="The new Advanced mode arrives in the next step." Style="{StaticResource BodyText}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </Grid>
+            </ScrollViewer>
         </Grid>
 
-        <ContentControl x:Name="OverlayHost" Background="White" Visibility="Collapsed" />
+        <ContentControl x:Name="OverlayHost" Visibility="Collapsed" Focusable="False" />
     </Grid>
 </Window>

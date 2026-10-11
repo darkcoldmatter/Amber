@@ -11,7 +11,7 @@ public class TintMatrixTests
     static float[] White(float[] m) => [m[0] + m[5] + m[10], m[1] + m[6] + m[11], m[2] + m[7] + m[12]];
 
     [Fact]
-    public void Astronomic_at_100_matches_the_tested_matrix()
+    public void Deep_night_at_100_matches_the_tested_matrix()
     {
         float[] expected =
         [
@@ -22,7 +22,7 @@ public class TintMatrixTests
             0, 0, 0, 0, 1,
         ];
 
-        var actual = TintMatrix.Build(TintMode.Astronomic, 100);
+        var actual = TintMatrix.Build(TintMode.DeepNight, 100);
 
         for (var k = 0; k < 25; k++) Assert.Equal(expected[k], actual[k], 0.0001f);
     }

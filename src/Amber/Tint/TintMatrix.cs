@@ -17,7 +17,7 @@ public static class TintMatrix
     {
         TintMode.GoldenHour => (new(1.00, 0.96, 0.88, 0.00), new(1.00, 0.62, 0.12, 0.00)),
         TintMode.Amber => (new(1.00, 0.93, 0.82, 0.00), new(1.00, 0.45, 0.02, 0.85)),
-        TintMode.Astronomic => (new(1.00, 0.92, 0.90, 0.15), new(1.00, 0.25, 0.05, 1.00)),
+        TintMode.DeepNight => (new(1.00, 0.92, 0.90, 0.15), new(1.00, 0.25, 0.05, 1.00)),
         _ => throw new ArgumentOutOfRangeException(nameof(mode)),
     };
 

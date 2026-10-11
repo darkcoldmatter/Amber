@@ -107,6 +107,6 @@ public partial class FilterCard : UserControl
     {
         TintMode.GoldenHour => "Golden hour",
         TintMode.Amber => "Amber",
-        _ => "Astronomic",
+        _ => "Deep night",
     };
 }

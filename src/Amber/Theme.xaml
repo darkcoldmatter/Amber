@@ -16,10 +16,10 @@
     <!-- Per-mode accents: slider fill, schedule bar, mode name -->
     <SolidColorBrush x:Key="GoldenHourAccent" Color="#FEC960" />
     <SolidColorBrush x:Key="AmberAccent" Color="#F99E43" />
-    <SolidColorBrush x:Key="AstronomicAccent" Color="#FD867F" />
+    <SolidColorBrush x:Key="DeepNightAccent" Color="#FD867F" />
     <SolidColorBrush x:Key="GoldenHourLabel" Color="#C36624" />
     <SolidColorBrush x:Key="AmberLabel" Color="#87400D" />
-    <SolidColorBrush x:Key="AstronomicLabel" Color="#A60909" />
+    <SolidColorBrush x:Key="DeepNightLabel" Color="#A60909" />
 
     <FontFamily x:Key="AppFont">pack://application:,,,/Assets/Fonts/#Plus Jakarta Sans</FontFamily>
 

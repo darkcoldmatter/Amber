@@ -161,7 +161,7 @@ public partial class App : Application
         if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level);
 
         var strength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
-            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes);
+            _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
         return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength) : null;
     }
 
@@ -197,7 +197,7 @@ public partial class App : Application
         var now = TimeOnly.FromDateTime(DateTime.Now);
         var fading = easing || (_settings.IsAdvanced
             ? AdvancedSchedule.IsFading(_settings.Filters, now)
-            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionMinutes));
+            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds));
         _scheduleTimer.Interval = fading ? FadeTick : IdleTick;
         _scheduleTimer.Start();
     }

@@ -89,6 +89,6 @@ public partial class AdvancedView : UserControl
     {
         TintMode.GoldenHour => "Golden hour",
         TintMode.Amber => "Amber",
-        _ => "Astronomic",
+        _ => "Deep night",
     };
 }

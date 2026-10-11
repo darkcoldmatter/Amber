@@ -48,8 +48,8 @@ public sealed class Settings : INotifyPropertyChanged
     public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(20, 0);
     public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(8, 0);
 
-    /// <summary>Schedule fade length in minutes; 0 falls back to <see cref="Fade.DefaultSeconds"/>.</summary>
-    public int TransitionMinutes { get; set => Set(ref field, value); }
+    /// <summary>Schedule fade length in seconds; 0 ("Off") falls back to <see cref="Fade.DefaultSeconds"/>.</summary>
+    public int TransitionSeconds { get; set => Set(ref field, value); }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

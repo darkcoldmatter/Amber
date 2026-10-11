@@ -4,5 +4,5 @@ public enum TintMode
 {
     GoldenHour,
     Amber,
-    Astronomic,
+    DeepNight,
 }

@@ -25,7 +25,7 @@ public class AdvancedTimeline : FrameworkElement
     {
         [TintMode.GoldenHour] = Frozen("#FEC960"),
         [TintMode.Amber] = Frozen("#F99E43"),
-        [TintMode.Astronomic] = Frozen("#FD867F"),
+        [TintMode.DeepNight] = Frozen("#FD867F"),
     };
 
     IReadOnlyList<Filter> _filters = [];

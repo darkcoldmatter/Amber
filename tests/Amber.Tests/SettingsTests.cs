@@ -19,7 +19,7 @@ public class SettingsTests : IDisposable
         new Settings
         {
             IsOn = true,
-            Mode = TintMode.Astronomic,
+            Mode = TintMode.DeepNight,
             Level = 73.5,
             ScheduleEnabled = true,
             ScheduleStart = new TimeOnly(22, 15),
@@ -29,7 +29,7 @@ public class SettingsTests : IDisposable
         var loaded = Settings.Load(SettingsPath);
 
         Assert.True(loaded.IsOn);
-        Assert.Equal(TintMode.Astronomic, loaded.Mode);
+        Assert.Equal(TintMode.DeepNight, loaded.Mode);
         Assert.Equal(73.5, loaded.Level);
         Assert.True(loaded.ScheduleEnabled);
         Assert.Equal(new TimeOnly(22, 15), loaded.ScheduleStart);
@@ -40,7 +40,7 @@ public class SettingsTests : IDisposable
     public void Advanced_filters_are_saved_and_read_back()
     {
         var settings = new Settings { IsAdvanced = true, AdvancedIsOn = true };
-        var filter = new Filter { Mode = TintMode.Astronomic, Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0), Level = 70 };
+        var filter = new Filter { Mode = TintMode.DeepNight, Start = new TimeOnly(8, 0), End = new TimeOnly(16, 0), Level = 70 };
         filter.ResetCurve();
         filter.Curve = CurveMath.Add(filter.Curve, 180, 90, filter.LengthMinutes);
         settings.Filters.Add(filter);
@@ -51,7 +51,7 @@ public class SettingsTests : IDisposable
         Assert.True(loaded.IsAdvanced);
         Assert.True(loaded.AdvancedIsOn);
         var read = Assert.Single(loaded.Filters);
-        Assert.Equal(TintMode.Astronomic, read.Mode);
+        Assert.Equal(TintMode.DeepNight, read.Mode);
         Assert.Equal(new TimeOnly(8, 0), read.Start);
         Assert.Equal(new TimeOnly(16, 0), read.End);
         Assert.Equal(70, read.Level);
@@ -96,6 +96,6 @@ public class SettingsTests : IDisposable
         Assert.Equal(new TimeOnly(20, 0), settings.ScheduleStart);
         Assert.Equal(new TimeOnly(8, 0), settings.ScheduleEnd);
         Assert.False(settings.IsAdvanced);
-        Assert.Equal(0, settings.TransitionMinutes);
+        Assert.Equal(0, settings.TransitionSeconds);
     }
 }

@@ -123,8 +123,8 @@ public partial class SimpleView : UserControl
         var length = ScheduleRange.Length(ScheduleRange.Minutes(_settings.ScheduleStart), ScheduleRange.Minutes(_settings.ScheduleEnd));
         var choices = TimeOptions.Transitions(length);
         Transition.ItemsSource = choices;
-        if (_settings.TransitionMinutes > choices[^1]) _settings.TransitionMinutes = choices[^1];
-        Transition.SelectedItem = _settings.TransitionMinutes;
+        if (_settings.TransitionSeconds > choices[^1]) _settings.TransitionSeconds = choices[^1];
+        Transition.SelectedItem = _settings.TransitionSeconds;
 
         _filling = false;
     }
@@ -135,7 +135,7 @@ public partial class SimpleView : UserControl
 
         _settings.ScheduleStart = TimeFrom(StartHour, StartMinute);
         _settings.ScheduleEnd = TimeFrom(EndHour, EndMinute);
-        if (Transition.SelectedItem is int minutes) _settings.TransitionMinutes = minutes;
+        if (Transition.SelectedItem is int seconds) _settings.TransitionSeconds = seconds;
     }
 
     static TimeOnly TimeFrom(ComboBox hours, ComboBox minutes) =>
@@ -145,7 +145,7 @@ public partial class SimpleView : UserControl
     {
         TintMode.GoldenHour => "Golden hour",
         TintMode.Amber => "Amber",
-        _ => "Astronomic",
+        _ => "Deep night",
     };
 
     static BitmapImage HeroFor(TintMode mode)

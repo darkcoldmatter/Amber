@@ -6,8 +6,9 @@ C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
 **Owner:** Dmitriy (designer, not a developer). Explain things plainly, keep changes small, and don't
 start the next step until he has checked the current one. He tests every step by hand on his own PC.
 
-**Status:** the whole experience works end to end — simple mode, the schedule engine, advanced mode with
-the curve editor. What's left is a UI polish pass against a redesign, then installer and release.
+**Status:** the engine and every feature work end to end. The UI is being rebuilt on Figma "Design 3.0":
+step 5a (shell, Simple mode, Settings/About) is built and waiting for the owner's check; step 5b (Advanced
+mode) comes next, then installer and release.
 
 ---
 
@@ -30,17 +31,17 @@ the curve editor. What's left is a UI polish pass against a redesign, then insta
   |---|---|---|
   | Golden hour | 1.00, 0.96, 0.88, 0.00 | 1.00, 0.62, 0.12, 0.00 |
   | Amber | 1.00, 0.93, 0.82, 0.00 | 1.00, 0.45, 0.02, 0.85 |
-  | Astronomic | 1.00, 0.92, 0.90, 0.15 | 1.00, 0.25, 0.05, 1.00 |
+  | Deep night | 1.00, 0.92, 0.90, 0.15 | 1.00, 0.25, 0.05, 1.00 |
 
-  The Astronomic level-100 matrix is the one the owner tested before this project started; don't "improve"
-  these numbers without asking — they were tuned on his screen.
+  The Deep night level-100 matrix (the mode was called "Astronomic" before Design 3.0) is the one the owner
+  tested before this project started; don't "improve" these numbers without asking — they were tuned on his screen.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
   screen; weights over 1 are shared out. Used where one filter hands over to the next.
 - **Fades:** one constant, `Fade.DefaultSeconds` — **currently 0 (no fade), the owner's choice for now.**
-  It covers on/off in both modes, filter hand-overs, and a schedule transition of 0 minutes. The schedule's
-  own transition setting still fades over the minutes it names.
+  It covers on/off in both modes, filter hand-overs, and a schedule transition set to "Off". Any other
+  transition setting fades over the time it names.
 - **Live preview:** while dragging a level slider or a curve point, the screen shows that tint immediately,
   whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
 - Applying is skipped when the matrix barely changed, so a slow fade doesn't hammer the display pipeline.
@@ -49,18 +50,20 @@ the curve editor. What's left is a UI polish pass against a redesign, then insta
 
 ## Behaviour rules
 
-- **Two app modes: simple and advanced.** Each keeps its own settings. The header button switches between
-  them and shows the *other* mode's name.
+- **Two app modes: simple and advanced.** Each keeps its own settings. The "Advanced" switch in the header
+  flips between them.
 - **Turning one mode on turns the other off.** Only one runs at a time.
 - **OFF turns the mode off completely** — a schedule does not resume it. **ON re-arms the schedule:** the
   tint then appears only when the schedule says so. There is deliberately no "tint right now" override;
   users switch the schedule off for that.
 - The tray's "Turn on/off" acts on whichever mode is current.
-- **Simple mode:** one mode at a time (Golden hour / Amber / Astronomic), one level, and an optional
-  schedule of one range. The schedule and level belong to the screen, not to the mode: switching mode
-  keeps them. The range snaps to 15 minutes, may run past midnight, is never shorter than 15 minutes, and
-  start == end means the whole 24 h. An edge never jumps over the other one — you fill the day by dragging
-  the long way round. **Transition** is a dropdown in minutes: max 30, and never more than half the range.
+- **Simple mode:** one mode at a time (Golden hour / Amber / Deep night), one level, and an optional
+  schedule of one range, switched on and off by the header's Schedule button. The schedule and level belong
+  to the screen, not to the mode: switching mode keeps them. The range snaps to 15 minutes, may run past
+  midnight, is never shorter than 15 minutes, and start == end means the whole 24 h. An edge never jumps
+  over the other one — you fill the day by dragging the long way round. **Transition** is one dropdown that
+  mixes units — Off, 10 s, 30 s, 1, 2, 5, 10, 15, 30 min — never more than half the range; "Off" uses the
+  fade constant (instant today). Stored in seconds.
 - **Advanced mode:** several filters, each a time range with a mode and either a flat level or a curve.
   - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
     When no free stretch of 15 min is left, the add menu greys out.
@@ -84,11 +87,12 @@ the curve editor. What's left is a UI polish pass against a redesign, then insta
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
   "IsOn": false, "Mode": "Amber", "Level": 50,
   "ScheduleEnabled": false, "ScheduleStart": "20:00:00", "ScheduleEnd": "08:00:00",
-  "TransitionMinutes": 0
+  "TransitionSeconds": 0
 }
 ```
 
-`Mode` is one of `GoldenHour`, `Amber`, `Astronomic`. Curve points are minutes from the filter's start.
+`Mode` is one of `GoldenHour`, `Amber`, `DeepNight` (an old file that still says `Astronomic` fails to
+parse and loads as defaults). Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
 filters silently fail to load.
 
@@ -108,27 +112,38 @@ filters silently fail to load.
 | `Filter.cs`, `Settings.cs` | The data, change notification, JSON load/save |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
-| `Controls/*` | Drawn controls: level slider, simple schedule bar, advanced timeline, curve editor |
-| `Views/*`, `MainWindow`, `Theme.xaml` | The screens and all styles/icons |
+| `Controls/*` | Level slider; simple schedule bar (`ScheduleBar`) on the shared timeline drawing (`Timeline`); `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`; the advanced timeline and curve editor keep the old look until step 5b |
+| `Views/*`, `MainWindow`, `Theme.xaml` | The screens and all styles/icons (icons are exact Figma geometry) |
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
+| `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 60 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 72 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
 ## UI
 
-Light theme only, 690 px wide, not resizable, max 800 px tall; the header (and the advanced timeline)
-stay put while the rest scrolls. Settings and About cover the whole window and close with a ✕.
-Hovers and state changes animate ~0.3 s; the curve graph fades in when a card expands.
-Font: **Plus Jakarta Sans** (SIL OFL, bundled, licence in `Licenses.txt`). The Figma file uses Satoshi,
-whose licence doesn't allow shipping the font — don't switch back.
+Follows **Design 3.0** in Figma (file `yq4CMAFmPnS3ZclM1kvkAy`, page `75:303`; components and icons on
+page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pixel values in this file.
 
-> **The design is being redone.** The current code follows "Design 2.0" in Figma
-> (file `yq4CMAFmPnS3ZclM1kvkAy`), but the owner is changing it. **Before any UI work, re-read the current
-> Figma page** — don't trust pixel values in the code or in this file. Behaviour rules above still hold.
+- Light theme only, not resizable. **724 px wide in Simple, 848 px in Advanced**: the window sizes itself to
+  its content (so the inside matches the Figma frame) and keeps its centre when the width changes. Max 800 px
+  tall; the header stays put and the rest scrolls. Settings and About cover the whole window and close with ✕.
+- Header: settings and about buttons, the "Advanced" switch, the Schedule button (Simple only), and ON/OFF
+  for the mode you're in.
+- Simple mode: big level % above the level slider, mode chips at the bottom; with the schedule on, the
+  timeline, the from/to time fields and Transition below.
+- Fonts: **Plus Jakarta Sans** for words, **Onest** for every number (both SIL OFL, bundled, licences in
+  `Licenses.txt`). The Figma file uses Satoshi, whose licence doesn't allow shipping it — never use it.
+  WPF has no letter-spacing, so tracked text goes through `TrackedText`.
+- Background `#F3F3F3` with a soft yellow glow (`Glow`: a small precomputed bitmap, no BlurEffect) at 70 % in
+  Simple/Settings/About and 30 % in Advanced. It never changes with the mode (owner's choice).
+- Timeline ranges: hover draws a thin dark outline; the double-arrow cursor shows only on a range's left
+  or right edge.
+- Time fields: click the hours or the minutes for a short list; the mouse wheel steps them.
+- Hovers and state changes animate ~0.3 s; nothing moves on the timeline or inside the graph.
 
-Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Astronomic)
+Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night)
 and the About credit ("Credit: Dmitriy Ratushniak"), which stay exactly as they are.
 
 ## Working here
@@ -142,20 +157,27 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   `--artifacts-path` pointing at a temp folder.
 - **Never launch Amber with his real settings** — it can tint his screen. Check no `Amber` process is
   running first (a second copy just exits), back up `%AppData%\Amber\settings.json`, run with a copy that
-  has `"IsOn": false`, and restore afterwards.
+  has `"IsOn": false` and `"AdvancedIsOn": false`, stop the test copy, and only then restore the original.
+  Never click ON or drag a level slider in automated tests — that tints his screen too.
 - Screenshots of the running app: `PrintWindow` with `PW_RENDERFULLCONTENT`, driven from PowerShell, and
   UI Automation to click around. **Give the window focus first** or clicks go nowhere and you'll chase
   ghosts.
 - CI: GitHub Actions builds and runs the tests on every push (`.github/workflows/ci.yml`).
-- One plan step per branch, merged into `main` after the owner approves it.
+- One plan step per branch, merged into `main` after the owner approves it. (`step-4c-advanced` was never
+  merged on its own; it reaches `main` together with step 5a, which was branched from it.)
 
 ## Where things stand
 
 Done: tint engine, tray, single instance, start with Windows, settings, simple mode with its schedule,
 the schedule engine, advanced mode (timeline, filter cards, curve editor), Settings and About.
+Design 3.0 step 5a (branch `step-5a-design3-simple`): fonts, cursor, Deep night rename, transition in
+seconds, new shell, Simple mode, Settings and About. Advanced shows a placeholder until 5b (its old view,
+cards, timeline and curve editor files are still in the tree, unused).
 
 Next:
-1. **UI polish** against the redesigned Figma, plus whatever the owner lists as broken.
+1. **Step 5b — Advanced mode in Design 3.0:** selectable timeline bars, add menu, filter panel, intro card
+   and hint, curve editor restyle; also fix `CurveMath.Fit` leaving a trail of points when a range grows.
+   The bar domes and curve fill use brighter colours than the mode menu (`#FFE063`, `#FFAE5D`, `#FF7C7C`).
 2. **Installer** and auto-update, with the "Check for updates" button in Settings wired up
    (it does nothing today), and `Licenses.txt` extended with the app's own licence.
 3. **Beta, then release** on GitHub.

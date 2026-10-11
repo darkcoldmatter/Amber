@@ -1,61 +1,163 @@
 # Amber — project notes
 
-Windows blue-light filter. C# / WPF on .NET 10, targets Windows 10 and 11 (x64).
-The UI follows **Design 2.0** in Figma (file `yq4CMAFmPnS3ZclM1kvkAy`, page "Design 2.0", node `68:1157`). Anything the old 1.0 design had and 2.0 doesn't is deleted, not kept around.
+Amber is a lightweight Windows 10/11 app that reduces blue light by tinting the whole screen.
+C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
 
-## Engine
-- **Tint:** Magnification API `MagSetFullscreenColorEffect` (5×5 color matrix, no admin, no overlay). Always reset to identity on every exit path. Tested: Windows clears the tint if the process is killed; tint survives lock/sleep; cursor is not tinted.
-- **Level is 0–100 everywhere** (UI and settings).
-- **Live preview:** while dragging the level slider or a curve point, the screen shows that tint immediately, whatever the on/off state. On release it returns to whatever the app should currently be showing.
+**Owner:** Dmitriy (designer, not a developer). Explain things plainly, keep changes small, and don't
+start the next step until he has checked the current one. He tests every step by hand on his own PC.
 
-## Two app modes
-- **Simple** (default) and **Advanced**; the header button switches between them and shows the *other* mode's name.
-- Each mode keeps its own settings. The big dome ON/OFF belongs to the mode you are in; **turning one mode on turns the other off**.
-- **OFF turns the mode off completely** — a schedule does not resume it. **ON re-arms the schedule**: the tint appears only when the schedule says so (no "turn on right now" override; users disable the schedule for that).
-- Tray on/off pauses the same way as the dome.
+**Status:** the whole experience works end to end — simple mode, the schedule engine, advanced mode with
+the curve editor. What's left is a UI polish pass against a redesign, then installer and release.
 
-## Simple mode
-- Hero slider picks the mode; arrows crossfade the background and the mode name, nothing else moves. Hero images are exported PNGs (`Assets/Heroes`, 2x).
-- Schedule and level belong to the screen, not to the mode: switching mode **keeps** the schedule and level.
-- Schedule: one range, drag either edge, snaps to 15 min, wraps past midnight (bar splits, drag continues). Minimum length 15 min; start = end means the whole 24 h.
-- **Transition** is a dropdown in minutes: 0 means the default short fade; maximum 30 min, and never more than half the scheduled length (15 min range → 7 min max).
-- Level slider, schedule bar and mode name are colored per mode.
+---
 
-## Advanced mode
-- Up to N filters, each = one bar on the 24 h timeline + one card below. Same filter type may be added several times.
-- Adding puts a 1 h bar in the left-most free slot; shorter if that's all that fits; minimum 15 min; when no free slot ≥ 15 min is left, the dropdown entries go grey.
-- Bars never overlap (2 px visual gap only, no time gap), can wrap past midnight, minimum 15 min.
-- Each bar draws a white line showing its level/curve, inset ~4 px from the bar's top and bottom so 0 and 100 stay visible.
-- Card: mode, start/end fields, level slider, delete, and a curve button. Curve and flat level are **two separate settings**: expanding applies the curve, collapsing goes back to the flat level but remembers the curve.
-- Curve editor: grid of the range's hours (skip every other label when tight), left click adds a point, right click removes; first and last points are locked to the ends (vertical only); points snap to 15 min and lightly to levels (within ~3); dragging shows a dark value box to the **left** of the point, never clipped; points and 40 %-opacity fill take the filter's color.
-- **Boundaries:** a gap between bars = a normal fade out/in. Two bars that touch = the earlier tint runs on a little longer while the next starts early and fades in, so the screen never flashes back to blue.
-- **Fade length:** one constant, `Fade.DefaultSeconds` (currently **0 — no fade**, owner's choice "for now"). It covers on/off in both modes, filter boundaries, and a transition of 0 minutes. The schedule's own transition setting still fades over the minutes it names.
-- **Preview:** releasing the level slider snaps straight back to the real state — no leftover preview tint.
+## The tint engine (the part to get exactly right)
 
-## Window & shell
-- 690 px wide, not resizable; grows to at most 800 px, header (logo row + advanced-mode timeline) fixed, the rest scrolls.
-- Settings and About cover the whole window (it shrinks to their frame height) and close with ✕ back to the mode you came from.
-- Motion: hovers and similar state changes ~0.3 s; card expand fades the graph in. No motion on the timeline or inside the graph.
+- **How the screen is tinted:** `MagSetFullscreenColorEffect` from `Magnification.dll` (P/Invoke in
+  `Tint/ScreenTint.cs`). No admin rights, no overlay window, works on Windows 8+. `MagInitialize` first,
+  `MagUninitialize` on exit, and **always reset to the identity matrix on every exit path**.
+  Tested: Windows clears the tint by itself if the process is killed; the tint survives lock and sleep;
+  the mouse cursor is not tinted; screenshots don't capture it.
+- **The matrix** is 25 floats, row-major, input treated as the row vector `[R G B A 1]`; element `[i, j]`
+  is how much input channel `i` adds to output channel `j` (`Tint/TintMatrix.cs`).
+- **How a look is built:** each mode has a *weak* look (level 0) and a *strong* look (level 100), and the
+  level interpolates between them. A look is a target color plus a "mono" amount:
+  `output[j] = color[j] * ((1 - mono) * input[j] + mono * luma)`, with Rec.709 luma weights
+  (0.2126, 0.7152, 0.0722) applied to gamma-encoded sRGB — approximate on purpose, tuned by eye.
+  White always maps to the target color, so highlights can't blow out.
 
-## Platform bits (unchanged)
-- **Tray:** own `Shell_NotifyIcon` interop (no WinForms). Double-click opens the window; right-click menu: Turn on/off, Open Amber, Quit. Grey icon when off. Icons generated by `tools/make-icons.ps1`.
-- **Window lifecycle:** closing destroys the window and releases memory (~3–4 MB idle in the tray; owner's budget is 5–6 MB).
-- **Startup:** `--tray` starts without a window; single instance; second launch shows the existing window.
-- **Settings file:** `%AppData%\Amber\settings.json`.
-- **Font:** Plus Jakarta Sans (SIL OFL, bundled; license in `Licenses.txt`). Figma uses Satoshi, whose license doesn't allow bundling — don't switch back.
+  | Mode | Level 0 (R,G,B,mono) | Level 100 (R,G,B,mono) |
+  |---|---|---|
+  | Golden hour | 1.00, 0.96, 0.88, 0.00 | 1.00, 0.62, 0.12, 0.00 |
+  | Amber | 1.00, 0.93, 0.82, 0.00 | 1.00, 0.45, 0.02, 0.85 |
+  | Astronomic | 1.00, 0.92, 0.90, 0.15 | 1.00, 0.25, 0.05, 1.00 |
 
-## Copy rules
-- Improve the English of all UI text, **except**: mode names (Golden hour, Amber, Astronomic) and the About credit ("Credit: Dmitriy Ratushniak") — keep exactly.
+  The Astronomic level-100 matrix is the one the owner tested before this project started; don't "improve"
+  these numbers without asking — they were tuned on his screen.
+- **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
+  must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
+- **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
+  screen; weights over 1 are shared out. Used where one filter hands over to the next.
+- **Fades:** one constant, `Fade.DefaultSeconds` — **currently 0 (no fade), the owner's choice for now.**
+  It covers on/off in both modes, filter hand-overs, and a schedule transition of 0 minutes. The schedule's
+  own transition setting still fades over the minutes it names.
+- **Live preview:** while dragging a level slider or a curve point, the screen shows that tint immediately,
+  whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
+- Applying is skipped when the matrix barely changed, so a slow fade doesn't hammer the display pipeline.
+- The timer checks twice a second while fading, every 5 s otherwise, and not at all when there's nothing
+  scheduled. Idle CPU measured at 0 ms over 20 s.
 
-## Working agreement
-- The owner is not a developer: explain steps plainly, keep changes small, one plan step per branch.
-- Don't start the next plan step until the owner has checked the current one.
-- The owner often has Amber running, which locks `bin\`. Build/test with `--artifacts-path` pointing to a temp folder.
-- Never launch Amber with the owner's real settings (it may tint their screen). Back up `%AppData%\Amber\settings.json`, use a copy with `"IsOn": false`, restore afterwards.
-- CI: GitHub Actions (`.github/workflows/ci.yml`) builds and runs tests on every push.
+## Behaviour rules
 
-## Plan (2.0)
-1. **Shell + simple mode** — header, hero slider, dome, level, schedule editing UI, Settings/About overlays.
-2. **Schedule engine** — the tint actually follows the schedule, with fades and the on/off rules above.
-3. **Advanced mode** — filter list, cards, curve editor, multi-bar timeline.
-4. **Polish, installer, release.**
+- **Two app modes: simple and advanced.** Each keeps its own settings. The header button switches between
+  them and shows the *other* mode's name.
+- **Turning one mode on turns the other off.** Only one runs at a time.
+- **OFF turns the mode off completely** — a schedule does not resume it. **ON re-arms the schedule:** the
+  tint then appears only when the schedule says so. There is deliberately no "tint right now" override;
+  users switch the schedule off for that.
+- The tray's "Turn on/off" acts on whichever mode is current.
+- **Simple mode:** one mode at a time (Golden hour / Amber / Astronomic), one level, and an optional
+  schedule of one range. The schedule and level belong to the screen, not to the mode: switching mode
+  keeps them. The range snaps to 15 minutes, may run past midnight, is never shorter than 15 minutes, and
+  start == end means the whole 24 h. An edge never jumps over the other one — you fill the day by dragging
+  the long way round. **Transition** is a dropdown in minutes: max 30, and never more than half the range.
+- **Advanced mode:** several filters, each a time range with a mode and either a flat level or a curve.
+  - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
+    When no free stretch of 15 min is left, the add menu greys out.
+  - Filters never overlap: dragging an edge stops at the neighbour (2 px visual gap only, no time gap).
+  - **Curve and flat level are two separate settings.** Expanding the curve applies it; collapsing goes
+    back to the flat level and keeps the curve for next time.
+  - Curve: points snap to 15 min and snap level with a neighbour within 3; the first and last points are
+    locked to the ends and only move up and down; left click adds, right click removes.
+  - Hand-over: a gap between filters fades out and back in; two filters that touch cross-fade, so the
+    screen never flashes back to blue. (Both are instant while the fade constant is 0.)
+
+## Settings file
+
+`%AppData%\Amber\settings.json`, written ~500 ms after the last change. Missing or corrupt → defaults.
+
+```json
+{
+  "IsAdvanced": false, "AdvancedIsOn": false,
+  "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "16:00:00",
+                 "Level": 50, "CurveEnabled": true,
+                 "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
+  "IsOn": false, "Mode": "Amber", "Level": 50,
+  "ScheduleEnabled": false, "ScheduleStart": "20:00:00", "ScheduleEnd": "08:00:00",
+  "TransitionMinutes": 0
+}
+```
+
+`Mode` is one of `GoldenHour`, `Amber`, `Astronomic`. Curve points are minutes from the filter's start.
+`Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
+filters silently fail to load.
+
+## Code map
+
+| File | What it does |
+|---|---|
+| `Tint/ScreenTint.cs` | Magnification API calls; apply and reset |
+| `Tint/TintMatrix.cs` | Builds, blends and mixes the colour matrices |
+| `App.xaml.cs` | Decides what the screen should show, the timer, tray wiring, single instance, preview |
+| `TintPlan.cs`, `Fade.cs` | Eases the tint in/out; snaps back after a preview |
+| `Schedule.cs` | Simple mode: strength at a moment, with the transition fades |
+| `AdvancedSchedule.cs` | Advanced mode: which filters show at a moment and how strongly |
+| `ScheduleRange.cs` | Range maths on the 24 h clock (length, snapping, moving an edge) |
+| `FilterLayout.cs` | Where a new filter fits; edges stopping at neighbours |
+| `CurveMath.cs` | Add / remove / move curve points, snapping, refitting after a range change |
+| `Filter.cs`, `Settings.cs` | The data, change notification, JSON load/save |
+| `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
+| `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
+| `Controls/*` | Drawn controls: level slider, simple schedule bar, advanced timeline, curve editor |
+| `Views/*`, `MainWindow`, `Theme.xaml` | The screens and all styles/icons |
+| `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
+
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 60 of them): matrices, schedule,
+ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
+so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
+
+## UI
+
+Light theme only, 690 px wide, not resizable, max 800 px tall; the header (and the advanced timeline)
+stay put while the rest scrolls. Settings and About cover the whole window and close with a ✕.
+Hovers and state changes animate ~0.3 s; the curve graph fades in when a card expands.
+Font: **Plus Jakarta Sans** (SIL OFL, bundled, licence in `Licenses.txt`). The Figma file uses Satoshi,
+whose licence doesn't allow shipping the font — don't switch back.
+
+> **The design is being redone.** The current code follows "Design 2.0" in Figma
+> (file `yq4CMAFmPnS3ZclM1kvkAy`), but the owner is changing it. **Before any UI work, re-read the current
+> Figma page** — don't trust pixel values in the code or in this file. Behaviour rules above still hold.
+
+Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Astronomic)
+and the About credit ("Credit: Dmitriy Ratushniak"), which stay exactly as they are.
+
+## Working here
+
+```
+dotnet run --project src\Amber                 # run it (add -- --tray to start hidden)
+dotnet test --artifacts-path <temp folder>     # build + tests, without touching bin\
+```
+
+- **The owner often has Amber running**, which locks `bin\`. Always build and test with
+  `--artifacts-path` pointing at a temp folder.
+- **Never launch Amber with his real settings** — it can tint his screen. Check no `Amber` process is
+  running first (a second copy just exits), back up `%AppData%\Amber\settings.json`, run with a copy that
+  has `"IsOn": false`, and restore afterwards.
+- Screenshots of the running app: `PrintWindow` with `PW_RENDERFULLCONTENT`, driven from PowerShell, and
+  UI Automation to click around. **Give the window focus first** or clicks go nowhere and you'll chase
+  ghosts.
+- CI: GitHub Actions builds and runs the tests on every push (`.github/workflows/ci.yml`).
+- One plan step per branch, merged into `main` after the owner approves it.
+
+## Where things stand
+
+Done: tint engine, tray, single instance, start with Windows, settings, simple mode with its schedule,
+the schedule engine, advanced mode (timeline, filter cards, curve editor), Settings and About.
+
+Next:
+1. **UI polish** against the redesigned Figma, plus whatever the owner lists as broken.
+2. **Installer** and auto-update, with the "Check for updates" button in Settings wired up
+   (it does nothing today), and `Licenses.txt` extended with the app's own licence.
+3. **Beta, then release** on GitHub.
+
+Open question for the owner: the repo is private; it becomes public and gets a licence at release.

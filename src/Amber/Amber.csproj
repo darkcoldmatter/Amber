@@ -15,6 +15,7 @@
     <None Update="Licenses.txt" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Assets\Fonts\*.ttf" />
     <Resource Include="Assets\Heroes\*.png" />
+    <Resource Include="Assets\resize.cur" />
   </ItemGroup>
 
 </Project>

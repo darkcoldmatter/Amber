@@ -5,16 +5,19 @@ using System.Windows.Media;
 namespace Amber.Controls;
 
 /// <summary>
-/// The simple schedule's 24-hour timeline: hour labels over a tan track with one white range.
-/// Either end of the range can be dragged; it snaps to 15 minutes and wraps past midnight,
+/// The simple schedule's 24-hour timeline: hour labels over a tan track with one white range, which has a grip
+/// line near each end. Either end of the range can be dragged; it snaps to 15 minutes and wraps past midnight,
 /// so the range splits in two and dragging continues from the other side.
 /// </summary>
 public class ScheduleBar : FrameworkElement
 {
     const double TrackTop = 32, TrackHeight = 42, TrackRadius = 14, LabelsAbove = 15.5;
     const double RangeInset = 2, RangeRadius = 12, OutlineWidth = 1.5;
+    // Grip lines as on the level slider: 2 × 14, 8 px inside the edge, and at least 4 px of white beside them.
+    const double GripInset = 8, GripWidth = 2, GripHeight = 14, GripRoom = 4;
 
     static readonly Brush TrackBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0x29, 0xAF, 0x58, 0x00)));
+    static readonly Brush GripBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0x33, 0x27, 0x1F, 0x1F)));
     static readonly Pen OutlinePen = Timeline.Frozen(new Pen(new SolidColorBrush(Color.FromArgb(0x4D, 0x27, 0x1F, 0x1F)), OutlineWidth));
 
     public static readonly DependencyProperty StartProperty = DependencyProperty.Register(
@@ -98,17 +101,41 @@ public class ScheduleBar : FrameworkElement
         dc.DrawRoundedRectangle(TrackBrush, null, track, TrackRadius, TrackRadius);
         Timeline.DrawHourGrid(dc, track);
 
-        foreach (var (left, right) in Timeline.Pieces(StartMinutes, EndMinutes, ActualWidth))
-        {
-            // White range, 2 px inside the track and on whole pixels so its sides stay sharp.
-            var range = new Rect(Math.Round(left) + RangeInset, track.Top + RangeInset,
-                Math.Max(Math.Round(right) - Math.Round(left) - 2 * RangeInset, 1), TrackHeight - 2 * RangeInset);
-            dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
-            if (!_hovered) continue;
+        // White range, 2 px inside the track and on whole pixels so its sides stay sharp: one piece, or two past midnight.
+        var pieces = Timeline.Pieces(StartMinutes, EndMinutes, ActualWidth)
+            .Select(piece => new Rect(Math.Round(piece.Left) + RangeInset, track.Top + RangeInset,
+                Math.Max(Math.Round(piece.Right) - Math.Round(piece.Left) - 2 * RangeInset, 1), TrackHeight - 2 * RangeInset))
+            .ToArray();
+        foreach (var range in pieces) dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
+        DrawGrips(dc, pieces);
+        if (!_hovered) return;
 
-            // The outline sits inside the range, like a Figma inside stroke.
-            range.Inflate(-OutlineWidth / 2, -OutlineWidth / 2);
-            dc.DrawRoundedRectangle(null, OutlinePen, range, RangeRadius - OutlineWidth / 2, RangeRadius - OutlineWidth / 2);
+        // The outline sits inside the range, like a Figma inside stroke.
+        foreach (var range in pieces)
+        {
+            var outline = range;
+            outline.Inflate(-OutlineWidth / 2, -OutlineWidth / 2);
+            dc.DrawRoundedRectangle(null, OutlinePen, outline, RangeRadius - OutlineWidth / 2, RangeRadius - OutlineWidth / 2);
         }
+    }
+
+    /// <summary>
+    /// One grip line just inside the range's start and one inside its end; never at the midnight cut, where the
+    /// range only looks split. The first piece always begins at the start and the last one ends at the end.
+    /// If either line would be cramped, there are none.
+    /// </summary>
+    static void DrawGrips(DrawingContext dc, Rect[] pieces)
+    {
+        var first = pieces[0];
+        var last = pieces[^1];
+        var span = GripInset + GripWidth;
+        var fits = pieces.Length == 1
+            ? first.Width >= 2 * span + GripRoom
+            : first.Width >= span + GripRoom && last.Width >= span + GripRoom;
+        if (!fits) return;
+
+        var top = first.Top + (first.Height - GripHeight) / 2;
+        dc.DrawRoundedRectangle(GripBrush, null, new Rect(first.Left + GripInset, top, GripWidth, GripHeight), 1, 1);
+        dc.DrawRoundedRectangle(GripBrush, null, new Rect(last.Right - GripInset - GripWidth, top, GripWidth, GripHeight), 1, 1);
     }
 }

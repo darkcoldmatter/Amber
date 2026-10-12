@@ -58,7 +58,8 @@ mode) comes next, then installer and release.
   users switch the schedule off for that.
 - The tray's "Turn on/off" acts on whichever mode is current.
 - **Simple mode:** one mode at a time (Golden hour / Amber / Deep night), one level, and an optional
-  schedule of one range, switched on and off by the header's Schedule button. The schedule and level belong
+  schedule of one range, switched on and off by the header's Schedule button (a first-time schedule is
+  12:00–13:00). The schedule and level belong
   to the screen, not to the mode: switching mode keeps them. The range snaps to 15 minutes, may run past
   midnight, is never shorter than 15 minutes, and start == end means the whole 24 h. An edge never jumps
   over the other one — you fill the day by dragging the long way round. **Transition** is one dropdown that
@@ -86,7 +87,7 @@ mode) comes next, then installer and release.
                  "Level": 50, "CurveEnabled": true,
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
   "IsOn": false, "Mode": "Amber", "Level": 50,
-  "ScheduleEnabled": false, "ScheduleStart": "20:00:00", "ScheduleEnd": "08:00:00",
+  "ScheduleEnabled": false, "ScheduleStart": "12:00:00", "ScheduleEnd": "13:00:00",
   "TransitionSeconds": 0
 }
 ```
@@ -139,9 +140,12 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Background `#F3F3F3` with a soft yellow glow (`Glow`: a small precomputed bitmap, no BlurEffect) at 70 % in
   Simple/Settings/About and 30 % in Advanced. It never changes with the mode (owner's choice).
 - Timeline ranges: hover draws a thin dark outline; the double-arrow cursor shows only on a range's left
-  or right edge.
+  or right edge. The Simple range has two grip lines, at its real start and end (none at a midnight cut).
 - Time fields: click the hours or the minutes for a short list; the mouse wheel steps them.
-- Hovers and state changes animate ~0.3 s; nothing moves on the timeline or inside the graph.
+- Hovers and state changes animate ~0.3 s, except the ON/OFF button, which changes instantly (owner's
+  choice); nothing moves on the timeline or inside the graph.
+- Text is grey-smoothed with `TextHintingMode="Animated"` (set on the window and copied to popups): plain
+  grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
 Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night)
 and the About credit ("Credit: Dmitriy Ratushniak"), which stay exactly as they are.

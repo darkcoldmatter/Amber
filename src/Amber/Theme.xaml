@@ -360,7 +360,7 @@
         </Setter>
     </Style>
 
-    <!-- The big ON/OFF pill in the header (Figma button/main_advanced). -->
+    <!-- The big ON/OFF pill in the header (Figma button/main_advanced). Unlike the rest, it changes at once: no fades. -->
     <Style x:Key="PowerButton" TargetType="ToggleButton">
         <Setter Property="Width" Value="100" />
         <Setter Property="Height" Value="36" />
@@ -370,9 +370,6 @@
                     <Grid>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.3" />
-                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="MouseOver">
                                     <Storyboard>
@@ -389,9 +386,6 @@
                                 <VisualState x:Name="Disabled" />
                             </VisualStateGroup>
                             <VisualStateGroup x:Name="CheckStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition GeneratedDuration="0:0:0.3" />
-                                </VisualStateGroup.Transitions>
                                 <VisualState x:Name="Checked">
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="OffLabel" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />

@@ -45,8 +45,8 @@ public sealed class Settings : INotifyPropertyChanged
     public TintMode Mode { get; set => Set(ref field, value); }
     public double Level { get; set => Set(ref field, value); } = 50;
     public bool ScheduleEnabled { get; set => Set(ref field, value); }
-    public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(20, 0);
-    public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(8, 0);
+    public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(12, 0);
+    public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(13, 0);
 
     /// <summary>Schedule fade length in seconds; 0 ("Off") falls back to <see cref="Fade.DefaultSeconds"/>.</summary>
     public int TransitionSeconds { get; set => Set(ref field, value); }

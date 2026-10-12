@@ -4,10 +4,11 @@
         xmlns:controls="clr-namespace:Amber.Controls"
         Title="Amber" SizeToContent="WidthAndHeight" MaxHeight="800" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBrush}" FontFamily="{StaticResource AppFont}" UseLayoutRounding="True"
-        TextOptions.TextRenderingMode="Grayscale">
+        TextOptions.TextRenderingMode="Grayscale" TextOptions.TextHintingMode="Animated">
     <!--
         The content sets the window's size: 724 wide in Simple, 848 in Advanced (Figma frames = client area).
-        Text is anti-aliased in grey, not ClearType, so it looks like Figma's.
+        Text is smoothed in grey (no ClearType colour fringes) and not snapped to the pixel grid ("Animated"
+        hinting), which is how Figma draws it; snapped grey text looked jagged at 100 % scaling.
     -->
     <Grid x:Name="Root" Width="724">
         <controls:Glow x:Name="Glow" IsHitTestVisible="False" />

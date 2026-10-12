@@ -51,7 +51,9 @@ static class DropdownList
 
         var scroller = new ScrollViewer { Content = items, MaxHeight = visible, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden };
         var menu = new Border { Style = (Style)field.FindResource("Menu"), Margin = new Thickness(ShadowRoom), Child = scroller };
-        TextOptions.SetTextRenderingMode(menu, TextOptions.GetTextRenderingMode(field)); // a popup doesn't inherit it
+        // A popup doesn't inherit the window's text look, so copy it.
+        TextOptions.SetTextRenderingMode(menu, TextOptions.GetTextRenderingMode(field));
+        TextOptions.SetTextHintingMode(menu, TextOptions.GetTextHintingMode(field));
         popup.Child = menu;
 
         // Show the current choice in the middle of the list when it is long enough to scroll.

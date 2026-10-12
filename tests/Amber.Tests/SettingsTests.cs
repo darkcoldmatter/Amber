@@ -93,8 +93,8 @@ public class SettingsTests : IDisposable
         Assert.Equal(TintMode.GoldenHour, settings.Mode);
         Assert.Equal(50, settings.Level);
         Assert.False(settings.ScheduleEnabled);
-        Assert.Equal(new TimeOnly(20, 0), settings.ScheduleStart);
-        Assert.Equal(new TimeOnly(8, 0), settings.ScheduleEnd);
+        Assert.Equal(new TimeOnly(12, 0), settings.ScheduleStart);
+        Assert.Equal(new TimeOnly(13, 0), settings.ScheduleEnd);
         Assert.False(settings.IsAdvanced);
         Assert.Equal(0, settings.TransitionSeconds);
     }

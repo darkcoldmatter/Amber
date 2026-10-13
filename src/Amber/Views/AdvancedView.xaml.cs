@@ -35,15 +35,20 @@ public partial class AdvancedView : UserControl
         ShowIntro();
         ShowSelection();
 
-        settings.PropertyChanged += OnSettingChanged;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         IsVisibleChanged += (_, _) => ShowHint();
     }
 
-    /// <summary>The hint floats over the whole window, and the keys work wherever the focus is, so both hook into the window.</summary>
+    /// <summary>
+    /// Follows the settings while the view is in the window. The hint floats over the whole window, and the keys work
+    /// wherever the focus is, so both hook into the window.
+    /// </summary>
     void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _settings.PropertyChanged += OnSettingChanged;
+        ShowIntro();
+
         _window = Window.GetWindow(this);
         if (_window is null) return;
         _window.KeyDown += OnWindowKeyDown;
@@ -103,8 +108,7 @@ public partial class AdvancedView : UserControl
         _hint.Tip = show ? Timeline.HintTarget(_settings.Filters[0]) : null;
     }
 
-    IEnumerable<(int Start, int End)> Ranges() =>
-        _settings.Filters.Select(f => (ScheduleRange.Minutes(f.Start), ScheduleRange.Minutes(f.End)));
+    IEnumerable<(int Start, int End)> Ranges() => _settings.Filters.Select(filter => filter.Range);
 
     /// <summary>The add menu: the three modes, with a + on hover; all faded when there is no free stretch of 15 minutes left.</summary>
     void OnAddClick(object sender, RoutedEventArgs e)

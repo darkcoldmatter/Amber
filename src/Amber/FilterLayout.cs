@@ -46,6 +46,17 @@ public static class FilterLayout
             : (range.Start, (range.Start + length) % Day);
     }
 
+    /// <summary>
+    /// Moves one edge of <paramref name="filter"/> as dragging and the time fields do: towards <paramref name="target"/>,
+    /// stopping at the other filters in <paramref name="all"/>.
+    /// </summary>
+    public static void MoveEdge(Filter filter, IEnumerable<Filter> all, bool movingStart, int target)
+    {
+        var (start, end) = MoveEdge(filter.Range, all.Where(other => other != filter).Select(other => other.Range), movingStart, target);
+        filter.Start = ScheduleRange.Time(start);
+        filter.End = ScheduleRange.Time(end);
+    }
+
     /// <summary>Free minutes running away from <paramref name="edge"/> in the given direction.</summary>
     static int FreeRun(bool[] busy, int edge, int direction)
     {

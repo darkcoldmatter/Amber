@@ -29,6 +29,10 @@ public class ScheduleBar : FrameworkElement
         new FrameworkPropertyMetadata(new TimeOnly(8, 0), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault | FrameworkPropertyMetadataOptions.AffectsRender));
 
     bool? _dragging; // the edge being dragged: true = start, false = end
+    // Where that edge was when it was grabbed, where the pointer was then, and whether it has since moved more than a nudge.
+    int _grabbedEdge;
+    double _pressX;
+    bool _moved;
     bool _hovered;
 
     public TimeOnly Start { get => (TimeOnly)GetValue(StartProperty); set => SetValue(StartProperty, value); }
@@ -42,9 +46,13 @@ public class ScheduleBar : FrameworkElement
         base.OnMouseMove(e);
         var point = e.GetPosition(this);
 
+        // Once the pointer has moved more than a nudge, the edge travels with it from where it was grabbed, so it never jumps.
         if (_dragging is bool movingStart)
         {
-            var (start, end) = ScheduleRange.MoveEdge(StartMinutes, EndMinutes, movingStart, ScheduleRange.MinutesAt(point.X, ActualWidth));
+            if (!_moved && Math.Abs(point.X - _pressX) < SystemParameters.MinimumHorizontalDragDistance) return;
+            _moved = true;
+            var target = Timeline.DragTarget(_grabbedEdge, movingStart, _pressX, point.X, ActualWidth);
+            var (start, end) = ScheduleRange.MoveEdge(StartMinutes, EndMinutes, movingStart, target);
             Start = ScheduleRange.Time(start);
             End = ScheduleRange.Time(end);
             return;
@@ -68,7 +76,7 @@ public class ScheduleBar : FrameworkElement
         if (!OnTrack(point) || Timeline.EdgeAt(point.X, StartMinutes, EndMinutes, ActualWidth) is not bool isStart) return;
         if (!CaptureMouse()) return; // without the mouse, a drag could never end
 
-        _dragging = isStart;
+        (_dragging, _grabbedEdge, _pressX, _moved) = (isStart, isStart ? StartMinutes : EndMinutes, point.X, false);
         e.Handled = true;
     }
 

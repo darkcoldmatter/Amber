@@ -30,15 +30,17 @@ public partial class FilterPanel : UserControl
         // While the slider is dragged, the screen shows this filter's tint at that level, whatever the on/off state.
         Level.PreviewStarted += (_, _) =>
         {
+            if (_filter is not { } filter) return;
             _previewing = true;
-            App.Current.StartPreview(_filter!.Mode, Level.Value);
+            App.Current.StartPreview(filter.Mode, Level.Value);
         };
         Level.ValueChanged += (_, _) =>
         {
-            if (_previewing) App.Current.UpdatePreview(_filter!.Mode, Level.Value);
+            if (_previewing && _filter is { } filter) App.Current.UpdatePreview(filter.Mode, Level.Value);
         };
         Level.PreviewEnded += (_, _) =>
         {
+            if (!_previewing) return;
             _previewing = false;
             App.Current.EndPreview();
         };
@@ -57,6 +59,9 @@ public partial class FilterPanel : UserControl
         set
         {
             if (value == _filter) return;
+            // The filter can change while its level is being dragged (Esc, Delete): letting go of the slider first ends
+            // the preview, so the slider never previews or moves a filter that has gone.
+            if (_previewing) Level.ReleaseMouseCapture();
             if (_filter is not null) _filter.PropertyChanged -= OnFilterChanged;
             _filter = value;
             DataContext = value;
@@ -133,11 +138,7 @@ public partial class FilterPanel : UserControl
     {
         if (_filling || _filter is null) return;
 
-        var target = ScheduleRange.Minutes(movingStart ? StartField.Value : EndField.Value);
-        var others = Filters.Where(other => other != _filter).Select(other => (ScheduleRange.Minutes(other.Start), ScheduleRange.Minutes(other.End)));
-        var (start, end) = FilterLayout.MoveEdge((ScheduleRange.Minutes(_filter.Start), ScheduleRange.Minutes(_filter.End)), others, movingStart, target);
-        _filter.Start = ScheduleRange.Time(start);
-        _filter.End = ScheduleRange.Time(end);
+        FilterLayout.MoveEdge(_filter, Filters, movingStart, ScheduleRange.Minutes(movingStart ? StartField.Value : EndField.Value));
         ShowTimes();
     }
 

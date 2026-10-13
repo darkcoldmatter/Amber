@@ -71,6 +71,14 @@ public static class Timeline
         return toStart == toEnd ? x >= startX : toStart < toEnd;
     }
 
+    /// <summary>
+    /// Where a dragged edge goes: it travels with the pointer from where the edge was when it was grabbed, rather than
+    /// jumping to the pointer, so taking hold of an edge a few pixels off never moves it. Snapped to 15 minutes, wrapped
+    /// into the day. <paramref name="pressX"/> is where the drag started and <paramref name="x"/> where the pointer is now.
+    /// </summary>
+    public static int DragTarget(int edge, bool isStart, double pressX, double x, double width) =>
+        ScheduleRange.MinutesAt((isStart ? X(edge, width) : EndX(edge, width)) + x - pressX, width);
+
     /// <summary>"00" to "24" every two hours, centred on their hour; the first and last stay within the track's ends.</summary>
     public static void DrawHourLabels(DrawingContext dc, Rect track, double centerY, FontFamily font, double pixelsPerDip)
     {

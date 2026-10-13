@@ -39,6 +39,38 @@ public static class CurveMath
         return [new CurvePoint(0, curve[0].Level), .. middle, new CurvePoint(length, curve[^1].Level)];
     }
 
+    /// <summary>
+    /// A curve read at a moment: between two points the level runs straight from one to the other; before the first
+    /// point and after the last it stays at theirs.
+    /// </summary>
+    public static double LevelAt(IReadOnlyList<CurvePoint> points, int minutes)
+    {
+        if (minutes <= points[0].Minutes) return points[0].Level;
+        for (var i = 1; i < points.Count; i++)
+        {
+            if (minutes > points[i].Minutes) continue;
+            var (from, to) = (points[i - 1], points[i]);
+            var span = to.Minutes - from.Minutes;
+            return span <= 0 ? to.Level : from.Level + (to.Level - from.Level) * (minutes - from.Minutes) / span;
+        }
+        return points[^1].Level;
+    }
+
+    /// <summary>
+    /// Makes a saved curve span its whole range without changing its shape. Older versions could leave one that starts
+    /// late or stops early: it reads flat beyond its points anyway, so a point at each end carrying that level on changes
+    /// nothing. One that runs past the end is cut there, at the level it has there. Every point inside stays.
+    /// </summary>
+    public static List<CurvePoint> ReachEnds(IReadOnlyList<CurvePoint> points, int length)
+    {
+        if (points.Count == 0) return [];
+
+        var curve = points.Where(p => p.Minutes >= 0 && p.Minutes <= length).ToList();
+        if (curve.Count == 0 || curve[0].Minutes > 0) curve.Insert(0, new CurvePoint(0, LevelAt(points, 0)));
+        if (curve[^1].Minutes < length) curve.Add(new CurvePoint(length, LevelAt(points, length)));
+        return curve;
+    }
+
     /// <summary>Adds a point where the user clicked, keeping the list in time order.</summary>
     public static List<CurvePoint> Add(IEnumerable<CurvePoint> points, double minutes, double level, int length)
     {

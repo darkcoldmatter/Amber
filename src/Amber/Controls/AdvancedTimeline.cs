@@ -48,11 +48,13 @@ public class AdvancedTimeline : FrameworkElement
     Filter? _selected, _hovered;
     bool _removeHovered;
 
-    // While the left button is down: the bar pressed (null for the empty track), the edge being dragged, whether the
-    // press became a drag (then it isn't a click), and whether it was on the delete icon.
+    // While the left button is down: the bar pressed (null for the empty track), the edge being dragged and where that
+    // edge was when it was grabbed, whether the press became a drag (then it isn't a click), whether it was on the delete
+    // icon, and whether it can be a click at all (the second press of a double-click can't).
     Filter? _pressed;
     bool? _dragEdge;
-    bool _dragged, _pressedRemove;
+    int _grabbedEdge;
+    bool _dragged, _pressedRemove, _clickable;
     Point _pressPoint;
 
     public AdvancedTimeline()
@@ -169,12 +171,10 @@ public class AdvancedTimeline : FrameworkElement
 
     double DayWidth => Math.Max(ActualWidth - 2 * Inset, 1);
 
-    static (int Start, int End) RangeOf(Filter filter) => (ScheduleRange.Minutes(filter.Start), ScheduleRange.Minutes(filter.End));
-
     /// <summary>A filter's bar: one piece, or two past midnight; on whole pixels, so the edges stay sharp.</summary>
     IEnumerable<Rect> Pieces(Filter filter)
     {
-        var (start, end) = RangeOf(filter);
+        var (start, end) = filter.Range;
         foreach (var (left, right) in Timeline.Pieces(start, end, DayWidth))
         {
             var x0 = Math.Round(Inset + left);
@@ -198,7 +198,7 @@ public class AdvancedTimeline : FrameworkElement
 
     BarHit HitAt(Point point) => _filters is null || !OnTrack(point)
         ? BarHit.None
-        : HitTest(point.X - Inset, _filters.Select(RangeOf).ToArray(), DayWidth);
+        : HitTest(point.X - Inset, _filters.Select(filter => filter.Range).ToArray(), DayWidth);
 
     Filter? FilterOf(BarHit hit) => hit.Index >= 0 ? _filters![hit.Index] : null;
 
@@ -208,7 +208,7 @@ public class AdvancedTimeline : FrameworkElement
         var point = e.GetPosition(this);
         if (!OnTrack(point) || !CaptureMouse()) return; // without the mouse, a drag could never end
         e.Handled = true;
-        Press(point);
+        Press(point, e.ClickCount);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -233,29 +233,31 @@ public class AdvancedTimeline : FrameworkElement
         ShowHover(e.GetPosition(this));
     }
 
-    void Press(Point point)
+    /// <summary>Takes hold of what is under the pointer. The second press of a double-click can still drag an edge, but isn't a click.</summary>
+    void Press(Point point, int clickCount = 1)
     {
         var hit = HitAt(point);
         _pressPoint = point;
         _pressed = FilterOf(hit);
         _pressedRemove = RemoveBox().Contains(point);
         _dragEdge = _pressedRemove ? null : hit.Edge;
+        _grabbedEdge = _pressed is null ? 0 : _dragEdge == true ? _pressed.Range.Start : _pressed.Range.End;
         _dragged = false;
+        _clickable = clickCount == 1;
     }
 
-    /// <summary>A press on a bar's edge drags that edge; moving the pointer more than a nudge makes it a drag rather than a click.</summary>
+    /// <summary>
+    /// A press on a bar's edge drags that edge once the pointer has moved more than a nudge (WPF reports a move as soon as
+    /// it takes the mouse, and a hand shakes a pixel or two). The edge then travels with the pointer from where it was
+    /// grabbed, so it never jumps, and stops at the neighbouring filters.
+    /// </summary>
     void DragTo(Point point)
     {
         if (_pressed is not { } filter || _dragEdge is not bool movingStart) return;
+        if (!_dragged && Math.Abs(point.X - _pressPoint.X) < SystemParameters.MinimumHorizontalDragDistance) return;
 
-        if (Math.Abs(point.X - _pressPoint.X) >= SystemParameters.MinimumHorizontalDragDistance) _dragged = true;
-        var before = RangeOf(filter);
-        var others = _filters!.Where(other => other != filter).Select(RangeOf);
-        var (start, end) = FilterLayout.MoveEdge(before, others, movingStart, ScheduleRange.MinutesAt(point.X - Inset, DayWidth));
-        if ((start, end) == before) return;
-        filter.Start = ScheduleRange.Time(start);
-        filter.End = ScheduleRange.Time(end);
         _dragged = true;
+        FilterLayout.MoveEdge(filter, _filters!, movingStart, Timeline.DragTarget(_grabbedEdge, movingStart, _pressPoint.X, point.X, DayWidth));
     }
 
     /// <summary>
@@ -264,7 +266,7 @@ public class AdvancedTimeline : FrameworkElement
     /// </summary>
     void Release(Point point)
     {
-        var (pressed, pressedRemove, dragged) = (_pressed, _pressedRemove, _dragged);
+        var (pressed, pressedRemove, dragged, clickable) = (_pressed, _pressedRemove, _dragged, _clickable);
         (_pressed, _dragEdge, _dragged, _pressedRemove) = (null, null, false, false);
 
         if (pressedRemove)
@@ -272,7 +274,7 @@ public class AdvancedTimeline : FrameworkElement
             if (RemoveBox().Contains(point) && _selected is { } selected) DeleteRequested?.Invoke(this, selected);
             return;
         }
-        if (dragged || FilterOf(HitAt(point)) != pressed) return;
+        if (dragged || !clickable || FilterOf(HitAt(point)) != pressed) return;
         Selected = pressed == _selected ? null : pressed;
     }
 

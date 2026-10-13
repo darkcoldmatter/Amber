@@ -109,4 +109,44 @@ public class CurveMathTests
 
         Assert.Equal([new CurvePoint(0, 50), new CurvePoint(120, 80), new CurvePoint(Length + 60, 30)], curve);
     }
+
+    [Fact]
+    public void A_curve_reads_straight_between_its_points_and_flat_beyond_them()
+    {
+        List<CurvePoint> curve = [new(60, 20), new(120, 80)];
+
+        Assert.Equal(20, CurveMath.LevelAt(curve, 0));
+        Assert.Equal(50, CurveMath.LevelAt(curve, 90));
+        Assert.Equal(80, CurveMath.LevelAt(curve, 200));
+    }
+
+    [Fact]
+    public void A_saved_curve_that_stops_short_is_carried_on_to_both_ends_in_the_same_shape()
+    {
+        // As older versions could save it: the range grew to 135 minutes while the curve still starts at 15 and stops at 60.
+        List<CurvePoint> saved = [new(15, 1), new(30, 100), new(45, 100), new(60, 100)];
+
+        var reached = CurveMath.ReachEnds(saved, 135);
+
+        Assert.Equal([new CurvePoint(0, 1), .. saved, new CurvePoint(135, 100)], reached);
+        for (var minutes = 0; minutes <= 135; minutes++) Assert.Equal(CurveMath.LevelAt(saved, minutes), CurveMath.LevelAt(reached, minutes));
+    }
+
+    [Fact]
+    public void A_saved_curve_running_past_its_range_is_cut_at_the_end_at_the_level_it_has_there()
+    {
+        var reached = CurveMath.ReachEnds([new(0, 0), new(100, 100), new(200, 0)], 150);
+
+        Assert.Equal([new CurvePoint(0, 0), new CurvePoint(100, 100), new CurvePoint(150, 50)], reached);
+    }
+
+    [Fact]
+    public void A_curve_that_spans_its_range_keeps_every_point()
+    {
+        // Including a long trail of middle points, one every 15 minutes.
+        List<CurvePoint> trail = [new(0, 50), .. Enumerable.Range(1, Length / 15 - 1).Select(i => new CurvePoint(i * 15, 50)), new(Length, 50)];
+
+        Assert.Equal(trail, CurveMath.ReachEnds(trail, Length));
+        Assert.Empty(CurveMath.ReachEnds([], Length));
+    }
 }

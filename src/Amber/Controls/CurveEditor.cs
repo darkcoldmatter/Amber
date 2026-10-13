@@ -20,11 +20,13 @@ public class CurveEditor : FrameworkElement
     const double PlotLeft = 24, PlotTop = 44, PlotHeight = 140, PlotRadius = 6, LabelsMiddle = 28, HintMiddle = 212.5;
     // Points keep 5 px off the plot's inner edges, so the ends and 0 / 100 % show whole.
     const double Inset = 5, PointRadius = 5, GrabRadius = 9;
-    const double BoxGap = 14, BoxPadding = 8, BoxHeight = 40, BoxRadius = 8, MinLabelGap = 16;
+    const double BoxGap = 14, BoxPadding = 8, BoxHeight = 40, BoxRadius = 8;
+    // Room between time labels; a label closer than EndGap to an end label would read as one with it.
+    const double MinLabelGap = 16, EndGap = 4;
     const double TextSize = 12; // every text on the card
     const string Hint = "Left-click to add a point, right-click to remove one";
 
-    static readonly int[] LabelSteps = [30, 60, 120, 180, 240, 360, 720];
+    static readonly int[] LabelStrides = [30, 60, 120, 180, 240, 360, 720];
     static readonly int[] LevelLines = [25, 50, 75];
 
     static readonly Brush InkBrush = Timeline.Frozen(new SolidColorBrush(Color.FromRgb(0x27, 0x1F, 0x1F)));
@@ -46,6 +48,9 @@ public class CurveEditor : FrameworkElement
         get => _filter;
         set
         {
+            // The filter can go mid-drag (Esc, Delete): letting go of the mouse ends the drag and its preview first.
+            if (_dragging >= 0) ReleaseMouseCapture();
+            _dragging = -1;
             if (_filter is not null) _filter.PropertyChanged -= OnFilterChanged;
             _filter = value;
             if (_filter is not null) _filter.PropertyChanged += OnFilterChanged;
@@ -56,38 +61,39 @@ public class CurveEditor : FrameworkElement
     void OnFilterChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
 
     /// <summary>
-    /// The times along the top: every 30 minutes when they fit, else whole hours, then every 2, 3, 4, 6 or 12 hours.
-    /// The first and last always show, pinned to the ends of the plot; a label that would crowd one of them is left out.
-    /// A range under an hour shows just its two times. <paramref name="measure"/> gives a label's width.
+    /// The times along the top. The range's own start and end always show, pinned to the ends of the plot (a range under
+    /// an hour shows only those). Between them, a regular stride on the clock: every half hour when it fits, else every
+    /// 1, 2, 3, 4, 6 or 12 hours counted from the first whole hour — every label, an end on the stride included, keeps
+    /// 16 px of room. A stride label gives way only to an end that falls between strides and that it would run into.
+    /// <paramref name="measure"/> gives a label's width.
     /// </summary>
     public static List<TimeLabel> TimeLabels(int start, int length, double width, Func<string, double> measure)
     {
-        List<TimeLabel> ends = [new(0, Clock(start), false), new(length, Clock(start + length), false)];
-        if (length < 60) return ends;
-
-        foreach (var step in LabelSteps)
+        TimeLabel At(int minutes) => new(minutes, Clock(start + minutes), (start + minutes) % 60 == 30);
+        (double Left, double Right) Box(TimeLabel label)
         {
-            List<TimeLabel> labels = [];
-            for (var minutes = (step - start % step) % step; minutes <= length; minutes += step)
-                labels.Add(new TimeLabel(minutes, Clock(start + minutes), (start + minutes) % 60 != 0));
-            if (labels.Count < 2) break;
-
-            var boxes = labels.Select(label =>
-            {
-                var labelWidth = measure(label.Text);
-                var left = Math.Clamp(label.Minutes / (double)length * width - labelWidth / 2, 0, width - labelWidth);
-                return (Left: left, Right: left + labelWidth);
-            }).ToArray();
-
-            List<int> kept = [0];
-            for (var i = 1; i < labels.Count - 1; i++)
-                if (boxes[i].Left >= boxes[0].Right + MinLabelGap && boxes[i].Right + MinLabelGap <= boxes[^1].Left) kept.Add(i);
-            kept.Add(labels.Count - 1);
-
-            if (kept.Zip(kept.Skip(1)).All(pair => boxes[pair.Second].Left - boxes[pair.First].Right >= MinLabelGap))
-                return [.. kept.Select(i => labels[i])];
+            var labelWidth = measure(label.Text);
+            var left = Math.Clamp(label.Minutes / (double)length * width - labelWidth / 2, 0, width - labelWidth);
+            return (left, left + labelWidth);
         }
-        return ends;
+
+        var (first, last) = (At(0), At(length));
+        if (length < 60) return [first, last];
+        var (firstBox, lastBox) = (Box(first), Box(last));
+
+        foreach (var stride in LabelStrides)
+        {
+            var origin = stride == 30 ? 30 : 60;
+            List<TimeLabel> marks = [];
+            for (var minutes = (origin - start % origin) % origin; minutes <= length; minutes += stride) marks.Add(At(minutes));
+            var boxes = marks.Select(Box).ToArray();
+            if (boxes.Zip(boxes.Skip(1)).Any(pair => pair.Second.Left - pair.First.Right < MinLabelGap)) continue;
+
+            var between = marks.Where((mark, i) => mark.Minutes > 0 && mark.Minutes < length
+                && boxes[i].Left >= firstBox.Right + EndGap && boxes[i].Right + EndGap <= lastBox.Left);
+            return [first, .. between, last];
+        }
+        return [first, last];
     }
 
     /// <summary>Where the dark box goes: to the left of the point, or to its right when there's no room; never outside the bounds.</summary>
@@ -198,6 +204,8 @@ public class CurveEditor : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
+        // Clicks only reach what is painted: cover the whole card, so the empty plot above the curve takes them too.
+        dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
         if (_filter is null) return;
 
         var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;

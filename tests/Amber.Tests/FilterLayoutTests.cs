@@ -59,4 +59,23 @@ public class FilterLayoutTests
         var moved = FilterLayout.MoveEdge((23 * 60, 30), [], movingStart: false, 2 * 60);
         Assert.Equal((23 * 60, 2 * 60), moved);
     }
+
+    [Fact]
+    public void A_filters_edge_moves_up_to_the_other_filters()
+    {
+        Filter At(int start, int end) => new() { Start = new TimeOnly(start, 0), End = new TimeOnly(end, 0) };
+        var (before, filter, after) = (At(0, 6), At(6, 10), At(16, 22));
+        Filter[] all = [before, filter, after];
+
+        FilterLayout.MoveEdge(filter, all, movingStart: false, 18 * 60);
+        Assert.Equal(Range(6, 16), filter.Range);
+
+        FilterLayout.MoveEdge(filter, all, movingStart: true, 4 * 60);
+        Assert.Equal(Range(6, 16), filter.Range);
+
+        FilterLayout.MoveEdge(filter, all, movingStart: false, 12 * 60);
+        Assert.Equal(Range(6, 12), filter.Range);
+        Assert.Equal(Range(0, 6), before.Range);
+        Assert.Equal(Range(16, 22), after.Range);
+    }
 }

@@ -70,6 +70,21 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void A_saved_curve_that_stops_short_reaches_its_range_end_when_loaded()
+    {
+        // The owner's own Amber filter: 21:45 to midnight is 135 minutes, but its curve was saved stopping at 60.
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "Filters": [ { "Mode": "Amber", "Start": "21:45:00", "End": "00:00:00", "Level": 50, "CurveEnabled": true,
+              "Curve": [ { "Minutes": 0, "Level": 1 }, { "Minutes": 15, "Level": 1 }, { "Minutes": 30, "Level": 100 }, { "Minutes": 60, "Level": 100 } ] } ] }
+            """);
+
+        var curve = Assert.Single(Settings.Load(SettingsPath).Filters).Curve;
+
+        Assert.Equal([new CurvePoint(0, 1), new CurvePoint(15, 1), new CurvePoint(30, 100), new CurvePoint(60, 100), new CurvePoint(135, 100)], curve);
+    }
+
+    [Fact]
     public void Missing_file_gives_defaults()
     {
         AssertDefaults(Settings.Load(SettingsPath));

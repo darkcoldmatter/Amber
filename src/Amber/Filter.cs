@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using Amber.Tint;
 
 namespace Amber;
@@ -34,22 +35,13 @@ public sealed class Filter : INotifyPropertyChanged
 
     public int LengthMinutes => ScheduleRange.Length(ScheduleRange.Minutes(Start), ScheduleRange.Minutes(End));
 
-    /// <summary>The level at a point in the range: the flat level, or the curve read between its points.</summary>
-    public double LevelAt(int minutesFromStart)
-    {
-        if (!CurveEnabled || Curve.Count == 0) return Level;
+    /// <summary>Start and end as minutes since midnight, the way the timeline and the layout rules work with them.</summary>
+    [JsonIgnore]
+    public (int Start, int End) Range => (ScheduleRange.Minutes(Start), ScheduleRange.Minutes(End));
 
-        var points = Curve;
-        if (minutesFromStart <= points[0].Minutes) return points[0].Level;
-        for (var i = 1; i < points.Count; i++)
-        {
-            if (minutesFromStart > points[i].Minutes) continue;
-            var (from, to) = (points[i - 1], points[i]);
-            var span = to.Minutes - from.Minutes;
-            return span <= 0 ? to.Level : from.Level + (to.Level - from.Level) * (minutesFromStart - from.Minutes) / span;
-        }
-        return points[^1].Level;
-    }
+    /// <summary>The level at a point in the range: the flat level, or the curve read between its points.</summary>
+    public double LevelAt(int minutesFromStart) =>
+        CurveEnabled && Curve.Count > 0 ? CurveMath.LevelAt(Curve, minutesFromStart) : Level;
 
     /// <summary>A fresh curve is just a flat line at the current level, from one end of the range to the other.</summary>
     public void ResetCurve() => Curve = CurveMath.Flat(LengthMinutes, Level);

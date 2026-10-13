@@ -71,4 +71,29 @@ public class TimelineTests
         Assert.Equal(true, Timeline.EdgeAt(82, H(8), H(8), Width));
         Assert.Equal(false, Timeline.EdgeAt(78, H(8), H(8), Width));
     }
+
+    [Fact]
+    public void Grabbing_an_edge_a_few_pixels_off_doesnt_move_it()
+    {
+        // The 10:00 end sits at x 100; it is taken hold of 4 px inside it, and the pointer then wobbles by a pixel.
+        Assert.Equal(H(10), Timeline.DragTarget(H(10), isStart: false, pressX: 96, x: 96, Width));
+        Assert.Equal(H(10), Timeline.DragTarget(H(10), isStart: false, pressX: 96, x: 97, Width));
+        Assert.Equal(H(6), Timeline.DragTarget(H(6), isStart: true, pressX: 65, x: 64, Width));
+    }
+
+    [Fact]
+    public void A_dragged_edge_follows_the_pointers_travel_snapped_to_15_minutes()
+    {
+        Assert.Equal(H(11), Timeline.DragTarget(H(10), isStart: false, pressX: 96, x: 106, Width));
+        Assert.Equal(H(9.5), Timeline.DragTarget(H(10), isStart: false, pressX: 96, x: 91, Width));
+        Assert.Equal(H(10.5), Timeline.DragTarget(H(10), isStart: false, pressX: 96, x: 100.6, Width)); // 4.6 px = 27.6 min
+    }
+
+    [Fact]
+    public void Edges_at_midnight_drag_from_their_own_end_of_the_timeline()
+    {
+        Assert.Equal(H(23), Timeline.DragTarget(0, isStart: false, pressX: 238, x: 228, Width));
+        Assert.Equal(H(1), Timeline.DragTarget(0, isStart: true, pressX: 2, x: 12, Width));
+        Assert.Equal(H(0.5), Timeline.DragTarget(H(23.5), isStart: false, pressX: 233, x: 243, Width)); // wraps past midnight
+    }
 }

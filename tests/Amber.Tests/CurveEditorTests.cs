@@ -22,33 +22,40 @@ public class CurveEditorTests
     }
 
     [Fact]
-    public void Tight_labels_thin_out_to_whole_hours_and_then_fewer()
+    public void Tight_labels_thin_out_to_a_wider_stride_on_the_clock()
     {
-        var halfDay = Labels(0, 0, 12 * 60);
-        Assert.All(halfDay, label => Assert.Equal(0, label.Minutes % 60));
-        Assert.True(halfDay.Count >= 12);
+        Assert.Equal(["0:00", "2:00", "4:00", "6:00", "8:00", "10:00", "12:00"], Labels(0, 0, 12 * 60).Select(l => l.Text));
 
         var day = Labels(0, 0, 24 * 60);
-        Assert.All(day, label => Assert.Equal(0, label.Minutes % 120));
         Assert.Equal(13, day.Count);
+        Assert.All(day, label => Assert.Equal(0, label.Minutes % 120));
         Assert.All(day, label => Assert.False(label.Faded));
     }
 
-    [Fact]
-    public void The_first_and_last_labels_always_show()
+    [Theory]
+    [InlineData(0, 12)]
+    [InlineData(0, 24)]
+    [InlineData(6, 7)]
+    [InlineData(3, 20)]
+    [InlineData(6, 14)]
+    [InlineData(21, 5)]
+    public void Thinning_keeps_a_regular_stride_from_end_to_end(int startHour, int hours)
     {
-        // 6:00–13:00: every half hour fits, but 12:30 would crowd 13:00, which is pinned to the right edge (and 6:30 would crowd 6:00).
-        var labels = Labels(6, 0, 7 * 60);
+        var minutes = Labels(startHour, 0, hours * 60).Select(l => l.Minutes).ToList();
 
-        Assert.Equal("6:00", labels[0].Text);
-        Assert.Equal("13:00", labels[^1].Text);
-        Assert.Equal("12:00", labels[^2].Text);
+        Assert.Equal(0, minutes[0]);
+        Assert.Equal(hours * 60, minutes[^1]);
+        Assert.Single(minutes.Zip(minutes.Skip(1), (a, b) => b - a).Distinct());
     }
 
     [Fact]
-    public void Labels_sit_on_the_clock_even_when_the_range_does_not()
+    public void Ends_off_the_stride_still_show_and_a_label_running_into_one_gives_way()
     {
-        Assert.Equal(["6:30", "7:00", "7:30", "8:00"], Labels(6, 15, 120).Select(l => l.Text));
+        // 6:15–8:15: half hours from 6:30, and the exact ends.
+        Assert.Equal(["6:15", "6:30", "7:00", "7:30", "8:00", "8:15"], Labels(6, 15, 120).Select(l => l.Text));
+
+        // 6:15–18:15: whole hours from 7:00; 18:00 would run into 18:15, so it gives way, and only it.
+        Assert.Equal(["6:15", .. Enumerable.Range(7, 11).Select(hour => $"{hour}:00"), "18:15"], Labels(6, 15, 12 * 60).Select(l => l.Text));
     }
 
     [Fact]

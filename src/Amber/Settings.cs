@@ -64,7 +64,11 @@ public sealed class Settings : INotifyPropertyChanged
     {
         try
         {
-            return JsonSerializer.Deserialize<Settings>(File.ReadAllText(path), JsonOptions) ?? new();
+            var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(path), JsonOptions) ?? new();
+            // Older versions could save a curve that stops short of its range's ends: carry it on to them, same shape.
+            foreach (var filter in settings.Filters)
+                if (CurveMath.ReachEnds(filter.Curve, filter.LengthMinutes) is var curve && !curve.SequenceEqual(filter.Curve)) filter.Curve = curve;
+            return settings;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         {

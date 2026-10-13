@@ -6,9 +6,9 @@ C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
 **Owner:** Dmitriy (designer, not a developer). Explain things plainly, keep changes small, and don't
 start the next step until he has checked the current one. He tests every step by hand on his own PC.
 
-**Status:** the engine and every feature work end to end. The UI is being rebuilt on Figma "Design 3.0":
-step 5a (shell, Simple mode, Settings/About) is built and waiting for the owner's check; step 5b (Advanced
-mode) comes next, then installer and release.
+**Status:** the engine and every feature work end to end. The UI is rebuilt on Figma "Design 3.0": step 5a
+(shell, Simple mode, Settings/About) is merged; step 5b (Advanced mode) is built and waiting for the owner's
+check. Then installer and release.
 
 ---
 
@@ -68,7 +68,11 @@ mode) comes next, then installer and release.
 - **Advanced mode:** several filters, each a time range with a mode and either a flat level or a curve.
   - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
     When no free stretch of 15 min is left, the add menu greys out.
-  - Filters never overlap: dragging an edge stops at the neighbour (2 px visual gap only, no time gap).
+  - Filters never overlap: dragging an edge stops at the neighbour. Touching bars share one border line.
+  - Click a bar to select it; its mode, times, level and curve button show below the timeline. Click it
+    again, click empty track or press Esc to deselect; its trash icon or Delete removes it. With nothing
+    selected, "+ Add filter" opens the mode menu. A new filter isn't selected: a one-time hint bubble points
+    at the first one. The "How it works" card shows while there are no filters, until it's closed.
   - **Curve and flat level are two separate settings.** Expanding the curve applies it; collapsing goes
     back to the flat level and keeps the curve for next time.
   - Curve: points snap to 15 min and snap level with a neighbour within 3; the first and last points are
@@ -82,7 +86,7 @@ mode) comes next, then installer and release.
 
 ```json
 {
-  "IsAdvanced": false, "AdvancedIsOn": false,
+  "IsAdvanced": false, "AdvancedIsOn": false, "AdvancedIntroClosed": false, "FilterHintDone": false,
   "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "16:00:00",
                  "Level": 50, "CurveEnabled": true,
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
@@ -113,12 +117,13 @@ filters silently fail to load.
 | `Filter.cs`, `Settings.cs` | The data, change notification, JSON load/save |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
-| `Controls/*` | Level slider; simple schedule bar (`ScheduleBar`) on the shared timeline drawing (`Timeline`); `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`; the advanced timeline and curve editor keep the old look until step 5b |
-| `Views/*`, `MainWindow`, `Theme.xaml` | The screens and all styles/icons (icons are exact Figma geometry) |
+| `Controls/*` | Level slider; simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
+| `Views/*` | `SimpleView`, `AdvancedView` (intro card, timeline, add menu or `FilterPanel`), `SettingsView`, `AboutView` |
+| `MainWindow`, `Theme.xaml` | The shell (header, width switch, overlays) and all styles/icons (icons are exact Figma geometry) |
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 72 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 100 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -134,6 +139,10 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   for the mode you're in.
 - Simple mode: big level % above the level slider, mode chips at the bottom; with the schedule on, the
   timeline, the from/to time fields and Transition below.
+- Advanced mode: the timeline's bars show a dome in the bar colour (`#FFE063` / `#FFAE5D` / `#FF7C7C` —
+  brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`) and the level, or a small curve
+  icon when the curve is on; content hides when it doesn't fit. Selected bar white with a trash icon, the
+  others at 70 %. The curve opens as a white graph card under the filter panel (the slider hides).
 - Fonts: **Plus Jakarta Sans** for words, **Onest** for every number (both SIL OFL, bundled, licences in
   `Licenses.txt`). The Figma file uses Satoshi, whose licence doesn't allow shipping it — never use it.
   WPF has no letter-spacing, so tracked text goes through `TrackedText`.
@@ -174,16 +183,14 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 Done: tint engine, tray, single instance, start with Windows, settings, simple mode with its schedule,
 the schedule engine, advanced mode (timeline, filter cards, curve editor), Settings and About.
-Design 3.0 step 5a (branch `step-5a-design3-simple`): fonts, cursor, Deep night rename, transition in
-seconds, new shell, Simple mode, Settings and About. Advanced shows a placeholder until 5b (its old view,
-cards, timeline and curve editor files are still in the tree, unused).
+Design 3.0: step 5a (merged) — fonts, cursor, Deep night rename, transition in seconds, new shell, Simple
+mode, Settings and About. Step 5b (branch `step-5b-design3-advanced`) — Advanced mode: selectable bars, add
+menu, filter panel, intro card and hint, curve editor; `CurveMath.Fit` no longer leaves a trail of points
+when a range grows; curves whose ends don't reach the range ends are fixed up on load.
 
 Next:
-1. **Step 5b — Advanced mode in Design 3.0:** selectable timeline bars, add menu, filter panel, intro card
-   and hint, curve editor restyle; also fix `CurveMath.Fit` leaving a trail of points when a range grows.
-   The bar domes and curve fill use brighter colours than the mode menu (`#FFE063`, `#FFAE5D`, `#FF7C7C`).
-2. **Installer** and auto-update, with the "Check for updates" button in Settings wired up
+1. **Installer** and auto-update, with the "Check for updates" button in Settings wired up
    (it does nothing today), and `Licenses.txt` extended with the app's own licence.
-3. **Beta, then release** on GitHub.
+2. **Beta, then release** on GitHub.
 
 Open question for the owner: the repo is private; it becomes public and gets a licence at release.

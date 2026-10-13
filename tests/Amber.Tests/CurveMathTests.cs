@@ -98,4 +98,15 @@ public class CurveMathTests
         Assert.Equal(0, fitted[0].Minutes);
         Assert.Equal(240, fitted[^1].Minutes);
     }
+
+    [Fact]
+    public void A_longer_range_moves_the_end_instead_of_leaving_a_point()
+    {
+        var curve = CurveMath.Move(CurveMath.Add(Flat(), 120, 80, Length), 2, Length, 30, Length);
+
+        // Dragging the end edge outward fits the curve again at every 15-minute step.
+        for (var length = Length + 15; length <= Length + 60; length += 15) curve = CurveMath.Fit(curve, length, 50);
+
+        Assert.Equal([new CurvePoint(0, 50), new CurvePoint(120, 80), new CurvePoint(Length + 60, 30)], curve);
+    }
 }

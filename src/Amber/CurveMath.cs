@@ -26,17 +26,17 @@ public static class CurveMath
     public static List<CurvePoint> Flat(int length, double level) => [new(0, level), new(length, level)];
 
     /// <summary>
-    /// Keeps a curve usable after its range changes: ends stay at the ends, points outside are dropped,
-    /// and an empty curve becomes a flat line.
+    /// Keeps a curve usable after its range changes: the first and last points move to the new ends (they never
+    /// become middle points, or a growing range would leave a trail of them), middle points that no longer fit are
+    /// dropped, and an empty curve becomes a flat line.
     /// </summary>
     public static List<CurvePoint> Fit(IEnumerable<CurvePoint> points, int length, double level)
     {
-        var inside = points.Where(p => p.Minutes > 0 && p.Minutes < length).ToList();
-        var first = points.FirstOrDefault();
-        var last = points.LastOrDefault();
-        if (first is null || last is null) return Flat(length, level);
+        var curve = points.ToList();
+        if (curve.Count == 0) return Flat(length, level);
 
-        return [new CurvePoint(0, first.Level), .. inside, new CurvePoint(length, last.Level)];
+        var middle = curve.Skip(1).SkipLast(1).Where(p => p.Minutes > 0 && p.Minutes < length);
+        return [new CurvePoint(0, curve[0].Level), .. middle, new CurvePoint(length, curve[^1].Level)];
     }
 
     /// <summary>Adds a point where the user clicked, keeping the list in time order.</summary>

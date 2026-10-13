@@ -17,7 +17,7 @@ public partial class TimeField : UserControl
     public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
         nameof(Value), typeof(TimeOnly), typeof(TimeField),
         new FrameworkPropertyMetadata(default(TimeOnly), FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
-            (field, _) => ((TimeField)field).ShowValue()));
+            (field, _) => ((TimeField)field).OnValueChanged()));
 
     public TimeField()
     {
@@ -26,6 +26,15 @@ public partial class TimeField : UserControl
     }
 
     public TimeOnly Value { get => (TimeOnly)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+
+    /// <summary>Raised whenever the value changes, whether picked here or set from outside.</summary>
+    public event EventHandler? ValueChanged;
+
+    void OnValueChanged()
+    {
+        ShowValue();
+        ValueChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     void ShowValue()
     {

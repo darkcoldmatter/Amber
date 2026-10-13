@@ -23,6 +23,10 @@
     <SolidColorBrush x:Key="GoldenHourAccent" Color="#FEC960" />
     <SolidColorBrush x:Key="AmberAccent" Color="#F99E43" />
     <SolidColorBrush x:Key="DeepNightAccent" Color="#FD867F" />
+    <!-- Brighter versions on the advanced timeline's bars and under the curve. -->
+    <SolidColorBrush x:Key="GoldenHourBar" Color="#FFE063" />
+    <SolidColorBrush x:Key="AmberBar" Color="#FFAE5D" />
+    <SolidColorBrush x:Key="DeepNightBar" Color="#FF7C7C" />
 
     <!-- Words use Plus Jakarta Sans (Figma's Satoshi can't be bundled); every number uses Onest. -->
     <FontFamily x:Key="AppFont">pack://application:,,,/Assets/Fonts/#Plus Jakarta Sans</FontFamily>
@@ -748,6 +752,242 @@
                             <Setter TargetName="Current" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        A mode in a menu (Figma btn/mode_dropdown 68:5136): the dome in the mode colour, which the item takes as its
+        Background, and the name. Light grey on hover; in the add menu (Tag "Add") a + shows at the right too.
+        Items that can't be picked are faded. A popup doesn't inherit the window's font, hence FontFamily.
+    -->
+    <Style x:Key="ModeMenuItem" TargetType="Button">
+        <Setter Property="Width" Value="180" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Plus" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Plus" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="Hover" CornerRadius="10" Background="{StaticResource MenuHoverBrush}" Opacity="0" />
+                        <Grid x:Name="Look">
+                            <Path Data="{StaticResource IconDome}" Fill="{TemplateBinding Background}" Margin="10,13,0,0"
+                                  HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <ContentPresenter Margin="39,-1,0,1" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid x:Name="PlusHost" Visibility="Collapsed">
+                            <Path x:Name="Plus" Data="{StaticResource IconPlus16}" Stroke="{StaticResource IconBrush}" StrokeThickness="1.5"
+                                  Margin="156,12,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0" />
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Add">
+                            <Setter TargetName="PlusHost" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Look" Property="Opacity" Value="0.4" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        A filter's mode field (Figma dropdown 79:4247): white, see-through a little on hover; orange with the arrow up while
+        its list is open. The frames draw the closed arrow at half strength.
+    -->
+    <Style x:Key="ModeDropdown" TargetType="Button">
+        <Setter Property="Width" Value="150" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="Fill" CornerRadius="14" Background="White" />
+                        <ContentPresenter Margin="16,-1,0,1" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        <Path x:Name="Arrow" Data="{StaticResource IconArrowDown}" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5"
+                              StrokeLineJoin="Round" Width="24" Height="24" Margin="120,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                              RenderTransformOrigin="0.5,0.5" Opacity="0.5" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="controls:DropdownList.IsOpen" Value="True">
+                            <Setter TargetName="Arrow" Property="Opacity" Value="1" />
+                            <Setter TargetName="Arrow" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="180" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- "+ Add filter" (Figma btn/add_filter 112:10506): grey plus and text, both ink on a tan pill on hover. -->
+    <Style x:Key="AddFilterButton" TargetType="Button">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverIcon" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverText" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverIcon" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverText" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="Hover" CornerRadius="16" Background="{StaticResource TanBrush}" Opacity="0" />
+                        <StackPanel Orientation="Horizontal" Margin="8,0" VerticalAlignment="Center">
+                            <Grid Width="20" Height="20">
+                                <Path Data="{StaticResource IconPlus20}" Stroke="{StaticResource SecondaryBrush}" StrokeThickness="1.5" />
+                                <Path x:Name="HoverIcon" Data="{StaticResource IconPlus20}" Stroke="{StaticResource InkBrush}" StrokeThickness="1.5" Opacity="0" />
+                            </Grid>
+                            <Grid Margin="6,-1,0,1" VerticalAlignment="Center">
+                                <ContentPresenter TextElement.Foreground="{StaticResource SecondaryBrush}" />
+                                <ContentPresenter x:Name="HoverText" TextElement.Foreground="{StaticResource InkBrush}" Opacity="0" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        A filter's round curve button (Figma button/icon 44:1152 with the curve icon): white with a grey icon; tan with a
+        dark icon on hover and while the curve is on, a lighter tan when hovered then.
+    -->
+    <Style x:Key="CurveButton" TargetType="ToggleButton">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedFill" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedHover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverIcon" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverFill" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedFill" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedHover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverIcon" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="UncheckedLook" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedLook" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="CheckedIcon" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid x:Name="UncheckedLook">
+                            <Ellipse x:Name="Plain" Fill="White" />
+                            <Ellipse x:Name="HoverFill" Fill="{StaticResource TanBrush}" Opacity="0" />
+                        </Grid>
+                        <Grid x:Name="CheckedLook" Opacity="0">
+                            <Ellipse x:Name="CheckedFill" Fill="{StaticResource TanBrush}" />
+                            <Ellipse x:Name="CheckedHover" Fill="{StaticResource TanHoverBrush}" Opacity="0" />
+                        </Grid>
+                        <Path Data="{StaticResource IconCurve}" Fill="{StaticResource IconBrush}" Width="24" Height="24"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path x:Name="HoverIcon" Data="{StaticResource IconCurve}" Fill="{StaticResource InkBrush}" Width="24" Height="24"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" />
+                        <Path x:Name="CheckedIcon" Data="{StaticResource IconCurve}" Fill="{StaticResource InkBrush}" Width="24" Height="24"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" />
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

@@ -1,55 +1,33 @@
 <UserControl x:Class="Amber.Views.AdvancedView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:Amber.Controls">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="134" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- Fixed: the timeline, or an explanation while there are no filters -->
-        <Canvas Background="White">
-            <controls:AdvancedTimeline x:Name="Timeline" Canvas.Left="30" Canvas.Top="21" Width="630" Height="88" />
-            <StackPanel x:Name="HowItWorks" Canvas.Left="30" Canvas.Top="21" Width="630">
-                <StackPanel Orientation="Horizontal">
-                    <Border Width="24" Height="24" CornerRadius="12" Background="{StaticResource SurfaceBrush}">
-                        <TextBlock Text="?" FontSize="14" FontWeight="Bold" Foreground="{StaticResource GoldenHourLabel}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <TextBlock Text="How it works" FontSize="16" FontWeight="Bold" Foreground="{StaticResource InkBrush}"
-                               Margin="10,0,0,0" VerticalAlignment="Center" />
-                </StackPanel>
-                <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" LineHeight="20" Margin="0,14,0,0">
-                    Advanced mode lets you schedule <Bold>more than one</Bold> display filter and apply a
-                    <Bold>changing tint</Bold> level. Use the + button below to add the first filter.
+             xmlns:controls="clr-namespace:Amber.Controls"
+             xmlns:views="clr-namespace:Amber.Views">
+    <!-- Figma "Advanced" (section 111:10246), below the 66 px header: subtract 66 from Figma's y. -->
+    <StackPanel Width="848">
+        <!-- "How it works" (Figma 111:9513): shown while there are no filters, until it is closed. -->
+        <Border x:Name="Intro" Margin="23,9,24,11" Height="105" Background="White" CornerRadius="14">
+            <Grid>
+                <Image Source="{StaticResource IconQuestionImage}" Width="24" Height="24" Margin="16,16,0,0"
+                       HorizontalAlignment="Left" VerticalAlignment="Top" />
+                <TextBlock Text="How it works" Style="{StaticResource LabelText}" Margin="48,17.35,0,0" VerticalAlignment="Top" />
+                <TextBlock Style="{StaticResource BodyText}" Margin="16,50,19,0" VerticalAlignment="Top" TextWrapping="Wrap"
+                           LineHeight="20" LineStackingStrategy="BlockLineHeight">
+                    <Run Text="Advanced mode lets you schedule" /> <Bold Foreground="{StaticResource InkBrush}">more than one</Bold> <Run
+                        Text="display filter and apply a" /> <Bold Foreground="{StaticResource InkBrush}">dynamic tint</Bold> <Run
+                        Text="level. Click the “+” button below to add the first filter." />
                 </TextBlock>
-            </StackPanel>
-        </Canvas>
+                <Button Style="{StaticResource IconButton}" Tag="{StaticResource IconCross}" Foreground="{StaticResource InkBrush}"
+                        Margin="0,2,2,0" HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnCloseIntro"
+                        AutomationProperties.Name="Close how it works" />
+            </Grid>
+        </Border>
 
-        <!-- Scrolls: the filter list -->
-        <Grid Grid.Row="1" Background="#F8F8F8">
-            <Canvas Height="62" VerticalAlignment="Top">
-                <TextBlock Canvas.Left="30" Canvas.Top="23" Text="Display filter" FontSize="16" FontWeight="Medium"
-                           Foreground="{StaticResource FaintBrush}" />
-                <Button x:Name="AddButton" Canvas.Left="133" Canvas.Top="16" Style="{StaticResource AddButton}"
-                        Click="OnAddClicked" AutomationProperties.Name="Add filter" />
-                <ToggleButton x:Name="Power" Canvas.Left="560" Canvas.Top="12" Style="{StaticResource AdvancedPower}"
-                              IsChecked="{Binding AdvancedIsOn}" AutomationProperties.Name="Advanced tint on or off" />
-                <Popup x:Name="AddMenu" PlacementTarget="{Binding ElementName=AddButton}" Placement="Bottom"
-                       HorizontalOffset="-8" VerticalOffset="8" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
-                    <Border Background="White" CornerRadius="12" Padding="6" BorderThickness="1" BorderBrush="{StaticResource LineBrush}">
-                        <StackPanel x:Name="AddChoices" />
-                    </Border>
-                </Popup>
-            </Canvas>
+        <controls:AdvancedTimeline x:Name="Timeline" Width="800" Height="112" Margin="0,9,0,0" AutomationProperties.Name="Filters" />
 
-            <ScrollViewer Margin="0,62,0,0" MaxHeight="498" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="Cards" Margin="30,0,30,30" />
-            </ScrollViewer>
-
-            <TextBlock x:Name="EmptyLabel" Text="No display filters added yet." Style="{StaticResource BodyText}"
-                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,130,0,0" />
-        </Grid>
-    </Grid>
+        <!-- Nothing selected: add a filter. Selected: its settings. -->
+        <Button x:Name="AddButton" Style="{StaticResource AddFilterButton}" Content="Add filter" Margin="0,36,0,36" HorizontalAlignment="Center"
+                Click="OnAddClick" AutomationProperties.Name="Add filter" />
+        <views:FilterPanel x:Name="Panel" Margin="0,42,0,24" Visibility="Collapsed" />
+    </StackPanel>
 </UserControl>

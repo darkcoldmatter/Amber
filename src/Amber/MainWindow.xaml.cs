@@ -40,8 +40,7 @@ public partial class MainWindow : Window
         Root.Width = advanced ? AdvancedWidth : SimpleWidth;
         ScheduleButton.Visibility = advanced ? Visibility.Collapsed : Visibility.Visible;
         PowerButton.SetBinding(ToggleButton.IsCheckedProperty, advanced ? nameof(Settings.AdvancedIsOn) : nameof(Settings.IsOn));
-        ModeHost.Content = advanced ? null : new SimpleView(_settings);
-        AdvancedPlaceholder.Visibility = advanced ? Visibility.Visible : Visibility.Collapsed;
+        ModeHost.Content = advanced ? new AdvancedView(_settings) : new SimpleView(_settings);
         ShowGlow();
     }
 

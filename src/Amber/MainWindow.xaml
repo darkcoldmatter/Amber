@@ -34,14 +34,7 @@
             </Canvas>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
-                <Grid>
-                    <ContentControl x:Name="ModeHost" Focusable="False" />
-                    <!-- Until the new Advanced mode arrives (step 5b) -->
-                    <Grid x:Name="AdvancedPlaceholder" Height="225" Visibility="Collapsed">
-                        <TextBlock Text="The new Advanced mode arrives in the next step." Style="{StaticResource BodyText}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Grid>
-                </Grid>
+                <ContentControl x:Name="ModeHost" Focusable="False" />
             </ScrollViewer>
         </Grid>
 

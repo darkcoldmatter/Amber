@@ -59,6 +59,17 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void Closed_intro_and_used_hint_are_remembered()
+    {
+        new Settings { AdvancedIntroClosed = true, FilterHintDone = true }.Save(SettingsPath);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.True(loaded.AdvancedIntroClosed);
+        Assert.True(loaded.FilterHintDone);
+    }
+
+    [Fact]
     public void Missing_file_gives_defaults()
     {
         AssertDefaults(Settings.Load(SettingsPath));
@@ -97,5 +108,7 @@ public class SettingsTests : IDisposable
         Assert.Equal(new TimeOnly(13, 0), settings.ScheduleEnd);
         Assert.False(settings.IsAdvanced);
         Assert.Equal(0, settings.TransitionSeconds);
+        Assert.False(settings.AdvancedIntroClosed);
+        Assert.False(settings.FilterHintDone);
     }
 }

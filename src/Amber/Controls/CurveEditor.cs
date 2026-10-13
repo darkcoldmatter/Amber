@@ -1,31 +1,46 @@
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 
 namespace Amber.Controls;
 
+/// <summary>A time over the curve: minutes from the start of the range, its text, and whether it is a half hour (drawn faded).</summary>
+public readonly record struct TimeLabel(int Minutes, string Text, bool Faded);
+
 /// <summary>
-/// The level curve of one filter. Left click adds a point, right click removes it, and dragging moves it —
-/// the ends only move up and down. A dark box to the left of the point shows the time and level while dragging.
+/// The level curve of one filter, drawn as Figma's graph card (111:2717): times along the top, the plot with its grid,
+/// the curve over a fill in the bar colour, and a hint underneath. Left click adds a point, right click removes one, and
+/// dragging moves it — the ends only up and down. While dragging, a dark box beside the point shows its time and level.
 /// </summary>
 public class CurveEditor : FrameworkElement
 {
-    // The plot fills whatever room the card gives it, leaving a column for the level labels
-    // and a row for the hour labels. The filter's range is then spread across that width.
-    const double PlotLeft = 28, PlotTop = 24, ValueInset = 4.5;
-    const double PointRadius = 5, GrabRadius = 9, MinLabelGap = 28;
+    // In the card: the plot's outer edge (24 px in from the sides, its 1 px border inside), the label and hint lines.
+    const double PlotLeft = 24, PlotTop = 44, PlotHeight = 140, PlotRadius = 6, LabelsMiddle = 28, HintMiddle = 212.5;
+    // Points keep 5 px off the plot's inner edges, so the ends and 0 / 100 % show whole.
+    const double Inset = 5, PointRadius = 5, GrabRadius = 9;
+    const double BoxGap = 14, BoxPadding = 8, BoxHeight = 40, BoxRadius = 8, MinLabelGap = 16;
+    const double TextSize = 12; // every text on the card
+    const string Hint = "Left-click to add a point, right-click to remove one";
 
-    static readonly Brush GridBrush = Frozen("#EFF1F5");
-    static readonly Brush EdgeBrush = Frozen("#E6E6E2");
-    static readonly Brush LabelBrush = Frozen("#565656");
-    static readonly Brush BoxBrush = Frozen("#271F1F");
-    static readonly Brush BoxSubBrush = Frozen("#A5AABA");
+    static readonly int[] LabelSteps = [30, 60, 120, 180, 240, 360, 720];
+    static readonly int[] LevelLines = [25, 50, 75];
+
+    static readonly Brush InkBrush = Timeline.Frozen(new SolidColorBrush(Color.FromRgb(0x27, 0x1F, 0x1F)));
+    static readonly Brush FadedInkBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0x80, 0x27, 0x1F, 0x1F)));
+    static readonly Brush FadedWhiteBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0xCC, 0xFF, 0xFF, 0xFF)));
+    static readonly Brush HintBrush = Timeline.Frozen(new SolidColorBrush(Color.FromRgb(0xA5, 0xAA, 0xBA)));
+    static readonly Pen BorderPen = Timeline.Frozen(new Pen(new SolidColorBrush(Color.FromRgb(0xD3, 0xD6, 0xDF)), 1));
+    // Figma's 0.5 px lines, as 1 px at half strength; the half-hour lines are 1 px, 3 px dashes.
+    static readonly Pen ThinLine = Timeline.Frozen(new Pen(new SolidColorBrush(Color.FromArgb(0x80, 0xD3, 0xD6, 0xDF)), 1));
+    static readonly Pen DashedLine = Timeline.Frozen(new Pen(BorderPen.Brush, 1) { DashStyle = new DashStyle([3, 3], 0), DashCap = PenLineCap.Flat });
+    static readonly Pen CurvePen = Timeline.Frozen(new Pen(InkBrush, 1.5) { LineJoin = PenLineJoin.Round });
 
     Filter? _filter;
     int _dragging = -1;
 
+    /// <summary>The filter whose curve is shown and edited, or null for none.</summary>
     public Filter? Filter
     {
         get => _filter;
@@ -38,9 +53,55 @@ public class CurveEditor : FrameworkElement
         }
     }
 
-    public Brush Accent { get; set; } = Brushes.Orange;
+    void OnFilterChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
 
-    void OnFilterChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvalidateVisual();
+    /// <summary>
+    /// The times along the top: every 30 minutes when they fit, else whole hours, then every 2, 3, 4, 6 or 12 hours.
+    /// The first and last always show, pinned to the ends of the plot; a label that would crowd one of them is left out.
+    /// A range under an hour shows just its two times. <paramref name="measure"/> gives a label's width.
+    /// </summary>
+    public static List<TimeLabel> TimeLabels(int start, int length, double width, Func<string, double> measure)
+    {
+        List<TimeLabel> ends = [new(0, Clock(start), false), new(length, Clock(start + length), false)];
+        if (length < 60) return ends;
+
+        foreach (var step in LabelSteps)
+        {
+            List<TimeLabel> labels = [];
+            for (var minutes = (step - start % step) % step; minutes <= length; minutes += step)
+                labels.Add(new TimeLabel(minutes, Clock(start + minutes), (start + minutes) % 60 != 0));
+            if (labels.Count < 2) break;
+
+            var boxes = labels.Select(label =>
+            {
+                var labelWidth = measure(label.Text);
+                var left = Math.Clamp(label.Minutes / (double)length * width - labelWidth / 2, 0, width - labelWidth);
+                return (Left: left, Right: left + labelWidth);
+            }).ToArray();
+
+            List<int> kept = [0];
+            for (var i = 1; i < labels.Count - 1; i++)
+                if (boxes[i].Left >= boxes[0].Right + MinLabelGap && boxes[i].Right + MinLabelGap <= boxes[^1].Left) kept.Add(i);
+            kept.Add(labels.Count - 1);
+
+            if (kept.Zip(kept.Skip(1)).All(pair => boxes[pair.Second].Left - boxes[pair.First].Right >= MinLabelGap))
+                return [.. kept.Select(i => labels[i])];
+        }
+        return ends;
+    }
+
+    /// <summary>Where the dark box goes: to the left of the point, or to its right when there's no room; never outside the bounds.</summary>
+    public static Rect ValueBoxAt(Point point, Size box, Rect bounds)
+    {
+        var left = point.X - BoxGap - box.Width;
+        if (left < bounds.Left) left = Math.Min(point.X + BoxGap, bounds.Right - box.Width);
+        var top = Math.Clamp(point.Y - box.Height / 2, bounds.Top, bounds.Bottom - box.Height);
+        return new Rect(left, top, box.Width, box.Height);
+    }
+
+    /// <summary>"6:00", "23:30", "0:15" — minutes since midnight on the clock, past midnight too.</summary>
+    static string Clock(int minutes) =>
+        $"{minutes / 60 % 24}:{(minutes % 60).ToString("00", CultureInfo.InvariantCulture)}";
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
@@ -51,14 +112,14 @@ public class CurveEditor : FrameworkElement
         var index = PointAt(point);
         if (index < 0)
         {
-            if (!InPlot(point)) return;
+            if (!Inner.Contains(point)) return;
             _filter.Curve = CurveMath.Add(_filter.Curve, MinutesAt(point.X), LevelAt(point.Y), _filter.LengthMinutes);
             index = PointAt(point);
             if (index < 0) return;
         }
+        if (!CaptureMouse()) return; // without the mouse, the drag (and its preview) could never end
 
         _dragging = index;
-        CaptureMouse();
         App.Current.StartPreview(_filter.Mode, _filter.Curve[index].Level);
         e.Handled = true;
     }
@@ -68,25 +129,29 @@ public class CurveEditor : FrameworkElement
         base.OnMouseMove(e);
         if (_filter is null) return;
 
+        var point = e.GetPosition(this);
         if (_dragging < 0)
         {
-            Cursor = PointAt(e.GetPosition(this)) >= 0 ? Cursors.SizeAll : Cursors.Arrow;
+            Cursor = PointAt(point) >= 0 ? Cursors.SizeAll : Cursors.Arrow;
             return;
         }
 
-        var point = e.GetPosition(this);
         _filter.Curve = CurveMath.Move(_filter.Curve, _dragging, MinutesAt(point.X), LevelAt(point.Y), _filter.LengthMinutes);
         App.Current.UpdatePreview(_filter.Mode, _filter.Curve[_dragging].Level);
-        InvalidateVisual();
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonUp(e);
-        if (_dragging < 0) return;
+        if (_dragging >= 0) ReleaseMouseCapture();
+    }
 
+    /// <summary>Losing the mouse mid-drag (Alt+Tab, a window popping up) must end the preview too, or the tint would stay.</summary>
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        if (_dragging < 0) return;
         _dragging = -1;
-        ReleaseMouseCapture();
         App.Current.EndPreview();
         InvalidateVisual();
     }
@@ -94,7 +159,7 @@ public class CurveEditor : FrameworkElement
     protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseRightButtonDown(e);
-        if (_filter is null) return;
+        if (_filter is null || _dragging >= 0) return;
 
         var index = PointAt(e.GetPosition(this));
         if (index < 0) return;
@@ -103,98 +168,22 @@ public class CurveEditor : FrameworkElement
         e.Handled = true;
     }
 
-    protected override void OnRender(DrawingContext dc)
-    {
-        if (_filter is null) return;
+    Rect Plot => new(PlotLeft, PlotTop, Math.Max(ActualWidth - 2 * PlotLeft, 2), PlotHeight);
 
-        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var family = TextElement.GetFontFamily(this);
-        var plot = new Rect(PlotLeft, PlotTop, PlotWidth, PlotHeight);
+    /// <summary>Inside the plot's border: where the grid, the fill and the curve are drawn.</summary>
+    Rect Inner => new(PlotLeft + 1, PlotTop + 1, Plot.Width - 2, PlotHeight - 2);
 
-        dc.DrawRoundedRectangle(Brushes.White, new Pen(EdgeBrush, 1), plot, 8, 8);
+    int Length => Math.Max(_filter!.LengthMinutes, 1);
 
-        foreach (var level in new[] { 0, 25, 50, 75, 100 })
-        {
-            var y = Y(level);
-            dc.DrawLine(new Pen(GridBrush, 1), new Point(PlotLeft, y), new Point(PlotLeft + PlotWidth, y));
-            var label = Text(level.ToString(CultureInfo.InvariantCulture), family, 12, FontWeights.Medium, LabelBrush, dpi);
-            dc.DrawText(label, new Point(0, y - label.Height / 2));
-        }
+    double X(int minutes) => Inner.Left + minutes / (double)Length * Inner.Width;
 
-        DrawHours(dc, family, dpi);
+    /// <summary>Where a point is drawn: on its time, but kept off the plot's edges so the two ends show whole.</summary>
+    double PointX(int minutes) => Math.Clamp(X(minutes), Inner.Left + Inset, Inner.Right - Inset);
 
-        var curve = _filter.Curve;
-        if (curve.Count == 0) return;
+    double Y(double level) => Inner.Top + Inset + (1 - Math.Clamp(level, 0, 100) / 100) * (Inner.Height - 2 * Inset);
 
-        var line = new PathFigure { StartPoint = new Point(X(curve[0].Minutes), Y(curve[0].Level)) };
-        foreach (var point in curve.Skip(1)) line.Segments.Add(new LineSegment(new Point(X(point.Minutes), Y(point.Level)), true));
-
-        var area = line.Clone();
-        area.Segments.Add(new LineSegment(new Point(X(curve[^1].Minutes), plot.Bottom), true));
-        area.Segments.Add(new LineSegment(new Point(X(curve[0].Minutes), plot.Bottom), true));
-        area.IsClosed = true;
-
-        var fill = Accent.Clone();
-        fill.Opacity = 0.4;
-        dc.DrawGeometry(fill, null, new PathGeometry([area]));
-        dc.DrawGeometry(null, new Pen(Accent, 1.5), new PathGeometry([line]));
-
-        foreach (var point in curve)
-            dc.DrawEllipse(Accent, new Pen(Brushes.White, 1.5), new Point(X(point.Minutes), Y(point.Level)), PointRadius, PointRadius);
-
-        if (_dragging >= 0 && _dragging < curve.Count) DrawValueBox(dc, family, dpi, curve[_dragging]);
-    }
-
-    /// <summary>Hour marks across the range; labels thin out when they would collide, the lines stay.</summary>
-    void DrawHours(DrawingContext dc, FontFamily family, double dpi)
-    {
-        var length = _filter!.LengthMinutes;
-        var startMinutes = ScheduleRange.Minutes(_filter.Start);
-        var marks = new List<(double X, string Label)>();
-
-        for (var minute = 0; minute <= length; minute++)
-        {
-            if ((startMinutes + minute) % 60 != 0) continue;
-            var hour = (startMinutes + minute) / 60 % 24;
-            marks.Add((X(minute), hour.ToString("00", CultureInfo.InvariantCulture)));
-        }
-
-        // A range shorter than an hour gets its own two times instead.
-        if (marks.Count < 2)
-        {
-            marks.Clear();
-            marks.Add((X(0), _filter.Start.ToString("HH:mm")));
-            marks.Add((X(length), _filter.End.ToString("HH:mm")));
-        }
-
-        var everyOther = marks.Count > 1 && marks[1].X - marks[0].X < MinLabelGap;
-        for (var i = 0; i < marks.Count; i++)
-        {
-            var (x, label) = marks[i];
-            dc.DrawLine(new Pen(GridBrush, 1), new Point(x, PlotTop), new Point(x, PlotTop + PlotHeight));
-            if (everyOther && i % 2 == 1 && i != marks.Count - 1) continue;
-
-            var text = Text(label, family, 14, FontWeights.Bold, LabelBrush, dpi);
-            dc.DrawText(text, new Point(Math.Clamp(x - text.Width / 2, 0, ActualWidth - text.Width), 8 - text.Height / 2));
-        }
-    }
-
-    /// <summary>The dark readout sits to the left of the point, and stays inside the control.</summary>
-    void DrawValueBox(DrawingContext dc, FontFamily family, double dpi, CurvePoint point)
-    {
-        var time = _filter!.Start.Add(TimeSpan.FromMinutes(point.Minutes)).ToString("HH:mm");
-        var timeText = Text(time, family, 13, FontWeights.Bold, Brushes.White, dpi);
-        var levelText = Text($"{Math.Round(point.Level)}%", family, 12, FontWeights.Medium, BoxSubBrush, dpi);
-
-        var width = Math.Max(timeText.Width, levelText.Width) + 20;
-        var height = timeText.Height + levelText.Height + 14;
-        var left = Math.Max(X(point.Minutes) - width - 12, 0);
-        var top = Math.Clamp(Y(point.Level) - height / 2, 0, ActualHeight - height);
-
-        dc.DrawRoundedRectangle(BoxBrush, null, new Rect(left, top, width, height), 8, 8);
-        dc.DrawText(timeText, new Point(left + 10, top + 7));
-        dc.DrawText(levelText, new Point(left + 10, top + 7 + timeText.Height));
-    }
+    double MinutesAt(double x) => (x - Inner.Left) / Inner.Width * Length;
+    double LevelAt(double y) => (1 - (y - Inner.Top - Inset) / (Inner.Height - 2 * Inset)) * 100;
 
     int PointAt(Point position)
     {
@@ -202,31 +191,125 @@ public class CurveEditor : FrameworkElement
         for (var i = 0; i < _filter.Curve.Count; i++)
         {
             var point = _filter.Curve[i];
-            if (Math.Abs(X(point.Minutes) - position.X) <= GrabRadius && Math.Abs(Y(point.Level) - position.Y) <= GrabRadius) return i;
+            if (Math.Abs(PointX(point.Minutes) - position.X) <= GrabRadius && Math.Abs(Y(point.Level) - position.Y) <= GrabRadius) return i;
         }
         return -1;
     }
 
-    double PlotWidth => Math.Max(ActualWidth - PlotLeft, 1);
-    double PlotHeight => Math.Max(ActualHeight - PlotTop, 1);
-
-    bool InPlot(Point position) =>
-        position.X >= PlotLeft && position.X <= PlotLeft + PlotWidth && position.Y >= PlotTop && position.Y <= PlotTop + PlotHeight;
-
-    double X(int minutes) => PlotLeft + minutes / (double)Math.Max(_filter!.LengthMinutes, 1) * PlotWidth;
-    double Y(double level) => PlotTop + ValueInset + (1 - Math.Clamp(level, 0, 100) / 100) * (PlotHeight - 2 * ValueInset);
-
-    double MinutesAt(double x) => (x - PlotLeft) / PlotWidth * _filter!.LengthMinutes;
-    double LevelAt(double y) => (1 - (y - PlotTop - ValueInset) / (PlotHeight - 2 * ValueInset)) * 100;
-
-    static FormattedText Text(string text, FontFamily family, double size, FontWeight weight, Brush brush, double dpi) =>
-        new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-            new Typeface(family, FontStyles.Normal, weight, FontStretches.Normal), size, brush, dpi);
-
-    static Brush Frozen(string hex)
+    protected override void OnRender(DrawingContext dc)
     {
-        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex)!);
-        brush.Freeze();
-        return brush;
+        if (_filter is null) return;
+
+        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var numbers = (FontFamily)FindResource("NumberFont");
+        DrawLabels(dc, numbers, dpi);
+
+        var inner = Inner;
+        dc.PushClip(new RectangleGeometry(inner, PlotRadius - 1, PlotRadius - 1));
+        DrawGrid(dc, inner);
+        var curve = _filter.Curve;
+        if (curve.Count > 0) DrawCurve(dc, inner, curve);
+        dc.Pop();
+
+        var border = Plot;
+        border.Inflate(-0.5, -0.5);
+        dc.DrawRoundedRectangle(null, BorderPen, border, PlotRadius - 0.5, PlotRadius - 0.5);
+
+        foreach (var point in curve) dc.DrawEllipse(InkBrush, null, new Point(PointX(point.Minutes), Y(point.Level)), PointRadius, PointRadius);
+        if (_dragging >= 0 && _dragging < curve.Count) DrawValueBox(dc, curve[_dragging], numbers, dpi);
+
+        var words = new Typeface((FontFamily)FindResource("AppFont"), FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
+        var hint = Text(Hint, words, HintBrush, dpi);
+        dc.DrawText(hint, new Point((ActualWidth - hint.Width) / 2, CapTop(words, HintMiddle, hint)));
     }
+
+    /// <summary>Full hours in ink, half hours faded; the first and last pinned to the plot's ends, the rest centred on their time.</summary>
+    void DrawLabels(DrawingContext dc, FontFamily font, double dpi)
+    {
+        var typeface = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
+        var plot = Plot;
+        var start = ScheduleRange.Minutes(_filter!.Start);
+        foreach (var label in TimeLabels(start, _filter.LengthMinutes, plot.Width, text => Text(text, typeface, InkBrush, dpi).Width))
+        {
+            var text = Text(label.Text, typeface, label.Faded ? FadedInkBrush : InkBrush, dpi);
+            var x = Math.Clamp(plot.Left + label.Minutes / (double)Length * plot.Width - text.Width / 2, plot.Left, plot.Right - text.Width);
+            dc.DrawText(text, new Point(x, CapTop(typeface, LabelsMiddle, text)));
+        }
+    }
+
+    /// <summary>Lines at 25, 50 and 75 %, and at every half hour: solid on the hour, dashed in between. On whole pixels, so they stay sharp.</summary>
+    void DrawGrid(DrawingContext dc, Rect inner)
+    {
+        foreach (var level in LevelLines)
+        {
+            var y = Math.Floor(Y(level)) + 0.5;
+            dc.DrawLine(ThinLine, new Point(inner.Left, y), new Point(inner.Right, y));
+        }
+
+        var start = ScheduleRange.Minutes(_filter!.Start);
+        for (var minutes = (30 - start % 30) % 30; minutes < Length; minutes += 30)
+        {
+            if (minutes == 0) continue;
+            var x = Math.Floor(X(minutes)) + 0.5;
+            dc.DrawLine((start + minutes) % 60 == 0 ? ThinLine : DashedLine, new Point(x, inner.Top), new Point(x, inner.Bottom));
+        }
+    }
+
+    /// <summary>
+    /// The curve through its points, carried on flat to the plot's edges, over a fill in the bar colour that fades out
+    /// from the curve's highest point down to the bottom of the plot.
+    /// </summary>
+    void DrawCurve(DrawingContext dc, Rect inner, List<CurvePoint> curve)
+    {
+        var points = curve.Select(point => new Point(PointX(point.Minutes), Y(point.Level))).ToList();
+        points.Insert(0, new Point(inner.Left, points[0].Y));
+        points.Add(new Point(inner.Right, points[^1].Y));
+
+        var area = new StreamGeometry();
+        using (var draw = area.Open())
+        {
+            draw.BeginFigure(new Point(inner.Left, inner.Bottom), true, true);
+            draw.PolyLineTo(points, false, true);
+            draw.LineTo(new Point(inner.Right, inner.Bottom), false, true);
+        }
+        area.Freeze();
+
+        var color = ((SolidColorBrush)FindResource(_filter!.Mode + "Bar")).Color;
+        var fill = new LinearGradientBrush(Color.FromArgb(0x80, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90);
+        fill.Freeze();
+        dc.DrawGeometry(fill, null, area);
+
+        var line = new StreamGeometry();
+        using (var draw = line.Open())
+        {
+            draw.BeginFigure(points[0], false, false);
+            draw.PolyLineTo(points.Skip(1).ToList(), true, true);
+        }
+        line.Freeze();
+        dc.DrawGeometry(null, CurvePen, line);
+    }
+
+    /// <summary>The dark box beside the dragged point: its time over its level.</summary>
+    void DrawValueBox(DrawingContext dc, CurvePoint point, FontFamily font, double dpi)
+    {
+        var bold = new Typeface(font, FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+        var medium = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
+        var time = Text(Clock(ScheduleRange.Minutes(_filter!.Start) + point.Minutes), bold, Brushes.White, dpi);
+        var level = Text(point.Level.ToString("0", CultureInfo.InvariantCulture) + "%", medium, FadedWhiteBrush, dpi);
+
+        var size = new Size(Math.Ceiling(Math.Max(time.Width, level.Width)) + 2 * BoxPadding, BoxHeight);
+        var box = ValueBoxAt(new Point(PointX(point.Minutes), Y(point.Level)), size, new Rect(RenderSize));
+        box = new Rect(Math.Round(box.X), Math.Round(box.Y), box.Width, box.Height);
+
+        dc.DrawRoundedRectangle(InkBrush, null, box, BoxRadius, BoxRadius);
+        dc.DrawText(time, new Point(box.Left + BoxPadding, CapTop(bold, box.Top + 12.5, time)));
+        dc.DrawText(level, new Point(box.Left + BoxPadding, CapTop(medium, box.Top + 27.5, level)));
+    }
+
+    /// <summary>Where to draw a line of text so its capitals are centred on <paramref name="middle"/>, like Figma's trimmed text.</summary>
+    static double CapTop(Typeface typeface, double middle, FormattedText text) =>
+        middle + (typeface.TryGetGlyphTypeface(out var glyphs) ? glyphs.CapsHeight * TextSize : 0) / 2 - text.Baseline;
+
+    static FormattedText Text(string text, Typeface typeface, Brush brush, double dpi) =>
+        new(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, TextSize, brush, dpi);
 }

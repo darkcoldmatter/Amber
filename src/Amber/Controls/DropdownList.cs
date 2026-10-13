@@ -6,20 +6,41 @@ using System.Windows.Media;
 
 namespace Amber.Controls;
 
-/// <summary>The white list that drops down under a field: hours, minutes or transition lengths.</summary>
-static class DropdownList
+/// <summary>The white list that drops down under a field: hours, minutes, transition lengths or modes.</summary>
+public static class DropdownList
 {
     const double ItemHeight = 40, Padding = 6, MaxHeight = 240, Gap = 6;
     const double ShadowRoom = 28; // transparent room around the menu, so its shadow isn't cut off
 
+    /// <summary>True on a field while its list is open, so its look can follow (the mode field turns its arrow up).</summary>
+    public static readonly DependencyProperty IsOpenProperty =
+        DependencyProperty.RegisterAttached("IsOpen", typeof(bool), typeof(DropdownList), new PropertyMetadata(false));
+
+    public static bool GetIsOpen(DependencyObject element) => (bool)element.GetValue(IsOpenProperty);
+    public static void SetIsOpen(DependencyObject element, bool value) => element.SetValue(IsOpenProperty, value);
+
+    /// <summary>A list of text choices, the current one marked.</summary>
+    public static void Open(Control field, IReadOnlyList<string> choices, int current, double itemWidth, Action<int> choose) =>
+        Open(field, choices.Select((choice, i) => new Button
+        {
+            Content = choice,
+            Width = itemWidth,
+            Style = (Style)field.FindResource("MenuItem"),
+            Tag = i == current ? "Current" : null,
+        }).ToArray(), current, 0, choose);
+
     /// <summary>
-    /// Opens a list centred under <paramref name="field"/> (or over it, when there is no room below), with the current
-    /// choice marked and scrolled into view; the field's text takes the open-dropdown colour meanwhile. Picking an item
-    /// closes the list and calls <paramref name="choose"/> with its index; Esc or a click elsewhere just closes it.
+    /// Opens a list of items centred under <paramref name="field"/> (or over it, when there is no room below), with
+    /// <paramref name="current"/> (if any, else -1) scrolled into view; the field's text takes the open-dropdown colour
+    /// meanwhile. Picking an item closes the list and calls <paramref name="choose"/> with its index; Esc or a click
+    /// elsewhere just closes it. <paramref name="spacing"/> is the room between items.
     /// </summary>
-    public static void Open(Control field, IReadOnlyList<string> choices, int current, double itemWidth, Action<int> choose)
+    public static void Open(Control field, IReadOnlyList<Button> items, int current, double spacing, Action<int> choose)
     {
-        var visible = Math.Min(choices.Count * ItemHeight, MaxHeight - 2 * Padding);
+        var itemWidth = items.Max(item => item.Width);
+        var step = ItemHeight + spacing;
+        var length = items.Count * step - spacing;
+        var visible = Math.Min(length, MaxHeight - 2 * Padding);
         var popup = new Popup
         {
             PlacementTarget = field,
@@ -30,26 +51,20 @@ static class DropdownList
             PopupAnimation = PopupAnimation.Fade,
         };
 
-        var items = new StackPanel();
-        for (var i = 0; i < choices.Count; i++)
+        var list = new StackPanel();
+        for (var i = 0; i < items.Count; i++)
         {
             var index = i;
-            var item = new Button
-            {
-                Content = choices[i],
-                Width = itemWidth,
-                Style = (Style)field.FindResource("MenuItem"),
-                Tag = i == current ? "Current" : null,
-            };
-            item.Click += (_, _) =>
+            items[i].Margin = new Thickness(0, i == 0 ? 0 : spacing, 0, 0);
+            items[i].Click += (_, _) =>
             {
                 popup.IsOpen = false;
                 choose(index);
             };
-            items.Children.Add(item);
+            list.Children.Add(items[i]);
         }
 
-        var scroller = new ScrollViewer { Content = items, MaxHeight = visible, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden };
+        var scroller = new ScrollViewer { Content = list, MaxHeight = visible, VerticalScrollBarVisibility = ScrollBarVisibility.Hidden };
         var menu = new Border { Style = (Style)field.FindResource("Menu"), Margin = new Thickness(ShadowRoom), Child = scroller };
         // A popup doesn't inherit the window's text look, so copy it.
         TextOptions.SetTextRenderingMode(menu, TextOptions.GetTextRenderingMode(field));
@@ -59,10 +74,15 @@ static class DropdownList
         // Show the current choice in the middle of the list when it is long enough to scroll.
         popup.Opened += (_, _) =>
         {
+            if (current < 0) return;
             scroller.UpdateLayout();
-            scroller.ScrollToVerticalOffset(Math.Clamp(current * ItemHeight - (visible - ItemHeight) / 2, 0, choices.Count * ItemHeight - visible));
+            scroller.ScrollToVerticalOffset(Math.Clamp(current * step - (visible - ItemHeight) / 2, 0, length - visible));
         };
-        popup.Closed += (_, _) => field.ClearValue(Control.ForegroundProperty);
+        popup.Closed += (_, _) =>
+        {
+            field.ClearValue(Control.ForegroundProperty);
+            field.ClearValue(IsOpenProperty);
+        };
 
         // The keyboard stays with the window while the list is open, so Esc is caught there.
         if (Window.GetWindow(field) is { } window)
@@ -78,6 +98,7 @@ static class DropdownList
         }
 
         field.Foreground = (Brush)field.FindResource("OpenTextBrush");
+        SetIsOpen(field, true);
         popup.IsOpen = true;
     }
 

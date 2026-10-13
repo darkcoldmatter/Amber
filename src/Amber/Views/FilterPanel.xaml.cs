@@ -1,0 +1,158 @@
+using System.ComponentModel;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using Amber.Controls;
+using Amber.Tint;
+
+namespace Amber.Views;
+
+/// <summary>
+/// Settings of the selected filter: its mode, start and end, and either a flat level or a curve. Turning the curve on
+/// replaces the slider with the graph; turning it off goes back to the flat level and keeps the curve for next time.
+/// </summary>
+public partial class FilterPanel : UserControl
+{
+    static readonly TintMode[] Modes = Enum.GetValues<TintMode>();
+
+    Filter? _filter;
+    bool _filling, _previewing;
+
+    public FilterPanel()
+    {
+        InitializeComponent();
+
+        StartField.ValueChanged += (_, _) => OnTimePicked(movingStart: true);
+        EndField.ValueChanged += (_, _) => OnTimePicked(movingStart: false);
+
+        // While the slider is dragged, the screen shows this filter's tint at that level, whatever the on/off state.
+        Level.PreviewStarted += (_, _) =>
+        {
+            _previewing = true;
+            App.Current.StartPreview(_filter!.Mode, Level.Value);
+        };
+        Level.ValueChanged += (_, _) =>
+        {
+            if (_previewing) App.Current.UpdatePreview(_filter!.Mode, Level.Value);
+        };
+        Level.PreviewEnded += (_, _) =>
+        {
+            _previewing = false;
+            App.Current.EndPreview();
+        };
+
+        // Let go of the filter when the panel leaves the window, so a closed window can be freed.
+        Unloaded += (_, _) => Filter = null;
+    }
+
+    /// <summary>All the filters: a time can only move as far as the neighbours allow.</summary>
+    public IReadOnlyList<Filter> Filters { get; set; } = [];
+
+    /// <summary>The filter shown, or null. Switching filters shows the new one at once, without fades.</summary>
+    public Filter? Filter
+    {
+        get => _filter;
+        set
+        {
+            if (value == _filter) return;
+            if (_filter is not null) _filter.PropertyChanged -= OnFilterChanged;
+            _filter = value;
+            DataContext = value;
+            Curve.Filter = null;
+            if (_filter is null) return;
+
+            _filter.PropertyChanged += OnFilterChanged;
+            ShowMode();
+            ShowTimes();
+            ShowLevel();
+            ShowCurve(animate: false);
+        }
+    }
+
+    void OnFilterChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(Amber.Filter.Mode):
+                ShowMode();
+                break;
+            case nameof(Amber.Filter.Start):
+            case nameof(Amber.Filter.End):
+                ShowTimes();
+                break;
+            case nameof(Amber.Filter.Level):
+                ShowLevel();
+                break;
+            case nameof(Amber.Filter.CurveEnabled):
+                ShowCurve(animate: true);
+                break;
+        }
+    }
+
+    void ShowMode() => ModeField.Content = _filter!.Mode.DisplayName();
+
+    void ShowTimes()
+    {
+        _filling = true;
+        StartField.Value = _filter!.Start;
+        EndField.Value = _filter.End;
+        _filling = false;
+    }
+
+    /// <summary>The number follows the slider live, also while dragging.</summary>
+    void ShowLevel() => Percent.Text = _filter!.Level.ToString("0", CultureInfo.InvariantCulture) + "%";
+
+    /// <summary>
+    /// The curve takes the slider's place: the slider and number fade out and the graph fades in below (the window
+    /// grows at once). Closing it hides the graph at once and brings the slider back.
+    /// </summary>
+    void ShowCurve(bool animate)
+    {
+        var show = _filter!.CurveEnabled;
+        if (show && _filter.Curve.Count == 0) _filter.ResetCurve();
+        Curve.Filter = show ? _filter : null;
+
+        GraphCard.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (show) Fade(GraphCard, 0, 1, animate);
+        Fade(LevelGroup, LevelGroup.Opacity, show ? 0 : 1, animate);
+        LevelGroup.IsHitTestVisible = !show;
+    }
+
+    static void Fade(UIElement element, double from, double to, bool animate) =>
+        element.BeginAnimation(OpacityProperty, animate
+            ? new DoubleAnimation(from, to, new Duration(TimeSpan.FromSeconds(0.3)))
+            : new DoubleAnimation(to, new Duration(TimeSpan.Zero)));
+
+    /// <summary>
+    /// A picked time moves that edge, stopping at the neighbouring filters just as a drag does;
+    /// if it can't go all the way, the field snaps back to where the edge stopped.
+    /// </summary>
+    void OnTimePicked(bool movingStart)
+    {
+        if (_filling || _filter is null) return;
+
+        var target = ScheduleRange.Minutes(movingStart ? StartField.Value : EndField.Value);
+        var others = Filters.Where(other => other != _filter).Select(other => (ScheduleRange.Minutes(other.Start), ScheduleRange.Minutes(other.End)));
+        var (start, end) = FilterLayout.MoveEdge((ScheduleRange.Minutes(_filter.Start), ScheduleRange.Minutes(_filter.End)), others, movingStart, target);
+        _filter.Start = ScheduleRange.Time(start);
+        _filter.End = ScheduleRange.Time(end);
+        ShowTimes();
+    }
+
+    /// <summary>The mode list: each mode with its dome in the mode colour.</summary>
+    void OnModeClick(object sender, RoutedEventArgs e)
+    {
+        if (_filter is not { } filter) return;
+        DropdownList.Open(ModeField, [.. Modes.Select(mode => ModeItem(this, mode))], -1, 2, index => filter.Mode = Modes[index]);
+    }
+
+    /// <summary>A mode in a menu, shared with the add menu.</summary>
+    internal static Button ModeItem(FrameworkElement owner, TintMode mode) => new()
+    {
+        Style = (Style)owner.FindResource("ModeMenuItem"),
+        Content = mode.DisplayName(),
+        Background = (Brush)owner.FindResource(mode + "Accent"),
+    };
+}

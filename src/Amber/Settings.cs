@@ -37,6 +37,12 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>Advanced mode has its own on/off, and turning it on turns simple mode off.</summary>
     public bool AdvancedIsOn { get; set => Set(ref field, value); }
 
+    /// <summary>The "How it works" card of advanced mode was closed with its ✕, so it stays away.</summary>
+    public bool AdvancedIntroClosed { get; set => Set(ref field, value); }
+
+    /// <summary>The "Click a filter to adjust it" bubble has done its job: a filter has been selected once.</summary>
+    public bool FilterHintDone { get; set => Set(ref field, value); }
+
     /// <summary>Populate: the list is read-only, so the reader has to add into it rather than replace it.</summary>
     [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public ObservableCollection<Filter> Filters { get; } = [];

@@ -28,7 +28,7 @@ public static class Timeline
     public static double X(int minutes, double width) => minutes * width / ScheduleRange.DayMinutes;
 
     /// <summary>Where a range ends: one that ends at midnight ends at the right-hand end of the timeline.</summary>
-    static double EndX(int end, double width) => end == 0 ? width : X(end, width);
+    public static double EndX(int end, double width) => end == 0 ? width : X(end, width);
 
     /// <summary>
     /// The pieces of a range as (left, right) pixels: one, or two when it runs past midnight.

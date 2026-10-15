@@ -75,8 +75,9 @@ check. Then installer and release.
     at the first one. The "How it works" card shows while there are no filters, until it's closed.
   - **Curve and flat level are two separate settings.** Expanding the curve applies it; collapsing goes
     back to the flat level and keeps the curve for next time.
-  - Curve: points snap to 15 min and snap level with a neighbour within 3; the first and last points are
-    locked to the ends and only move up and down; left click adds, right click removes.
+  - Curve: points snap to 5 min (range edges stay on 15) and line up with any other point whose level is
+    within 3; the first and last points are locked to the ends and only move up and down; left click adds,
+    right click removes. Moving a range keeps the curve's shape relative to the filter (owner likes this).
   - Hand-over: a gap between filters fades out and back in; two filters that touch cross-fade, so the
     screen never flashes back to blue. (Both are instant while the fade constant is 0.)
 
@@ -115,6 +116,8 @@ filters silently fail to load.
 | `FilterLayout.cs` | Where a new filter fits; edges stopping at neighbours |
 | `CurveMath.cs` | Add / remove / move curve points, snapping, refitting after a range change |
 | `Filter.cs`, `Settings.cs` | The data, change notification, JSON load/save |
+| `TimeFormat.cs` | Every time shown in the UI, in Windows' 12- or 24-hour format |
+| `TextLook.cs` | Makes grey, unsnapped text smoothing the default for every element, menus included |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider; simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
@@ -123,7 +126,7 @@ filters silently fail to load.
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 100 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 115 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -148,13 +151,20 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   WPF has no letter-spacing, so tracked text goes through `TrackedText`.
 - Background `#F3F3F3` with a soft yellow glow (`Glow`: a small precomputed bitmap, no BlurEffect) at 70 % in
   Simple/Settings/About and 30 % in Advanced. It never changes with the mode (owner's choice).
-- Timeline ranges: hover draws a thin dark outline; the double-arrow cursor shows only on a range's left
-  or right edge. The Simple range has two grip lines, at its real start and end (none at a midnight cut).
+- Timeline ranges sit exactly on their times (a thin border separates them, no gap); hover draws a thin dark
+  outline; the double-arrow cursor shows only on a range's left or right edge. The Simple range has two grip
+  lines, at its real start and end (none at a midnight cut).
+- Times follow Windows' 12- or 24-hour setting (`TimeFormat`, read live from Windows each time the window
+  opens — WPF pins the culture at startup, so `CultureInfo` alone would go stale). AM/PM is always written
+  "AM"/"PM" in English, like the rest of the UI (localised designators get cut off or overlap). 12-hour:
+  timeline labels "12 AM · 2 · … · 12 PM · …", curve labels with AM/PM on the first, last and 12 o'clock
+  labels, time fields "6 : 00 PM" with one 12 AM–11 PM hour list. 24-hour looks exactly like the Figma frames.
+  The owner's own PC is 24-hour (`ru-UA`); PowerShell 5.1's `Get-Culture` misreports it as `en-US`.
 - Time fields: click the hours or the minutes for a short list; the mouse wheel steps them.
 - Hovers and state changes animate ~0.3 s, except the ON/OFF button, which changes instantly (owner's
   choice); nothing moves on the timeline or inside the graph.
-- Text is grey-smoothed with `TextHintingMode="Animated"` (set on the window and copied to popups): plain
-  grayscale snaps letters to pixels and looks jagged at 100 % scaling.
+- Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
+  (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
 Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night)
 and the About credit ("Credit: Dmitriy Ratushniak"), which stay exactly as they are.

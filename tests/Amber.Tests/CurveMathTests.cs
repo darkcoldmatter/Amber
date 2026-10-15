@@ -6,20 +6,28 @@ public class CurveMathTests
     static List<CurvePoint> Flat(double level = 50) => CurveMath.Flat(Length, level);
 
     [Fact]
-    public void Times_land_on_15_minute_marks_inside_the_range()
+    public void Times_land_on_5_minute_marks_inside_the_range()
     {
-        Assert.Equal(60, CurveMath.SnapTime(57, Length));
-        Assert.Equal(45, CurveMath.SnapTime(50, Length));
+        Assert.Equal(5, CurveMath.StepMinutes);
+        Assert.Equal(55, CurveMath.SnapTime(57, Length));
+        Assert.Equal(60, CurveMath.SnapTime(58, Length));
         Assert.Equal(0, CurveMath.SnapTime(-20, Length));
         Assert.Equal(Length, CurveMath.SnapTime(999, Length));
     }
 
     [Fact]
-    public void A_level_close_to_a_neighbour_lines_up_with_it()
+    public void A_level_close_to_another_points_lines_up_with_it()
     {
         Assert.Equal(75, CurveMath.SnapLevel(73, [75]));
         Assert.Equal(70, CurveMath.SnapLevel(70, [75]));     // 5 apart: left alone
         Assert.Equal(100, CurveMath.SnapLevel(140, []));     // clamped
+    }
+
+    [Fact]
+    public void Of_two_close_levels_a_point_lines_up_with_the_nearer()
+    {
+        Assert.Equal(54, CurveMath.SnapLevel(52.5, [50, 54]));
+        Assert.Equal(50, CurveMath.SnapLevel(51.5, [54, 50]));
     }
 
     [Fact]
@@ -31,10 +39,18 @@ public class CurveMathTests
     [Fact]
     public void Clicking_adds_a_point_in_time_order()
     {
-        var curve = CurveMath.Add(Flat(), 130, 80, Length);
+        var curve = CurveMath.Add(Flat(), 132, 80, Length);
 
         Assert.Equal(3, curve.Count);
-        Assert.Equal(new CurvePoint(135, 80), curve[1]);
+        Assert.Equal(new CurvePoint(130, 80), curve[1]);
+    }
+
+    [Fact]
+    public void A_new_point_lines_up_with_a_level_already_on_the_curve()
+    {
+        var curve = CurveMath.Add(Flat(50), 240, 52, Length);
+
+        Assert.Equal(new CurvePoint(240, 50), curve[1]);
     }
 
     [Fact]
@@ -85,6 +101,24 @@ public class CurveMathTests
 
         var moved = CurveMath.Move(curve, 1, 240, 52, Length);
         Assert.Equal(50, moved[1].Level);
+    }
+
+    [Fact]
+    public void A_dragged_point_snaps_level_with_any_other_point_not_only_its_neighbours()
+    {
+        List<CurvePoint> curve = [new(0, 50), new(120, 20), new(240, 80), new(360, 30), new(Length, 50)];
+
+        // 360's neighbours sit at 80 and 50; the point at 120, two along, is at 20.
+        Assert.Equal(new CurvePoint(360, 20), CurveMath.Move(curve, 3, 360, 22, Length)[3]);
+    }
+
+    [Fact]
+    public void A_dragged_point_between_two_close_levels_takes_the_nearer()
+    {
+        List<CurvePoint> curve = [new(0, 50), new(120, 10), new(240, 54), new(Length, 10)];
+
+        Assert.Equal(54, CurveMath.Move(curve, 1, 120, 52.5, Length)[1].Level);
+        Assert.Equal(50, CurveMath.Move(curve, 1, 120, 51.5, Length)[1].Level);
     }
 
     [Fact]

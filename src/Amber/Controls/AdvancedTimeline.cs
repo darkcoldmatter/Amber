@@ -406,8 +406,11 @@ public class AdvancedTimeline : FrameworkElement
 
     sealed class BarPeer(AdvancedTimeline owner, Filter filter) : AutomationPeer, ISelectionItemProvider
     {
-        protected override string GetNameCore() =>
-            $"{filter.Mode.DisplayName()}, {filter.Start:HH\\:mm} to {filter.End:HH\\:mm}";
+        protected override string GetNameCore()
+        {
+            static string Clock(TimeOnly time) => TimeFormat.Current.Clock(ScheduleRange.Minutes(time));
+            return $"{filter.Mode.DisplayName()}, {Clock(filter.Start)} to {Clock(filter.End)}";
+        }
 
         protected override Rect GetBoundingRectangleCore()
         {

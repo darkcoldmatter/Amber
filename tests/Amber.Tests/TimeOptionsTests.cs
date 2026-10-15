@@ -3,11 +3,8 @@ namespace Amber.Tests;
 public class TimeOptionsTests
 {
     [Fact]
-    public void Hours_and_minutes_cover_the_day_in_15_minute_steps()
+    public void Minutes_come_in_15_minute_steps()
     {
-        Assert.Equal(24, TimeOptions.Hours.Count);
-        Assert.Equal("00", TimeOptions.Hours[0]);
-        Assert.Equal("23", TimeOptions.Hours[^1]);
         Assert.Equal(["00", "15", "30", "45"], TimeOptions.Minutes);
     }
 

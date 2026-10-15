@@ -29,6 +29,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        TextLook.MakeDefault();
         var startInTray = e.Args.Contains(TrayArgument);
 
         // Only one Amber at a time. A second launch asks the running one to show its window, then exits.

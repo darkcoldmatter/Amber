@@ -26,8 +26,6 @@ public sealed class HintBubble : Adorner
         _lines = lines;
         IsHitTestVisible = false;
         Effect = new DropShadowEffect { Color = Color.FromRgb(0x27, 0x1F, 0x1F), Opacity = 0.16, BlurRadius = 30, ShadowDepth = 4, Direction = 270 };
-        TextOptions.SetTextRenderingMode(this, TextOptions.GetTextRenderingMode(adornedElement));
-        TextOptions.SetTextHintingMode(this, TextOptions.GetTextHintingMode(adornedElement));
     }
 
     /// <summary>Where the pointer's tip goes, in the adorned element's coordinates; null hides the bubble.</summary>

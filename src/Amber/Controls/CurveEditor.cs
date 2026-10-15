@@ -65,11 +65,12 @@ public class CurveEditor : FrameworkElement
     /// an hour shows only those). Between them, a regular stride on the clock: every half hour when it fits, else every
     /// 1, 2, 3, 4, 6 or 12 hours counted from the first whole hour — every label, an end on the stride included, keeps
     /// 16 px of room. A stride label gives way only to an end that falls between strides and that it would run into.
-    /// <paramref name="measure"/> gives a label's width.
+    /// On the 12-hour clock the two ends say AM or PM, as does 12 o'clock. <paramref name="measure"/> gives a label's width.
     /// </summary>
-    public static List<TimeLabel> TimeLabels(int start, int length, double width, Func<string, double> measure)
+    public static List<TimeLabel> TimeLabels(int start, int length, double width, TimeFormat format, Func<string, double> measure)
     {
-        TimeLabel At(int minutes) => new(minutes, Clock(start + minutes), (start + minutes) % 60 == 30);
+        TimeLabel At(int minutes) =>
+            new(minutes, format.GraphLabel(start + minutes, designator: minutes == 0 || minutes == length), (start + minutes) % 60 == 30);
         (double Left, double Right) Box(TimeLabel label)
         {
             var labelWidth = measure(label.Text);
@@ -104,10 +105,6 @@ public class CurveEditor : FrameworkElement
         var top = Math.Clamp(point.Y - box.Height / 2, bounds.Top, bounds.Bottom - box.Height);
         return new Rect(left, top, box.Width, box.Height);
     }
-
-    /// <summary>"6:00", "23:30", "0:15" — minutes since midnight on the clock, past midnight too.</summary>
-    static string Clock(int minutes) =>
-        $"{minutes / 60 % 24}:{(minutes % 60).ToString("00", CultureInfo.InvariantCulture)}";
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
@@ -237,7 +234,7 @@ public class CurveEditor : FrameworkElement
         var typeface = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
         var plot = Plot;
         var start = ScheduleRange.Minutes(_filter!.Start);
-        foreach (var label in TimeLabels(start, _filter.LengthMinutes, plot.Width, text => Text(text, typeface, InkBrush, dpi).Width))
+        foreach (var label in TimeLabels(start, _filter.LengthMinutes, plot.Width, TimeFormat.Current, text => Text(text, typeface, InkBrush, dpi).Width))
         {
             var text = Text(label.Text, typeface, label.Faded ? FadedInkBrush : InkBrush, dpi);
             var x = Math.Clamp(plot.Left + label.Minutes / (double)Length * plot.Width - text.Width / 2, plot.Left, plot.Right - text.Width);
@@ -302,7 +299,7 @@ public class CurveEditor : FrameworkElement
     {
         var bold = new Typeface(font, FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
         var medium = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
-        var time = Text(Clock(ScheduleRange.Minutes(_filter!.Start) + point.Minutes), bold, Brushes.White, dpi);
+        var time = Text(TimeFormat.Current.Clock(ScheduleRange.Minutes(_filter!.Start) + point.Minutes), bold, Brushes.White, dpi);
         var level = Text(point.Level.ToString("0", CultureInfo.InvariantCulture) + "%", medium, FadedWhiteBrush, dpi);
 
         var size = new Size(Math.Ceiling(Math.Max(time.Width, level.Width)) + 2 * BoxPadding, BoxHeight);

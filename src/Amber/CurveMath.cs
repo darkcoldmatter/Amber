@@ -1,25 +1,27 @@
 namespace Amber;
 
 /// <summary>
-/// The rules behind a filter's curve: points sit on 15-minute marks, the first and last stay at the ends
-/// of the range, and a point nudged almost level with its neighbour snaps to it.
+/// The rules behind a filter's curve: points sit on 5-minute marks, the first and last stay at the ends
+/// of the range, and a point nudged almost level with another point snaps to its level.
 /// </summary>
 public static class CurveMath
 {
-    public const int StepMinutes = ScheduleRange.SnapMinutes;
+    /// <summary>Curve points move in 5-minute steps, finer than the 15 minutes a filter's edges snap to.</summary>
+    public const int StepMinutes = 5;
 
-    /// <summary>A point within ~3 levels of a neighbour lines up with it exactly.</summary>
+    /// <summary>A point within ~3 levels of another point's level lines up with it exactly.</summary>
     public const double LevelSnap = 3;
 
     public static int SnapTime(double minutes, int length) =>
         Math.Clamp((int)Math.Round(minutes / StepMinutes) * StepMinutes, 0, length);
 
-    public static double SnapLevel(double level, IEnumerable<double> neighbours)
+    /// <summary>The level, kept within 0–100, or the nearest of the other points' levels when one is within ~3 of it.</summary>
+    public static double SnapLevel(double level, IEnumerable<double> others)
     {
         var snapped = Math.Clamp(level, 0, 100);
-        foreach (var neighbour in neighbours)
-            if (Math.Abs(neighbour - snapped) <= LevelSnap) return neighbour;
-        return snapped;
+        var nearest = others.Where(other => Math.Abs(other - snapped) <= LevelSnap)
+            .OrderBy(other => Math.Abs(other - snapped)).Cast<double?>().FirstOrDefault();
+        return nearest ?? snapped;
     }
 
     /// <summary>A curve that hasn't been drawn yet: a flat line across the range.</summary>
@@ -71,14 +73,14 @@ public static class CurveMath
         return curve;
     }
 
-    /// <summary>Adds a point where the user clicked, keeping the list in time order.</summary>
+    /// <summary>Adds a point where the user clicked, keeping the list in time order; its level lines up with a close one.</summary>
     public static List<CurvePoint> Add(IEnumerable<CurvePoint> points, double minutes, double level, int length)
     {
         var curve = points.ToList();
         var at = SnapTime(minutes, length);
         if (at <= 0 || at >= length || curve.Any(p => p.Minutes == at)) return curve;
 
-        curve.Add(new CurvePoint(at, Math.Clamp(level, 0, 100)));
+        curve.Add(new CurvePoint(at, SnapLevel(level, curve.Select(p => p.Level))));
         return [.. curve.OrderBy(p => p.Minutes)];
     }
 
@@ -94,7 +96,7 @@ public static class CurveMath
 
     /// <summary>
     /// Moves a point. The first and last only move up and down; the others also stay between their
-    /// neighbours, at least one step away from each.
+    /// neighbours, at least one step away from each. Its level lines up with any other point's that is close.
     /// </summary>
     public static List<CurvePoint> Move(IEnumerable<CurvePoint> points, int index, double minutes, double level, int length)
     {
@@ -106,11 +108,8 @@ public static class CurveMath
             ? curve[index].Minutes
             : Math.Clamp(SnapTime(minutes, length), curve[index - 1].Minutes + StepMinutes, curve[index + 1].Minutes - StepMinutes);
 
-        var neighbours = new List<double>();
-        if (index > 0) neighbours.Add(curve[index - 1].Level);
-        if (index < curve.Count - 1) neighbours.Add(curve[index + 1].Level);
-
-        curve[index] = new CurvePoint(time, SnapLevel(level, neighbours));
+        var others = curve.Where((_, i) => i != index).Select(p => p.Level);
+        curve[index] = new CurvePoint(time, SnapLevel(level, others));
         return curve;
     }
 }

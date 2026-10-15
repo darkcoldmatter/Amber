@@ -5,19 +5,23 @@ using System.Windows.Media;
 namespace Amber.Controls;
 
 /// <summary>
-/// The simple schedule's 24-hour timeline: hour labels over a tan track with one white range, which has a grip
-/// line near each end. Either end of the range can be dragged; it snaps to 15 minutes and wraps past midnight,
+/// The simple schedule's 24-hour timeline: hour labels over a tan track with one white range, which has a thin
+/// border and a grip line near each end. Either end of the range can be dragged; it snaps to 15 minutes and wraps past midnight,
 /// so the range splits in two and dragging continues from the other side.
 /// </summary>
 public class ScheduleBar : FrameworkElement
 {
     const double TrackTop = 32, TrackHeight = 42, TrackRadius = 14, LabelsAbove = 15.5;
+    // The range runs exactly from its start to its end, 2 px inside the track at the top and bottom only.
     const double RangeInset = 2, RangeRadius = 12, OutlineWidth = 1.5;
     // Grip lines as on the level slider: 2 × 14, 8 px inside the edge, and at least 4 px of white beside them.
     const double GripInset = 8, GripWidth = 2, GripHeight = 14, GripRoom = 4;
 
     static readonly Brush TrackBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0x29, 0xAF, 0x58, 0x00)));
     static readonly Brush GripBrush = Timeline.Frozen(new SolidColorBrush(Color.FromArgb(0x33, 0x27, 0x1F, 0x1F)));
+    // A thin border keeps the range distinct where it meets the hour lines, like the advanced bars': a step deeper
+    // than the tan track, as theirs is than the amber one.
+    static readonly Pen BorderPen = Timeline.Frozen(new Pen(new SolidColorBrush(Color.FromRgb(0xE6, 0xCA, 0xAD)), 1));
     static readonly Pen OutlinePen = Timeline.Frozen(new Pen(new SolidColorBrush(Color.FromArgb(0x4D, 0x27, 0x1F, 0x1F)), OutlineWidth));
 
     public static readonly DependencyProperty StartProperty = DependencyProperty.Register(
@@ -109,22 +113,33 @@ public class ScheduleBar : FrameworkElement
         dc.DrawRoundedRectangle(TrackBrush, null, track, TrackRadius, TrackRadius);
         Timeline.DrawHourGrid(dc, track);
 
-        // White range, 2 px inside the track and on whole pixels so its sides stay sharp: one piece, or two past midnight.
+        // White range from exactly its start to its end, on whole pixels so its sides stay sharp: one piece, or two past
+        // midnight. Its border sits inside it, on the pixels of the start's and the end's hour lines (an hour line is
+        // drawn on the pixel right of its hour), so neither the border nor the hover outline leaves the track.
         var pieces = Timeline.Pieces(StartMinutes, EndMinutes, ActualWidth)
-            .Select(piece => new Rect(Math.Round(piece.Left) + RangeInset, track.Top + RangeInset,
-                Math.Max(Math.Round(piece.Right) - Math.Round(piece.Left) - 2 * RangeInset, 1), TrackHeight - 2 * RangeInset))
+            .Select(piece =>
+            {
+                var left = Math.Round(piece.Left);
+                var right = Math.Min(Math.Round(piece.Right) + 1, ActualWidth);
+                return new Rect(left, track.Top + RangeInset, Math.Max(right - left, 1), TrackHeight - 2 * RangeInset);
+            })
             .ToArray();
-        foreach (var range in pieces) dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
+        foreach (var range in pieces)
+        {
+            dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
+            DrawInside(dc, BorderPen, range);
+        }
         DrawGrips(dc, pieces);
         if (!_hovered) return;
 
-        // The outline sits inside the range, like a Figma inside stroke.
-        foreach (var range in pieces)
-        {
-            var outline = range;
-            outline.Inflate(-OutlineWidth / 2, -OutlineWidth / 2);
-            dc.DrawRoundedRectangle(null, OutlinePen, outline, RangeRadius - OutlineWidth / 2, RangeRadius - OutlineWidth / 2);
-        }
+        foreach (var range in pieces) DrawInside(dc, OutlinePen, range);
+    }
+
+    static void DrawInside(DrawingContext dc, Pen pen, Rect range)
+    {
+        if (range.Width <= pen.Thickness) return;
+        range.Inflate(-pen.Thickness / 2, -pen.Thickness / 2);
+        dc.DrawRoundedRectangle(null, pen, range, RangeRadius - pen.Thickness / 2, RangeRadius - pen.Thickness / 2);
     }
 
     /// <summary>

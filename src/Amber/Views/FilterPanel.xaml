@@ -7,18 +7,30 @@
         <Canvas Height="42">
             <Button x:Name="ModeField" Canvas.Left="24" Style="{StaticResource ModeDropdown}" Click="OnModeClick" AutomationProperties.Name="Mode" />
 
-            <controls:TimeField x:Name="StartField" Canvas.Left="190" AutomationProperties.Name="Start time" />
-            <Rectangle Canvas.Left="285" Canvas.Top="20" Width="10" Height="1" Fill="{StaticResource InkBrush}" />
-            <controls:TimeField x:Name="EndField" Canvas.Left="303" AutomationProperties.Name="End time" />
+            <!--
+                From x 190 to Figma's x 776: the times, then the level slider from 40 px after them to x 700, and its number
+                right-aligned at 776. The 12-hour clock's wider times leave a shorter slider.
+            -->
+            <Grid Canvas.Left="190" Width="586" Height="42">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <controls:TimeField x:Name="StartField" AutomationProperties.Name="Start time" />
+                    <Rectangle Margin="8,20,8,0" VerticalAlignment="Top" Width="10" Height="1" Fill="{StaticResource InkBrush}" />
+                    <controls:TimeField x:Name="EndField" AutomationProperties.Name="End time" />
+                </StackPanel>
 
-            <!-- Gives way to the curve while the curve is on. The number must never take the mouse: it sits beside the slider. -->
-            <Grid x:Name="LevelGroup" Width="848" Height="42">
-                <controls:LevelSlider x:Name="Level" Width="270" Margin="430,0,0,0" HorizontalAlignment="Left" Style="{StaticResource LevelSlider}"
-                                      Value="{Binding Level}" AutomationProperties.Name="Level" />
-                <!-- Right-aligned to Figma's x 776, digits centred on its y 249.5. -->
-                <controls:TrackedText x:Name="Percent" FontFamily="{StaticResource NumberFont}" FontSize="24" FontWeight="Medium" Tracking="-0.96"
-                                      Foreground="{StaticResource InkBrush}" Margin="0,0,72,1" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                      IsHitTestVisible="False" />
+                <!-- Gives way to the curve while the curve is on. The number must never take the mouse: it sits beside the slider. -->
+                <Grid x:Name="LevelGroup" Grid.Column="1">
+                    <controls:LevelSlider x:Name="Level" Margin="40,0,76,0" Style="{StaticResource LevelSlider}"
+                                          Value="{Binding Level}" AutomationProperties.Name="Level" />
+                    <!-- Digits centred on Figma's y 249.5. -->
+                    <controls:TrackedText x:Name="Percent" FontFamily="{StaticResource NumberFont}" FontSize="24" FontWeight="Medium" Tracking="-0.96"
+                                          Foreground="{StaticResource InkBrush}" Margin="0,0,0,1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          IsHitTestVisible="False" />
+                </Grid>
             </Grid>
 
             <ToggleButton x:Name="CurveToggle" Canvas.Left="788" Canvas.Top="3" Style="{StaticResource CurveButton}"

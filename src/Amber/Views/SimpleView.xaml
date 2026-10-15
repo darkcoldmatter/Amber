@@ -28,9 +28,12 @@
             <controls:ScheduleBar Canvas.Left="24" Width="676" Height="74" Start="{Binding ScheduleStart}" End="{Binding ScheduleEnd}"
                                   AutomationProperties.Name="Schedule bar" />
 
-            <controls:TimeField Canvas.Left="24" Canvas.Top="98" Value="{Binding ScheduleStart}" AutomationProperties.Name="Start time" />
-            <Rectangle Canvas.Left="119" Canvas.Top="118" Width="10" Height="1" Fill="{StaticResource InkBrush}" Opacity="0.5" />
-            <controls:TimeField Canvas.Left="137" Canvas.Top="98" Value="{Binding ScheduleEnd}" AutomationProperties.Name="End time" />
+            <!-- The fields are wider on the 12-hour clock: the dash and the end time move along with them. -->
+            <StackPanel Canvas.Left="24" Canvas.Top="98" Orientation="Horizontal">
+                <controls:TimeField Value="{Binding ScheduleStart}" AutomationProperties.Name="Start time" />
+                <Rectangle Margin="8,20,8,0" VerticalAlignment="Top" Width="10" Height="1" Fill="{StaticResource InkBrush}" Opacity="0.5" />
+                <controls:TimeField Value="{Binding ScheduleEnd}" AutomationProperties.Name="End time" />
+            </StackPanel>
 
             <TextBlock Canvas.Right="136" Canvas.Top="109.7" Text="Transition" FontSize="14" FontWeight="Medium" Foreground="{StaticResource InkBrush}" />
             <Button x:Name="Transition" Canvas.Left="613" Canvas.Top="98" Style="{StaticResource FieldButton}" Click="OnTransitionClick"

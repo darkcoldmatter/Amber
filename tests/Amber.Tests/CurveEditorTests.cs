@@ -7,9 +7,12 @@ public class CurveEditorTests
 {
     const double PlotWidth = 750;
 
+    static readonly TimeFormat TwentyFour = TimeFormatTests.Format("HH:mm");
+    static readonly TimeFormat Twelve = TimeFormatTests.Format("h:mm tt");
+
     // 7 px per character is close enough to the real font for the spacing rules.
-    static List<TimeLabel> Labels(int startHour, int startMinute, int length) =>
-        CurveEditor.TimeLabels(startHour * 60 + startMinute, length, PlotWidth, text => text.Length * 7);
+    static List<TimeLabel> Labels(int startHour, int startMinute, int length, TimeFormat? format = null) =>
+        CurveEditor.TimeLabels(startHour * 60 + startMinute, length, PlotWidth, format ?? TwentyFour, text => text.Length * 7);
 
     [Fact]
     public void Labels_come_every_half_hour_when_there_is_room()
@@ -65,6 +68,21 @@ public class CurveEditorTests
 
         Assert.Equal(["23:30", "0:15"], labels.Select(l => l.Text));
         Assert.Equal([0, 45], labels.Select(l => l.Minutes));
+    }
+
+    [Fact]
+    public void On_the_12_hour_clock_the_ends_and_12_oclock_say_AM_or_PM()
+    {
+        Assert.Equal(["11 AM", "11:30", "12 PM", "12:30", "1", "1:30", "2", "2:30", "3 PM"], Labels(11, 0, 240, Twelve).Select(l => l.Text));
+        Assert.Equal(["6:15 AM", "6:30", "7", "7:30", "8", "8:15 AM"], Labels(6, 15, 120, Twelve).Select(l => l.Text));
+        Assert.Equal(["11:30 PM", "12:15 AM"], Labels(23, 30, 45, Twelve).Select(l => l.Text));
+    }
+
+    [Fact]
+    public void A_whole_day_on_the_12_hour_clock_thins_to_every_two_hours()
+    {
+        Assert.Equal(["12 AM", "2", "4", "6", "8", "10", "12 PM", "2", "4", "6", "8", "10", "12 AM"],
+            Labels(0, 0, 24 * 60, Twelve).Select(l => l.Text));
     }
 
     static readonly Rect Card = new(0, 0, 800, 241);

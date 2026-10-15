@@ -5,9 +5,7 @@ public static class TimeOptions
 {
     static readonly int[] TransitionChoices = [0, 10, 30, 60, 120, 300, 600, 900, 1800];
 
-    public static IReadOnlyList<string> Hours { get; } =
-        Enumerable.Range(0, 24).Select(hour => hour.ToString("00")).ToArray();
-
+    // The hours depend on the clock Windows uses: TimeFormat.Hours.
     public static IReadOnlyList<string> Minutes { get; } =
         Enumerable.Range(0, 60 / ScheduleStep).Select(step => (step * ScheduleStep).ToString("00")).ToArray();
 

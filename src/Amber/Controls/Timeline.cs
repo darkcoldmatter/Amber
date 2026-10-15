@@ -79,14 +79,18 @@ public static class Timeline
     public static int DragTarget(int edge, bool isStart, double pressX, double x, double width) =>
         ScheduleRange.MinutesAt((isStart ? X(edge, width) : EndX(edge, width)) + x - pressX, width);
 
-    /// <summary>"00" to "24" every two hours, centred on their hour; the first and last stay within the track's ends.</summary>
+    /// <summary>
+    /// Every two hours, "00" to "24" or "12 AM", "2" … "12 PM" … "12 AM", centred on their hour; the first and last stay
+    /// within the track's ends.
+    /// </summary>
     public static void DrawHourLabels(DrawingContext dc, Rect track, double centerY, FontFamily font, double pixelsPerDip)
     {
         var typeface = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
         var capHeight = typeface.TryGetGlyphTypeface(out var glyphs) ? glyphs.CapsHeight * 12 : 0;
+        var format = TimeFormat.Current;
         for (var hour = 0; hour <= 24; hour += 2)
         {
-            var text = new FormattedText(hour.ToString("00", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture,
+            var text = new FormattedText(format.TimelineHour(hour), CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, typeface, 12, LabelBrush, pixelsPerDip);
             var x = Math.Clamp(track.Left + hour / 24.0 * track.Width - text.Width / 2, track.Left, track.Right - text.Width);
             // Centre the digits themselves (cap height to baseline), like Figma's trimmed text.

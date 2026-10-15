@@ -7,8 +7,8 @@ public class CurveEditorTests
 {
     const double PlotWidth = 750;
 
-    static readonly TimeFormat TwentyFour = TimeFormatTests.Format("HH:mm");
-    static readonly TimeFormat Twelve = TimeFormatTests.Format("h:mm tt");
+    static readonly TimeFormat TwentyFour = TimeFormat.For("HH:mm");
+    static readonly TimeFormat Twelve = TimeFormat.For("h:mm tt");
 
     // 7 px per character is close enough to the real font for the spacing rules.
     static List<TimeLabel> Labels(int startHour, int startMinute, int length, TimeFormat? format = null) =>

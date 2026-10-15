@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -18,7 +17,7 @@ public partial class MainWindow : Window
     public MainWindow(Settings settings)
     {
         // The window is built afresh each time it opens: pick up a change to Windows' clock (12- or 24-hour) since last time.
-        CultureInfo.CurrentCulture.ClearCachedData();
+        TimeFormat.Refresh();
         InitializeComponent();
         _settings = settings;
         DataContext = settings;

@@ -124,15 +124,17 @@ public class ScheduleBar : FrameworkElement
                 return new Rect(left, track.Top + RangeInset, Math.Max(right - left, 1), TrackHeight - 2 * RangeInset);
             })
             .ToArray();
+        // A short piece at either end can't round its corners as the track's end does: everything on the range stays within
+        // the track's rounded inside, 2 px in from its top and bottom.
+        dc.PushClip(new RectangleGeometry(new Rect(0, track.Top + RangeInset, ActualWidth, TrackHeight - 2 * RangeInset), RangeRadius, RangeRadius));
         foreach (var range in pieces)
         {
             dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
             DrawInside(dc, BorderPen, range);
         }
         DrawGrips(dc, pieces);
-        if (!_hovered) return;
-
-        foreach (var range in pieces) DrawInside(dc, OutlinePen, range);
+        if (_hovered) foreach (var range in pieces) DrawInside(dc, OutlinePen, range);
+        dc.Pop();
     }
 
     static void DrawInside(DrawingContext dc, Pen pen, Rect range)

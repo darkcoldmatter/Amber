@@ -1,32 +1,51 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace Amber;
 
 /// <summary>
 /// How Amber writes a time: on the 12-hour clock ("6:30 PM") or the 24-hour one ("18:30"), whichever Windows' region
-/// settings use (24-hour when the short time format has an "H"). Every time Amber shows is written here; on the
-/// 24-hour clock each one reads as it always has.
+/// settings use. Only that choice comes from Windows; the words stay English like the rest of Amber, so it is always
+/// "AM" and "PM", after the time. Every time Amber shows is written here; on the 24-hour clock each one reads as it
+/// always has.
 /// </summary>
 public sealed class TimeFormat
 {
-    readonly string _am, _pm;
+    const string AM = "AM", PM = "PM";
+    const uint LOCALE_SSHORTTIME = 0x79;
 
-    TimeFormat(bool is24Hour, string am, string pm) => (Is24Hour, _am, _pm) = (is24Hour, am, pm);
+    static TimeFormat? _current;
 
-    /// <summary>The clock Windows uses. The window reads Windows' settings afresh each time it opens.</summary>
-    public static TimeFormat Current => For(CultureInfo.CurrentCulture);
+    TimeFormat(bool is24Hour) => Is24Hour = is24Hour;
 
-    /// <summary>A culture's clock: 24-hour when its short time format uses "H", else 12-hour with its own AM and PM.</summary>
-    public static TimeFormat For(CultureInfo culture)
+    /// <summary>The clock Windows used when the window last opened.</summary>
+    public static TimeFormat Current => _current ??= Read();
+
+    /// <summary>Reads Windows' clock again. The window does this each time it opens, so a change shows the next time.</summary>
+    public static void Refresh() => _current = Read();
+
+    /// <summary>
+    /// The clock a short time format asks for: 24-hour when it has an "H" outside its literal text (anything in quotes,
+    /// or a character after a backslash), else 12-hour.
+    /// </summary>
+    public static TimeFormat For(string shortTime)
     {
-        var format = culture.DateTimeFormat;
-        return new TimeFormat(format.ShortTimePattern.Contains('H'), format.AMDesignator, format.PMDesignator);
+        char? quote = null;
+        for (var i = 0; i < shortTime.Length; i++)
+        {
+            var c = shortTime[i];
+            if (c == '\\') i++;
+            else if (quote is not null) { if (c == quote) quote = null; }
+            else if (c is '\'' or '"') quote = c;
+            else if (c == 'H') return new TimeFormat(true);
+        }
+        return new TimeFormat(false);
     }
 
     public bool Is24Hour { get; }
 
     /// <summary>AM or PM for an hour of the day (0–24); nothing on the 24-hour clock.</summary>
-    public string Designator(int hour) => Is24Hour ? "" : hour % 24 < 12 ? _am : _pm;
+    public string Designator(int hour) => Is24Hour ? "" : hour % 24 < 12 ? AM : PM;
 
     /// <summary>The hour in a time field: "06", or "6" (with AM or PM beside it).</summary>
     public string FieldHour(int hour) => Is24Hour ? Number(hour, "00") : Number(Twelve(hour));
@@ -59,6 +78,17 @@ public sealed class TimeFormat
         return designator || (minute == 0 && hour % 12 == 0) ? $"{time} {Designator(hour)}" : time;
     }
 
+    /// <summary>
+    /// Windows' short time format as the user has it set right now (.NET keeps its own copy from when Amber started), or
+    /// .NET's copy if Windows can't say.
+    /// </summary>
+    static TimeFormat Read()
+    {
+        var buffer = new char[80]; // the longest a time format can be, closing null included
+        var length = GetLocaleInfoEx(null, LOCALE_SSHORTTIME, buffer, buffer.Length);
+        return For(length > 0 ? new string(buffer, 0, length - 1) : CultureInfo.CurrentCulture.DateTimeFormat.ShortTimePattern);
+    }
+
     static (int Hour, int Minute) HourAndMinute(int minutes)
     {
         var inDay = (minutes % ScheduleRange.DayMinutes + ScheduleRange.DayMinutes) % ScheduleRange.DayMinutes;
@@ -68,4 +98,7 @@ public sealed class TimeFormat
     static int Twelve(int hour) => hour % 12 == 0 ? 12 : hour % 12;
 
     static string Number(int value, string format = "0") => value.ToString(format, CultureInfo.InvariantCulture);
+
+    // A null locale name is the user's own locale (LOCALE_NAME_USER_DEFAULT), with their changes to it.
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern int GetLocaleInfoEx(string? localeName, uint type, [Out] char[] data, int size);
 }

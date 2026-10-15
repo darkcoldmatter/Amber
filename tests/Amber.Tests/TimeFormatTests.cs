@@ -1,32 +1,28 @@
-using System.Globalization;
-
 namespace Amber.Tests;
 
 public class TimeFormatTests
 {
-    /// <summary>A clock from a made-up culture, so the tests never depend on this PC's own settings.</summary>
-    internal static TimeFormat Format(string shortTime, string am = "AM", string pm = "PM")
-    {
-        var culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
-        culture.DateTimeFormat.ShortTimePattern = shortTime;
-        culture.DateTimeFormat.AMDesignator = am;
-        culture.DateTimeFormat.PMDesignator = pm;
-        return TimeFormat.For(culture);
-    }
-
-    static readonly TimeFormat TwentyFour = Format("HH:mm");
-    static readonly TimeFormat Twelve = Format("h:mm tt");
+    static readonly TimeFormat TwentyFour = TimeFormat.For("HH:mm");
+    static readonly TimeFormat Twelve = TimeFormat.For("h:mm tt");
 
     [Fact]
     public void The_clock_is_24_hour_when_the_short_time_format_uses_H()
     {
-        Assert.True(Format("HH:mm").Is24Hour);
-        Assert.True(Format("H:mm").Is24Hour);
-        Assert.False(Format("h:mm tt").Is24Hour);
-        Assert.False(Format("hh:mm tt").Is24Hour);
+        Assert.True(TimeFormat.For("HH:mm").Is24Hour);
+        Assert.True(TimeFormat.For("H:mm").Is24Hour);
+        Assert.False(TimeFormat.For("h:mm tt").Is24Hour);
+        Assert.False(TimeFormat.For("tt hh:mm").Is24Hour);
+    }
 
-        Assert.False(TimeFormat.For(CultureInfo.GetCultureInfo("en-US")).Is24Hour);
-        Assert.True(TimeFormat.For(CultureInfo.GetCultureInfo("en-GB")).Is24Hour);
+    [Fact]
+    public void Literal_text_in_the_format_never_counts_as_the_24_hour_H()
+    {
+        Assert.False(TimeFormat.For("h:mm 'Hr'").Is24Hour);
+        Assert.False(TimeFormat.For("h:mm \"H\"").Is24Hour);
+        Assert.False(TimeFormat.For(@"h:mm \H").Is24Hour);
+        Assert.False(TimeFormat.For("h 'o''clock H' mm").Is24Hour); // '' inside a literal is a quote mark
+        Assert.True(TimeFormat.For("HH 'h' mm").Is24Hour);
+        Assert.True(TimeFormat.For("'h'H:mm").Is24Hour);
     }
 
     [Fact]
@@ -90,11 +86,12 @@ public class TimeFormatTests
     }
 
     [Fact]
-    public void A_cultures_own_AM_and_PM_are_used()
+    public void AM_and_PM_are_always_English_and_after_the_time()
     {
-        var format = Format("h:mm tt", "a.m.", "p.m.");
+        // Windows only decides 12- or 24-hour: a format with its AM/PM first still reads "6:00 PM".
+        var format = TimeFormat.For("tt h:mm");
 
-        Assert.Equal("6:00 p.m.", format.Clock(18 * 60));
-        Assert.Equal("12 a.m.", format.TimelineHour(0));
+        Assert.Equal("6:00 PM", format.Clock(18 * 60));
+        Assert.Equal("12 AM", format.TimelineHour(0));
     }
 }

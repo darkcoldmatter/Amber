@@ -47,11 +47,15 @@ and release.
   gap (15 min at least) fades out to clear and back in.
 - **Live preview:** while dragging a level slider or a curve point, the screen shows that tint immediately,
   whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
-- Applying is skipped when the matrix barely changed, so a slow fade doesn't hammer the display pipeline.
-- The timer checks every 5 s, and not at all when there's nothing scheduled (idle CPU measured at 0 ms
-  over 20 s). From one check before a fade until it ends it steps every fade length / 100 (100–500 ms;
-  100 ms for advanced 10 s fades), so fades glide and never start late. A whole-day schedule or filter
-  has no edges and never fades.
+- Applying is skipped when the matrix barely changed (`TintMatrix.Differs`, 0.001 — a quarter of one 8-bit
+  colour step), so a slow fade doesn't hammer the display pipeline but no 1 % step is ever swallowed.
+- **Every visible change moves in steps of at most ~1 % (owner's rule).** The timer checks every 5 s, and not
+  at all when there's nothing scheduled (idle CPU measured at 0 ms over 20 s). From one check before a fade
+  until it ends it steps every fade length / 100 (100–500 ms; 100 ms for advanced 10 s fades), so fades
+  glide and never start late. On a sloped curve it checks often enough to move at most 1 level at a time
+  (`AdvancedSchedule.LevelTick`, 100 ms–5 s), and curves are read at fractional minutes. A whole-day
+  schedule or filter has no edges and never fades. Switching ON (or editing) in the middle of a fade jumps
+  straight to that moment's strength, by design.
 
 ## Behaviour rules
 
@@ -131,7 +135,7 @@ filters silently fail to load.
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 129 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 142 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 

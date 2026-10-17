@@ -11,7 +11,7 @@ public partial class App : Application
     // Windows starts Amber with this at sign-in: stay in the tray, no window.
     internal const string TrayArgument = "--tray";
 
-    static readonly TimeSpan FadeTick = TimeSpan.FromMilliseconds(500), IdleTick = TimeSpan.FromSeconds(5);
+    static readonly TimeSpan IdleTick = TimeSpan.FromSeconds(5);
 
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
@@ -195,11 +195,13 @@ public partial class App : Application
             return;
         }
 
+        // Look one idle check ahead, so the timer is already ticking often when a fade begins.
         var now = TimeOnly.FromDateTime(DateTime.Now);
         var fading = easing || (_settings.IsAdvanced
-            ? AdvancedSchedule.IsFading(_settings.Filters, now)
-            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds));
-        _scheduleTimer.Interval = fading ? FadeTick : IdleTick;
+            ? AdvancedSchedule.IsFading(_settings.Filters, now, IdleTick)
+            : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds, IdleTick));
+        var fadeSeconds = easing ? Fade.DefaultSeconds : _settings.IsAdvanced ? AdvancedSchedule.FadeSeconds : _settings.TransitionSeconds;
+        _scheduleTimer.Interval = fading ? Fade.Tick(fadeSeconds) : IdleTick;
         _scheduleTimer.Start();
     }
 

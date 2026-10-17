@@ -3,15 +3,16 @@ using Amber.Tint;
 namespace Amber;
 
 /// <summary>
-/// Turns "what the settings ask for" into "what the screen shows". The tint eases in and out, so
-/// switching a mode on — or a filter's time arriving — never snaps. The live preview is shown as it is,
-/// and releasing it snaps straight back to the real state.
+/// Turns "what the settings ask for" into "what the screen shows". When the tint comes or goes all at once — a mode
+/// switched on or off — it eases over the plain fade (<see cref="Amber.Fade.DefaultSeconds"/>, instant while that is 0);
+/// advanced filters fade at their edges by themselves. The live preview is shown as it is, and releasing it snaps
+/// straight back to the real state.
 /// </summary>
 public sealed class TintPlan
 {
     float[]? _lastTint;
 
-    /// <summary>How far the advanced fade has got: 0 = clear screen, 1 = the full tint.</summary>
+    /// <summary>How far the plain fade has got: 0 = clear screen, 1 = the full tint.</summary>
     public double Fade { get; private set; }
 
     /// <summary>True while a fade still has some way to go.</summary>

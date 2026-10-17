@@ -31,4 +31,13 @@ public class FadeTests
         Assert.Equal(1, Fade.Step(0.9, wanted: true, 60, FadeSeconds));
         Assert.Equal(0, Fade.Step(0.1, wanted: false, 60, FadeSeconds));
     }
+
+    [Fact]
+    public void A_fade_steps_about_1_percent_at_a_time_but_between_100_and_500_ms()
+    {
+        Assert.Equal(TimeSpan.FromMilliseconds(100), Fade.Tick(AdvancedSchedule.FadeSeconds));   // 10 s between filters
+        Assert.Equal(TimeSpan.FromMilliseconds(300), Fade.Tick(30));
+        Assert.Equal(TimeSpan.FromMilliseconds(500), Fade.Tick(30 * 60));   // a long fade still steps twice a second
+        Assert.Equal(TimeSpan.FromMilliseconds(100), Fade.Tick(2));         // never faster than 100 ms
+    }
 }

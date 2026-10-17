@@ -46,6 +46,26 @@ public class TintMatrixTests
     }
 
     [Fact]
+    public void Even_the_faintest_look_fades_in_1_percent_steps_that_are_never_skipped()
+    {
+        foreach (var mode in Modes)
+            foreach (var level in Levels)
+                for (var step = 0; step < 100; step++)
+                    Assert.True(TintMatrix.Differs(TintMatrix.Blend(mode, level, step / 100.0), TintMatrix.Blend(mode, level, (step + 1) / 100.0)),
+                        $"{mode} at level {level}: the step to {step + 1} % would be skipped");
+    }
+
+    [Fact]
+    public void Changes_too_small_to_see_are_skipped()
+    {
+        var almost = TintMatrix.Identity;
+        almost[12] -= 0.0005f;   // an eighth of one 8-bit colour step, on blue
+
+        Assert.False(TintMatrix.Differs(TintMatrix.Identity, TintMatrix.Identity));
+        Assert.False(TintMatrix.Differs(TintMatrix.Identity, almost));
+    }
+
+    [Fact]
     public void White_never_blows_out()
     {
         foreach (var mode in Modes)

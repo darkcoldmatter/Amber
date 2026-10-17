@@ -40,7 +40,7 @@ public sealed class Filter : INotifyPropertyChanged
     public (int Start, int End) Range => (ScheduleRange.Minutes(Start), ScheduleRange.Minutes(End));
 
     /// <summary>The level at a point in the range: the flat level, or the curve read between its points.</summary>
-    public double LevelAt(int minutesFromStart) =>
+    public double LevelAt(double minutesFromStart) =>
         CurveEnabled && Curve.Count > 0 ? CurveMath.LevelAt(Curve, minutesFromStart) : Level;
 
     /// <summary>A fresh curve is just a flat line at the current level, from one end of the range to the other.</summary>

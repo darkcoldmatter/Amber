@@ -43,9 +43,9 @@ public static class CurveMath
 
     /// <summary>
     /// A curve read at a moment: between two points the level runs straight from one to the other; before the first
-    /// point and after the last it stays at theirs.
+    /// point and after the last it stays at theirs. The moment may fall between whole minutes, so the level glides.
     /// </summary>
-    public static double LevelAt(IReadOnlyList<CurvePoint> points, int minutes)
+    public static double LevelAt(IReadOnlyList<CurvePoint> points, double minutes)
     {
         if (minutes <= points[0].Minutes) return points[0].Level;
         for (var i = 1; i < points.Count; i++)
@@ -56,6 +56,21 @@ public static class CurveMath
             return span <= 0 ? to.Level : from.Level + (to.Level - from.Level) * (minutes - from.Minutes) / span;
         }
         return points[^1].Level;
+    }
+
+    /// <summary>How fast the curve moves at its steepest between two moments, in levels per minute (0 where it is flat).</summary>
+    public static double Steepest(IReadOnlyList<CurvePoint> points, double fromMinutes, double toMinutes)
+    {
+        var steepest = 0.0;
+        for (var i = 1; i < points.Count; i++)
+        {
+            var (from, to) = (points[i - 1], points[i]);
+            var span = to.Minutes - from.Minutes;
+            // Outside the window, or two points on the same minute: a jump that no timer could smooth anyway.
+            if (span <= 0 || to.Minutes <= fromMinutes || from.Minutes >= toMinutes) continue;
+            steepest = Math.Max(steepest, Math.Abs(to.Level - from.Level) / span);
+        }
+        return steepest;
     }
 
     /// <summary>

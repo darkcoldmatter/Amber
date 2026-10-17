@@ -19,15 +19,16 @@ public readonly record struct BarHit(int Index, bool? Edge)
 
 /// <summary>
 /// Advanced mode's 24-hour timeline (Figma 111:4378): hour labels over an amber track with a white bar per filter, each
-/// showing its mode's dome over its level, or a curve mark. Clicking a bar selects it: it stays white and shows a delete
-/// icon while the others fade. Either edge of a bar can be dragged; it snaps to 15 minutes, wraps past midnight and stops
-/// at the neighbouring filters. Nothing on the timeline animates.
+/// showing its mode's dome over its level, or a curve mark. Clicking a bar selects it: it stays white, outlined as on
+/// hover, and shows a delete icon while the others fade. Either edge of a bar can be dragged; it snaps to 15 minutes,
+/// wraps past midnight and stops at the neighbouring filters. Nothing on the timeline animates.
 /// </summary>
 public class AdvancedTimeline : FrameworkElement
 {
     const double TrackTop = 32, TrackHeight = 80, TrackRadius = 14, LabelsAbove = 15.5;
     // The bars sit 2 px inside the track, so the day runs from x 2 to the width - 2; touching bars share their border.
-    const double Inset = 2, BarRadius = 12, OutlineWidth = 1.5;
+    // Their corners shrink with them (Timeline.CornerRadius).
+    const double Inset = 2, OutlineWidth = 1.5;
     // Inside a bar: the dome's top, the middle of the level text (or curve mark), and the room kept at the sides.
     const double DomeTop = 25, DomeWidth = 15, ContentMiddle = 46, ContentRoom = 4;
     // The delete icon on the selected bar: 16 px, 6 px below its top and 6 px in from its right; it needs 28 px of bar.
@@ -310,22 +311,37 @@ public class AdvancedTimeline : FrameworkElement
         Timeline.DrawHourGrid(dc, day);
         if (_filters is null || _filters.Count == 0) return;
 
+        // A short bar at either end can't round its corners as the track's end does: then the bars, their borders and
+        // outlines stay within the track's rounded inside (grown by a pixel, so the other bars' borders keep their outer half).
+        var clipped = _filters.SelectMany(Pieces)
+            .Any(piece => Radius(piece) < TrackRadius - Inset && (piece.Left <= Inset || piece.Right >= ActualWidth - Inset));
+        if (clipped)
+            dc.PushClip(new RectangleGeometry(new Rect(Inset - 1, TrackTop + Inset - 1, ActualWidth - 2 * Inset + 2, TrackHeight - 2 * Inset + 2),
+                TrackRadius - Inset + 1, TrackRadius - Inset + 1));
+
         // All the fills first, then every border in one stroke, so two bars that touch share a single line.
         var borders = new GeometryGroup();
         foreach (var filter in _filters)
             foreach (var piece in Pieces(filter))
             {
                 var fill = _selected is null || filter == _selected ? Brushes.White : FadedBarBrush;
-                dc.DrawRoundedRectangle(fill, null, piece, BarRadius, BarRadius);
-                borders.Children.Add(new RectangleGeometry(piece, BarRadius, BarRadius));
+                var radius = Radius(piece);
+                dc.DrawRoundedRectangle(fill, null, piece, radius, radius);
+                borders.Children.Add(new RectangleGeometry(piece, radius, radius));
             }
         dc.DrawGeometry(null, BorderPen, borders);
 
         var typeface = new Typeface(font, FontStyles.Normal, FontWeights.Medium, FontStretches.Normal);
         foreach (var filter in _filters) DrawContent(dc, filter, Widest(filter), typeface, dpi);
         DrawRemove(dc);
-        if (_hovered is not null) DrawOutline(dc, Pieces(_hovered));
+        // The selected bar keeps the hover outline for as long as it is selected; a hovered one gets it as well.
+        if (_selected is not null) DrawOutline(dc, Pieces(_selected));
+        if (_hovered is not null && _hovered != _selected) DrawOutline(dc, Pieces(_hovered));
+        if (clipped) dc.Pop();
     }
+
+    /// <summary>A bar's corners shrink with it (Timeline.CornerRadius).</summary>
+    double Radius(Rect piece) => Timeline.CornerRadius(piece.Width, DayWidth);
 
     /// <summary>The dome in the bar colour over the level ("70%") or the curve mark, centred; left out when the bar is too narrow.</summary>
     void DrawContent(DrawingContext dc, Filter filter, Rect bar, Typeface typeface, double dpi)
@@ -363,15 +379,16 @@ public class AdvancedTimeline : FrameworkElement
         dc.Pop();
     }
 
-    /// <summary>The hover outline sits inside the bar, like a Figma inside stroke.</summary>
-    static void DrawOutline(DrawingContext dc, IEnumerable<Rect> pieces)
+    /// <summary>The hover (and selected) outline sits inside the bar, like a Figma inside stroke.</summary>
+    void DrawOutline(DrawingContext dc, IEnumerable<Rect> pieces)
     {
         foreach (var piece in pieces)
         {
             if (piece.Width <= OutlineWidth) continue;
+            var radius = Radius(piece) - OutlineWidth / 2;
             var outline = piece;
             outline.Inflate(-OutlineWidth / 2, -OutlineWidth / 2);
-            dc.DrawRoundedRectangle(null, OutlinePen, outline, BarRadius - OutlineWidth / 2, BarRadius - OutlineWidth / 2);
+            dc.DrawRoundedRectangle(null, OutlinePen, outline, radius, radius);
         }
     }
 

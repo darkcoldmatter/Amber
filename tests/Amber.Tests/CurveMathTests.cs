@@ -155,6 +155,27 @@ public class CurveMathTests
     }
 
     [Fact]
+    public void A_curve_is_read_between_whole_minutes_too()
+    {
+        List<CurvePoint> curve = [new(0, 50), new(5, 100)];
+
+        Assert.Equal(55, CurveMath.LevelAt(curve, 0.5), 9);
+        Assert.Equal(75, CurveMath.LevelAt(curve, 2.5), 9);
+        Assert.Equal(99, CurveMath.LevelAt(curve, 4.9), 9);
+    }
+
+    [Fact]
+    public void The_steepest_stretch_counts_only_what_falls_between_the_two_moments()
+    {
+        List<CurvePoint> curve = [new(0, 0), new(10, 0), new(15, 100), new(60, 80)];   // flat, 20 a minute up, gently down
+
+        Assert.Equal(0, CurveMath.Steepest(curve, 2, 8));
+        Assert.Equal(20, CurveMath.Steepest(curve, 9, 11), 9);          // reaches into the steep stretch
+        Assert.Equal(20 / 45.0, CurveMath.Steepest(curve, 20, 30), 9);  // going down counts as moving too
+        Assert.Equal(0, CurveMath.Steepest(curve, 61, 70));             // past the last point it stays flat
+    }
+
+    [Fact]
     public void A_saved_curve_that_stops_short_is_carried_on_to_both_ends_in_the_same_shape()
     {
         // As older versions could save it: the range grew to 135 minutes while the curve still starts at 15 and stops at 60.

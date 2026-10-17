@@ -12,8 +12,9 @@ namespace Amber.Controls;
 public class ScheduleBar : FrameworkElement
 {
     const double TrackTop = 32, TrackHeight = 42, TrackRadius = 14, LabelsAbove = 15.5;
-    // The range runs exactly from its start to its end, 2 px inside the track at the top and bottom only.
-    const double RangeInset = 2, RangeRadius = 12, OutlineWidth = 1.5;
+    // The range runs exactly from its start to its end, 2 px inside the track at the top and bottom only; the track's
+    // rounded inside there has 12 px corners. (The range's own corners shrink with it: Timeline.CornerRadius.)
+    const double RangeInset = 2, InsideRadius = 12, OutlineWidth = 1.5;
     // Grip lines as on the level slider: 2 × 14, 8 px inside the edge, and at least 4 px of white beside them.
     const double GripInset = 8, GripWidth = 2, GripHeight = 14, GripRoom = 4;
 
@@ -126,22 +127,24 @@ public class ScheduleBar : FrameworkElement
             .ToArray();
         // A short piece at either end can't round its corners as the track's end does: everything on the range stays within
         // the track's rounded inside, 2 px in from its top and bottom.
-        dc.PushClip(new RectangleGeometry(new Rect(0, track.Top + RangeInset, ActualWidth, TrackHeight - 2 * RangeInset), RangeRadius, RangeRadius));
+        dc.PushClip(new RectangleGeometry(new Rect(0, track.Top + RangeInset, ActualWidth, TrackHeight - 2 * RangeInset), InsideRadius, InsideRadius));
         foreach (var range in pieces)
         {
-            dc.DrawRoundedRectangle(Brushes.White, null, range, RangeRadius, RangeRadius);
-            DrawInside(dc, BorderPen, range);
+            var radius = Timeline.CornerRadius(range.Width, ActualWidth);
+            dc.DrawRoundedRectangle(Brushes.White, null, range, radius, radius);
+            DrawInside(dc, BorderPen, range, radius);
         }
         DrawGrips(dc, pieces);
-        if (_hovered) foreach (var range in pieces) DrawInside(dc, OutlinePen, range);
+        if (_hovered) foreach (var range in pieces) DrawInside(dc, OutlinePen, range, Timeline.CornerRadius(range.Width, ActualWidth));
         dc.Pop();
     }
 
-    static void DrawInside(DrawingContext dc, Pen pen, Rect range)
+    /// <summary>A line along the inside of a piece, following its corners (<paramref name="radius"/>).</summary>
+    static void DrawInside(DrawingContext dc, Pen pen, Rect range, double radius)
     {
         if (range.Width <= pen.Thickness) return;
         range.Inflate(-pen.Thickness / 2, -pen.Thickness / 2);
-        dc.DrawRoundedRectangle(null, pen, range, RangeRadius - pen.Thickness / 2, RangeRadius - pen.Thickness / 2);
+        dc.DrawRoundedRectangle(null, pen, range, radius - pen.Thickness / 2, radius - pen.Thickness / 2);
     }
 
     /// <summary>

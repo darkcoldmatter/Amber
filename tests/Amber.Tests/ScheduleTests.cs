@@ -109,4 +109,23 @@ public class ScheduleTests
                 Assert.True(check <= fadeBegins, $"first noticed at {check:HH:mm:ss.f}");
             }
     }
+
+    [Fact]
+    public void A_scheduled_fade_in_starts_under_1_percent_and_rises_at_most_1_percent_per_check()
+    {
+        // At the app's own pace: idle checks every 5 s, then the fade's tick once it is about to begin.
+        foreach (var transition in TimeOptions.Transitions(12 * 60).Where(seconds => seconds > 0))
+            for (var tenths = 0; tenths < 50; tenths += 7)   // a few ways the idle checks can fall against the clock
+            {
+                var check = Start.Add(TimeSpan.FromSeconds(tenths / 10.0 - 60));
+                var strength = 0.0;
+                while (strength < 1)
+                {
+                    check = check.Add(IsFading(check, transition) ? Fade.Tick(transition) : IdleCheck);
+                    var next = Schedule.StrengthAt(check, Start, End, transition);
+                    Assert.True(next - strength <= 0.01 + 1e-9, $"{transition} s: {strength:P1} to {next:P1} at {check:HH:mm:ss.f}");
+                    strength = next;
+                }
+            }
+    }
 }

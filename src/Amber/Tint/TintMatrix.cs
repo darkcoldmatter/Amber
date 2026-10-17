@@ -31,6 +31,17 @@ public static class TintMatrix
     ];
 
     /// <summary>
+    /// True when two matrices differ by enough to be worth showing: at least a quarter of one 8-bit colour step (1/255)
+    /// somewhere. Small enough that even the faintest look (Golden hour at level 0) still fades in steps of 1 %.
+    /// </summary>
+    public static bool Differs(float[] a, float[] b)
+    {
+        for (var k = 0; k < a.Length; k++)
+            if (Math.Abs(a[k] - b[k]) >= 0.001f) return true;
+        return false;
+    }
+
+    /// <summary>
     /// Mixes several looks by weight, filling any leftover weight with an untinted screen.
     /// Used where two filters overlap while one fades out and the next fades in.
     /// </summary>

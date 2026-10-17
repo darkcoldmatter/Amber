@@ -14,6 +14,9 @@ public static class Timeline
     /// <summary>How close (px) the pointer has to be to a range's edge to grab it.</summary>
     public const double EdgeReach = 6;
 
+    // Corner radii of the ranges and bars: the full one from an hour up, the small one at the 15-minute minimum.
+    const double FullRadius = 12, SmallRadius = 4;
+
     static readonly Brush LabelBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x56, 0x56, 0x56)));
     static readonly Pen SolidLine = Frozen(new Pen(new SolidColorBrush(Color.FromArgb(0x1A, 0x27, 0x1F, 0x1F)), 1));
     // 3 px dashes, 3 px gaps; the offset starts the pattern 2 px above the track, as in Figma.
@@ -45,6 +48,19 @@ public static class Timeline
         }
         yield return (startX, width);
         yield return (0, endX);
+    }
+
+    /// <summary>
+    /// The corner radius of a range or bar <paramref name="barWidth"/> px wide on a day <paramref name="dayWidth"/> px wide:
+    /// 12 px from an hour up, shrinking with the bar to 4 px at the 15-minute minimum. It is the same across and down, and
+    /// never more than half the bar's width, so a narrow bar keeps round corners instead of squashed ones. (Bars are drawn
+    /// on whole pixels, so their length is read back to the nearest 15 minutes, the step every range moves in.)
+    /// </summary>
+    public static double CornerRadius(double barWidth, double dayWidth)
+    {
+        var minutes = Math.Round(barWidth / dayWidth * ScheduleRange.DayMinutes / ScheduleRange.SnapMinutes) * ScheduleRange.SnapMinutes;
+        var grown = Math.Clamp((minutes - ScheduleRange.SnapMinutes) / (60.0 - ScheduleRange.SnapMinutes), 0, 1);
+        return Math.Min(SmallRadius + grown * (FullRadius - SmallRadius), barWidth / 2);
     }
 
     /// <summary>Whether a point at <paramref name="x"/> lies within the range.</summary>

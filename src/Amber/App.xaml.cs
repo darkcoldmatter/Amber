@@ -174,13 +174,11 @@ public partial class App : Application
         return _plan.Next(target, eased: !_previewing, seconds);
     }
 
-    /// <summary>Skips tiny changes, so a slow fade doesn't hammer the display pipeline.</summary>
+    /// <summary>Skips changes too small to see, so a slow fade doesn't hammer the display pipeline.</summary>
     bool Changed(float[]? wanted)
     {
         if (wanted is null || _shown is null) return wanted is not null || _shown is not null;
-        for (var k = 0; k < wanted.Length; k++)
-            if (Math.Abs(wanted[k] - _shown[k]) >= 0.002f) return true;
-        return false;
+        return TintMatrix.Differs(wanted, _shown);
     }
 
     /// <summary>Checks often while a fade is running, rarely when the tint is steady, and not at all without a schedule.</summary>
@@ -201,7 +199,9 @@ public partial class App : Application
             ? AdvancedSchedule.IsFading(_settings.Filters, now, IdleTick)
             : Schedule.IsFading(now, _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds, IdleTick));
         var fadeSeconds = easing ? Fade.DefaultSeconds : _settings.IsAdvanced ? AdvancedSchedule.FadeSeconds : _settings.TransitionSeconds;
-        _scheduleTimer.Interval = fading ? Fade.Tick(fadeSeconds) : IdleTick;
+        // Between fades a sloped curve keeps moving: check often enough that its level changes by at most 1 at a time.
+        var steady = _settings.IsAdvanced ? AdvancedSchedule.LevelTick(_settings.Filters, now, IdleTick) : IdleTick;
+        _scheduleTimer.Interval = fading ? Fade.Tick(fadeSeconds) : steady;
         _scheduleTimer.Start();
     }
 

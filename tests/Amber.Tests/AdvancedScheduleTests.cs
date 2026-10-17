@@ -171,4 +171,77 @@ public class AdvancedScheduleTests
             Assert.True(check <= fadeBegins, $"first noticed at {check:HH:mm:ss.f}");
         }
     }
+
+    // Flat, then 0 to 100 in five minutes (the steepest a curve can be, with points 5 minutes apart), then flat again.
+    static Filter SteepCurve()
+    {
+        var filter = Between(Time(8), Time(9));
+        filter.Curve = [new(0, 0), new(10, 0), new(15, 100), new(60, 100)];
+        filter.CurveEnabled = true;
+        return filter;
+    }
+
+    [Fact]
+    public void A_curve_glides_between_whole_minutes()
+    {
+        // The owner's example, 50 to 100 over five minutes, used to jump 10 levels at every whole minute.
+        var filter = Between(Time(8), Time(9));
+        filter.Curve = [new(0, 50), new(5, 100), new(60, 100)];
+        filter.CurveEnabled = true;
+
+        Assert.Equal(55, AdvancedSchedule.LevelAt(filter, Around(Time(8), 30)), 6);
+        Assert.Equal(61, AdvancedSchedule.LevelAt(filter, Around(Time(8), 66)), 6);
+        for (var second = 0; second < 5 * 60; second++)
+        {
+            var change = AdvancedSchedule.LevelAt(filter, Around(Time(8), second + 1)) - AdvancedSchedule.LevelAt(filter, Around(Time(8), second));
+            Assert.True(Math.Abs(change) < 0.2, $"{change:F2} levels at second {second}");
+        }
+    }
+
+    [Fact]
+    public void Flat_levels_and_flat_stretches_keep_the_5_second_idle_check()
+    {
+        Filter[] filters = [Between(Time(6), Time(7)), SteepCurve()];
+
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick(filters, Time(6, 30), IdleCheck));   // a flat level
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick(filters, Time(8, 5), IdleCheck));    // the curve's flat start
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick(filters, Time(8, 30), IdleCheck));   // its flat end
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick(filters, Time(12), IdleCheck));      // not showing at all
+    }
+
+    [Fact]
+    public void On_a_sloped_curve_the_checks_come_often_enough_to_move_1_level_at_a_time()
+    {
+        Filter[] filters = [SteepCurve()];
+
+        Assert.Equal(TimeSpan.FromSeconds(3), AdvancedSchedule.LevelTick(filters, Time(8, 12), IdleCheck));        // 20 a minute
+        Assert.Equal(TimeSpan.FromSeconds(3), AdvancedSchedule.LevelTick(filters, Around(Time(8, 10), -3), IdleCheck)); // just ahead
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick(filters, Around(Time(8, 10), -6), IdleCheck));
+
+        // The owner's 50 to 100 over five minutes moves 10 a minute: one level every 6 s, so the 5 s check already does it.
+        var gentle = Between(Time(8), Time(9));
+        gentle.Curve = [new(0, 50), new(5, 100), new(60, 100)];
+        gentle.CurveEnabled = true;
+        Assert.Equal(IdleCheck, AdvancedSchedule.LevelTick([gentle], Time(8, 2), IdleCheck));
+    }
+
+    [Fact]
+    public void Checking_at_that_pace_a_curve_never_moves_more_than_1_level_between_checks()
+    {
+        var filter = SteepCurve();
+        Filter[] filters = [filter];
+
+        for (var tenths = 0; tenths < 50; tenths++)   // however the checks fall against the clock
+        {
+            var check = Around(Time(8, 5), tenths / 10.0);
+            var level = AdvancedSchedule.LevelAt(filter, check);
+            while (check < Time(8, 20))
+            {
+                check = check.Add(AdvancedSchedule.LevelTick(filters, check, IdleCheck));
+                var next = AdvancedSchedule.LevelAt(filter, check);
+                Assert.True(Math.Abs(next - level) <= 1.0001, $"{Math.Abs(next - level):F2} levels at {check:HH:mm:ss.f}");
+                level = next;
+            }
+        }
+    }
 }

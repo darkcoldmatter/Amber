@@ -34,7 +34,28 @@ public static class AdvancedSchedule
         var elapsed = SecondsSince(filter.Start, now);
         // Past the middle of the gap the next start is nearer: that's just before the start, not long after the end.
         if (elapsed > (filter.LengthMinutes * 60.0 + DaySeconds) / 2) elapsed -= DaySeconds;
-        return filter.LevelAt((int)Math.Clamp(elapsed / 60, 0, filter.LengthMinutes));
+        // In fractions of a minute: a sloped curve glides instead of jumping once a minute.
+        return filter.LevelAt(Math.Clamp(elapsed / 60, 0, filter.LengthMinutes));
+    }
+
+    /// <summary>
+    /// How long to wait for the next check while no fade runs: <paramref name="idle"/> while every curve is flat, and
+    /// on a sloped one just long enough for its level to move by 1 (never under 100 ms), so it glides in small steps.
+    /// </summary>
+    public static TimeSpan LevelTick(IEnumerable<Filter> filters, TimeOnly now, TimeSpan idle)
+    {
+        var steepest = 0.0;   // levels per minute, from now until the next idle check
+        foreach (var filter in filters)
+        {
+            if (!filter.CurveEnabled || filter.Curve.Count == 0) continue;
+            var from = SecondsSince(filter.Start, now) / 60;
+            var to = from + idle.TotalMinutes;
+            // The same stretch a day earlier reaches the curve's beginning when it comes round again before the next check.
+            steepest = Math.Max(steepest, Math.Max(CurveMath.Steepest(filter.Curve, from, to),
+                CurveMath.Steepest(filter.Curve, from - ScheduleRange.DayMinutes, to - ScheduleRange.DayMinutes)));
+        }
+        var seconds = steepest > 0 ? 60 / steepest : idle.TotalSeconds;
+        return TimeSpan.FromSeconds(Math.Clamp(seconds, 0.1, idle.TotalSeconds));
     }
 
     /// <summary>

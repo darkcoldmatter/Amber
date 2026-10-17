@@ -96,4 +96,25 @@ public class TimelineTests
         Assert.Equal(H(1), Timeline.DragTarget(0, isStart: true, pressX: 2, x: 12, Width));
         Assert.Equal(H(0.5), Timeline.DragTarget(H(23.5), isStart: false, pressX: 233, x: 243, Width)); // wraps past midnight
     }
+
+    [Fact]
+    public void Corners_shrink_with_the_bar_from_12_px_at_an_hour_to_4_px_at_15_minutes()
+    {
+        const double day = 24 * 60; // 1 px per minute
+
+        Assert.Equal(12, Timeline.CornerRadius(60, day));
+        Assert.Equal(12, Timeline.CornerRadius(8 * 60, day));
+        Assert.Equal(4, Timeline.CornerRadius(15, day));
+        Assert.Equal(4 + 8 / 3.0, Timeline.CornerRadius(30, day), 6);
+        Assert.Equal(4 + 16 / 3.0, Timeline.CornerRadius(45, day), 6);
+    }
+
+    [Fact]
+    public void A_corner_is_never_more_than_half_the_bar()
+    {
+        // Simple mode's 676 px day: a 15-minute range is about 7 px wide.
+        var width = 15 * 676 / (24 * 60.0);
+
+        Assert.Equal(width / 2, Timeline.CornerRadius(width, 676), 6);
+    }
 }

@@ -6,9 +6,9 @@ C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
 **Owner:** Dmitriy (designer, not a developer). Explain things plainly, keep changes small, and don't
 start the next step until he has checked the current one. He tests every step by hand on his own PC.
 
-**Status:** the engine and every feature work end to end. The UI is rebuilt on Figma "Design 3.0": step 5a
-(shell, Simple mode, Settings/About) is merged; step 5b (Advanced mode) is built and waiting for the owner's
-check. Then installer and release.
+**Status:** the engine and every feature work end to end, and the UI is rebuilt on Figma "Design 3.0"
+(steps 5a and 5b, merged). Step 5c (10-second fades between advanced filters) is in progress. Then installer
+and release.
 
 ---
 
@@ -39,14 +39,19 @@ check. Then installer and release.
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
   screen; weights over 1 are shared out. Used where one filter hands over to the next.
-- **Fades:** one constant, `Fade.DefaultSeconds` — **currently 0 (no fade), the owner's choice for now.**
-  It covers on/off in both modes, filter hand-overs, and a schedule transition set to "Off". Any other
-  transition setting fades over the time it names.
+- **Fades:** `Fade.DefaultSeconds` — **0 (no fade), the owner's choice** — covers on/off in both modes and a
+  simple-schedule transition set to "Off"; any other transition setting fades over the time it names.
+  **Advanced filter edges always fade over 10 s** (`AdvancedSchedule`, no setting): each edge is a 10 s ramp
+  centred on it (starts 5 s before, done 5 s after). Two filters that touch run their ramps over the same
+  10 s with weights adding up to 1 — a cross-fade, so the screen never goes untinted between them. Any real
+  gap (15 min at least) fades out to clear and back in.
 - **Live preview:** while dragging a level slider or a curve point, the screen shows that tint immediately,
   whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
 - Applying is skipped when the matrix barely changed, so a slow fade doesn't hammer the display pipeline.
-- The timer checks twice a second while fading, every 5 s otherwise, and not at all when there's nothing
-  scheduled. Idle CPU measured at 0 ms over 20 s.
+- The timer checks every 5 s, and not at all when there's nothing scheduled (idle CPU measured at 0 ms
+  over 20 s). From one check before a fade until it ends it steps every fade length / 100 (100–500 ms;
+  100 ms for advanced 10 s fades), so fades glide and never start late. A whole-day schedule or filter
+  has no edges and never fades.
 
 ## Behaviour rules
 
@@ -78,8 +83,8 @@ check. Then installer and release.
   - Curve: points snap to 5 min (range edges stay on 15) and line up with any other point whose level is
     within 3; the first and last points are locked to the ends and only move up and down; left click adds,
     right click removes. Moving a range keeps the curve's shape relative to the filter (owner likes this).
-  - Hand-over: a gap between filters fades out and back in; two filters that touch cross-fade, so the
-    screen never flashes back to blue. (Both are instant while the fade constant is 0.)
+  - Hand-over: a gap between filters fades out and back in over 10 s each; two filters that touch
+    cross-fade over the same 10 s, so the screen never flashes back to blue.
 
 ## Settings file
 
@@ -126,7 +131,7 @@ filters silently fail to load.
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 115 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 129 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 

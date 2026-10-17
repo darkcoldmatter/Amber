@@ -7,8 +7,8 @@ C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
 start the next step until he has checked the current one. He tests every step by hand on his own PC.
 
 **Status:** the engine and every feature work end to end, and the UI is rebuilt on Figma "Design 3.0"
-(steps 5a and 5b, merged). Step 5c (10-second fades between advanced filters) is in progress. Then installer
-and release.
+(steps 5a and 5b), with 10-second fades and cross-fades between advanced filters (step 5c) — all merged.
+Next: installer, auto-update and release.
 
 ---
 

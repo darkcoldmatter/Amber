@@ -7,12 +7,30 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\amber.ico</ApplicationIcon>
+    <!-- Per-monitor DPI and the Windows 10/11 compatibility entry. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The one place the version lives. A release is tagged v + this (v1.0.0), and the release workflow checks they match. -->
+    <Version>1.0.0</Version>
+    <!-- Amber's UI is English: leave out .NET's translated framework messages (13 languages, ~8 MB in a self-contained build). -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Amber has its own Main (App.xaml.cs), so Velopack can run before WPF starts. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Tray icons are loaded from files next to the exe. -->
     <None Update="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Licenses.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The GPL's full text ships with the program, next to Amber.exe. -->
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Assets\Fonts\*.ttf" />
     <Resource Include="Assets\resize.cur" />
   </ItemGroup>

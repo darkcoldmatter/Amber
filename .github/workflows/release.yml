@@ -1,0 +1,81 @@
+# Builds a release when a version tag is pushed (v1.0.0, matching <Version> in src/Amber/Amber.csproj) and uploads it
+# to GitHub Releases as a DRAFT. Installed copies only see a release once the owner has reviewed the draft (its notes)
+# and pressed Publish. To re-run by hand: Actions > Release > Run workflow, and pick the version tag under
+# "Use workflow from".
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+# The workflow's own token may create the draft release and upload its files, nothing else.
+permissions:
+  contents: write
+
+# One release at a time: each one builds its delta update from the release before it.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      REF_TYPE: ${{ github.ref_type }}
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Version from the tag
+        shell: pwsh
+        run: |
+          if ($env:REF_TYPE -ne 'tag' -or $env:TAG -notmatch '^v(\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?)$') {
+            throw "Run this from a version tag like v1.0.0 (got $env:REF_TYPE '$env:TAG')."
+          }
+          $version = $Matches[1]
+          $project = ([xml](Get-Content -Raw src/Amber/Amber.csproj)).Project.PropertyGroup.Version | Where-Object { $_ }
+          if ($project -ne $version) { throw "Tag $env:TAG doesn't match <Version>$project</Version> in src/Amber/Amber.csproj." }
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Publish (self-contained, win-x64)
+        run: dotnet publish src/Amber/Amber.csproj -c Release -r win-x64 --self-contained -o publish
+
+      # ---- SIGNING, part 1 (later, SignPath): sign Amber's own files in publish/ (Amber.exe, Amber.dll, Velopack.dll)
+      # before they are packed. .NET's files are already signed by Microsoft.
+
+      - name: Restore vpk
+        run: dotnet tool restore
+
+      - name: Download the previous release (for the delta update)
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet vpk download github --repoUrl $env:REPO_URL -o releases
+
+      - name: Pack
+        run: >-
+          dotnet vpk pack --packId Amber --packVersion $env:VERSION --packTitle Amber
+          --packAuthors "Dmitriy Ratushniak" --shortcuts StartMenuRoot
+          --packDir publish --mainExe Amber.exe --icon src/Amber/Assets/amber.ico
+          --runtime win10-x64 --noPortable -o releases
+
+      # ---- SIGNING, part 2 (later, SignPath): sign releases/Amber-win-Setup.exe here, after packing.
+      # vpk also adds Velopack's Update.exe and a small launcher to the package; to sign those as well, give vpk pack a
+      # --signTemplate command (it runs it for each file before packing) and --signExclude for Microsoft's files.
+
+      - name: Upload as a draft release
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          dotnet vpk upload github --repoUrl $env:REPO_URL -o releases
+          --tag $env:TAG --releaseName "Amber $env:VERSION"

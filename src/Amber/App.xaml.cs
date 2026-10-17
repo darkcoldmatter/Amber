@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 using Amber.Tint;
+using Velopack;
 
 namespace Amber;
 
@@ -16,6 +17,8 @@ public partial class App : Application
     readonly Settings _settings = Settings.Load(Settings.DefaultPath);
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     readonly DispatcherTimer _scheduleTimer = new();
+    readonly Updates _updates;
+    readonly DispatcherTimer _updateTimer = new();
     Mutex? _singleInstance;
     bool _previewing;
     TintMode? _previewMode;
@@ -25,6 +28,24 @@ public partial class App : Application
     DateTime _lastFadeStep = DateTime.UtcNow;
     TrayIcon? _tray;
     MainWindow? _window;
+
+    [STAThread]
+    static void Main()
+    {
+        // Velopack first. While installing, updating or uninstalling, it starts Amber with arguments of its own; Run()
+        // handles them and exits right here, before there is a window, a tray icon or a tint.
+        VelopackApp.Build()
+            // Uninstalling: take Amber off the sign-in list. The settings file stays, in case Amber is installed again.
+            .OnBeforeUninstallFastCallback(_ => StartupRegistration.IsEnabled = false)
+            .Run();
+
+        var app = new App();
+        app.InitializeComponent();
+        app.Run();
+    }
+
+    // A copy run from a build folder (dotnet run) isn't installed: it shows "Not installed" and never checks or updates.
+    public App() => _updates = new(VelopackServer.ForThisCopy(), _settings);
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -47,8 +68,8 @@ public partial class App : Application
         }
         ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) => Dispatcher.InvokeAsync(ShowWindow), null, Timeout.Infinite, false);
 
-        // Keep the sign-in entry pointing at this exe, in case Amber was moved or updated.
-        if (StartupRegistration.IsEnabled) StartupRegistration.IsEnabled = true;
+        // Keep the sign-in entry pointing at this exe, in case Amber was moved; never from a build run from source.
+        if (StartupRegistration.ShouldRefresh(_updates.IsInstalled, StartupRegistration.IsEnabled)) StartupRegistration.IsEnabled = true;
 
         // Never leave the screen tinted if the app crashes.
         DispatcherUnhandledException += (_, _) => ScreenTint.Reset();
@@ -77,6 +98,9 @@ public partial class App : Application
         };
         ApplyTint();
 
+        _updateTimer.Tick += async (_, _) => await CheckForUpdates(userAsked: false);
+        ScheduleUpdateCheck();
+
         if (startInTray) ReleaseMemorySoon();
         else ShowWindow();
     }
@@ -92,6 +116,37 @@ public partial class App : Application
 
     /// <summary>App instance, for views that need to talk to it.</summary>
     public static new App Current => (App)Application.Current;
+
+    public Updates Updates => _updates;
+
+    /// <summary>Looks for a new version now. The timer runs this too: a minute after start, then daily.</summary>
+    public async Task CheckForUpdates(bool userAsked)
+    {
+        _updateTimer.Stop();
+        await _updates.CheckAsync(userAsked, DateTime.UtcNow);
+        ScheduleUpdateCheck();
+        if (_window is null) ReleaseMemorySoon(); // a check from the tray loads the network code: give that memory back
+    }
+
+    void ScheduleUpdateCheck()
+    {
+        if (_updates.NextCheckIn(DateTime.UtcNow) is not { } wait) return; // not installed: nothing to check
+        _updateTimer.Interval = wait;
+        _updateTimer.Start();
+    }
+
+    /// <summary>Downloads the update on offer, then quits so the updater can install it and start the new Amber.</summary>
+    public async void InstallUpdate()
+    {
+        if (!await _updates.DownloadAsync()) return;
+
+        // Every exit path leaves the screen untinted; the new Amber puts the tint back once it starts.
+        ScreenTint.Reset();
+        _shown = null;
+        // Back to the tray if the window was closed while downloading, otherwise with the window.
+        if (_updates.ApplyOnExit(_window is null ? [TrayArgument] : [])) Shutdown();
+        else ApplyTint(); // the updater didn't start: carry on, tint as before
+    }
 
     /// <summary>
     /// While the user drags a level, the screen shows that tint whatever the on/off state.

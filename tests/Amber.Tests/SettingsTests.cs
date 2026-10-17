@@ -85,6 +85,43 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_file_says_which_layout_it_was_written_in()
+    {
+        new Settings().Save(SettingsPath);
+
+        Assert.StartsWith("{\n  \"SettingsVersion\": 1,", File.ReadAllText(SettingsPath).ReplaceLineEndings("\n"));
+        Assert.Equal(Settings.CurrentVersion, Settings.Load(SettingsPath).SettingsVersion);
+    }
+
+    [Fact]
+    public void A_skipped_update_is_remembered()
+    {
+        new Settings { SkippedVersion = "1.1.0" }.Save(SettingsPath);
+
+        Assert.Equal("1.1.0", Settings.Load(SettingsPath).SkippedVersion);
+    }
+
+    [Fact]
+    public void A_file_from_before_the_layout_version_still_loads()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "IsAdvanced": false, "AdvancedIsOn": false, "Filters": [], "IsOn": true, "Mode": "Amber", "Level": 30,
+              "ScheduleEnabled": true, "ScheduleStart": "22:00:00", "ScheduleEnd": "06:00:00", "TransitionSeconds": 600 }
+            """);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Equal(0, loaded.SettingsVersion);
+        Assert.Null(loaded.SkippedVersion);
+        Assert.True(loaded.IsOn);
+        Assert.Equal(TintMode.Amber, loaded.Mode);
+        Assert.Equal(30, loaded.Level);
+        Assert.Equal(new TimeOnly(22, 0), loaded.ScheduleStart);
+        Assert.Equal(600, loaded.TransitionSeconds);
+    }
+
+    [Fact]
     public void Missing_file_gives_defaults()
     {
         AssertDefaults(Settings.Load(SettingsPath));

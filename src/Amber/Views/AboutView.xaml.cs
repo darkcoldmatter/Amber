@@ -13,7 +13,8 @@ public partial class AboutView : UserControl
     public AboutView()
     {
         InitializeComponent();
-        VersionRun.Text = Assembly.GetEntryAssembly()?.GetName().Version?.ToString(2);
+        // The full version, "1.0.0" (or "1.1.0-beta.1"), without the build's commit id that follows a "+".
+        VersionRun.Text = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0];
     }
 
     public event EventHandler? CloseRequested;

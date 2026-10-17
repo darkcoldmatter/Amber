@@ -20,6 +20,12 @@ public sealed class Settings : INotifyPropertyChanged
         Converters = { new JsonStringEnumConverter() },
     };
 
+    /// <summary>
+    /// The layout of the file this Amber writes. A later Amber that changes the layout raises it, and upgrades older
+    /// files as it loads them.
+    /// </summary>
+    public const int CurrentVersion = 1;
+
     public Settings()
     {
         // Any change to a filter, or to the list itself, counts as a settings change.
@@ -30,6 +36,13 @@ public sealed class Settings : INotifyPropertyChanged
             Announce(nameof(Filters));
         };
     }
+
+    /// <summary>
+    /// The layout the loaded file was written in: <see cref="CurrentVersion"/> once saved, 0 for a file from before
+    /// this number was written. First in the file.
+    /// </summary>
+    [JsonPropertyOrder(-1)]
+    public int SettingsVersion { get; set; }
 
     /// <summary>Which app mode the window shows: simple (default) or advanced.</summary>
     public bool IsAdvanced { get; set => Set(ref field, value); }
@@ -57,6 +70,9 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>Schedule fade length in seconds; 0 ("Off") falls back to <see cref="Fade.DefaultSeconds"/>.</summary>
     public int TransitionSeconds { get; set => Set(ref field, value); }
 
+    /// <summary>The update version the user chose to skip, so it isn't announced again (<see cref="Updates.Skip"/>).</summary>
+    public string? SkippedVersion { get; set => Set(ref field, value); }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Returns default settings if the file is missing or unreadable.</summary>
@@ -78,6 +94,7 @@ public sealed class Settings : INotifyPropertyChanged
 
     public void Save(string path)
     {
+        SettingsVersion = CurrentVersion;
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, JsonSerializer.Serialize(this, JsonOptions));
     }

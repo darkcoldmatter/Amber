@@ -688,12 +688,19 @@
                                         <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
                                     </Storyboard>
                                 </VisualState>
-                                <VisualState x:Name="Disabled" />
+                                <!-- Faded while there is nothing to click (the update row's "Checking…", "Up to date"). -->
+                                <VisualState x:Name="Disabled">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Look" Storyboard.TargetProperty="Opacity" To="0.5" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        <Border CornerRadius="12" Background="{StaticResource InkBrush}" />
-                        <Border x:Name="Hover" CornerRadius="12" Background="{StaticResource InkHoverBrush}" Opacity="0" />
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid x:Name="Look">
+                            <Border CornerRadius="12" Background="{StaticResource InkBrush}" />
+                            <Border x:Name="Hover" CornerRadius="12" Background="{StaticResource InkHoverBrush}" Opacity="0" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

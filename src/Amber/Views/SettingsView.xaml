@@ -17,11 +17,17 @@
                 <Rectangle Style="{StaticResource Divider}" Margin="0,67,0,0" />
 
                 <TextBlock Text="Check for updates" Style="{StaticResource LabelText}" Margin="24,99.35,0,0" VerticalAlignment="Top" />
-                <!-- Update checking comes in a later step. -->
-                <Button Style="{StaticResource PrimaryButton}" Width="100" Margin="0,92,24,0"
-                        HorizontalAlignment="Right" VerticalAlignment="Top" AutomationProperties.Name="Check for updates">
-                    <TextBlock Text="Check" Margin="0,-1,0,1" />
-                </Button>
+                <!--
+                    A plain stand-in until the update banners are designed: the button says where the update is
+                    (it widens for longer text), and a short note beside it says when something went wrong.
+                -->
+                <StackPanel Orientation="Horizontal" Margin="0,92,24,0" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <TextBlock x:Name="UpdateNote" Style="{StaticResource BodyText}" Margin="0,-1,16,1" VerticalAlignment="Center"
+                               Visibility="Collapsed" />
+                    <Button x:Name="UpdateButton" Style="{StaticResource PrimaryButton}" MinWidth="100" Click="OnUpdateClick">
+                        <TextBlock x:Name="UpdateText" Margin="16,-1,16,1" />
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

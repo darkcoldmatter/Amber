@@ -8,7 +8,8 @@ start the next step until he has checked the current one. He tests every step by
 
 **Status:** the engine and every feature work end to end, and the UI is rebuilt on Figma "Design 3.0"
 (steps 5a and 5b), with 10-second fades and cross-fades between advanced filters (step 5c) — all merged.
-Next: installer, auto-update and release.
+Step 6a (installer, auto-update, versioning, release pipeline) is built; the update notice (6b), going
+public and the first release come next.
 
 ---
 
@@ -96,6 +97,7 @@ Next: installer, auto-update and release.
 
 ```json
 {
+  "SettingsVersion": 1, "SkippedVersion": null,
   "IsAdvanced": false, "AdvancedIsOn": false, "AdvancedIntroClosed": false, "FilterHintDone": false,
   "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "16:00:00",
                  "Level": 50, "CurveEnabled": true,
@@ -106,6 +108,8 @@ Next: installer, auto-update and release.
 }
 ```
 
+`SettingsVersion` (always written first) is for future format changes: old files without it read 0 and
+still load. `SkippedVersion` is the update the user dismissed with ✕ — not announced again.
 `Mode` is one of `GoldenHour`, `Amber`, `DeepNight` (an old file that still says `Astronomic` fails to
 parse and loads as defaults). Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
@@ -127,6 +131,7 @@ filters silently fail to load.
 | `Filter.cs`, `Settings.cs` | The data, change notification, JSON load/save |
 | `TimeFormat.cs` | Every time shown in the UI, in Windows' 12- or 24-hour format |
 | `TextLook.cs` | Makes grey, unsnapped text smoothing the default for every element, menus included |
+| `Updates.cs` | Update checks and installs through Velopack + GitHub Releases (see "Releases" below) |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider; simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
@@ -134,8 +139,11 @@ filters silently fail to load.
 | `MainWindow`, `Theme.xaml` | The shell (header, width switch, overlays) and all styles/icons (icons are exact Figma geometry) |
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
+| `app.manifest` | Per-monitor DPI awareness, Windows 10/11, runs without admin |
+| `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
+| `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 142 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 170 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -195,6 +203,28 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   UI Automation to click around. **Give the window focus first** or clicks go nowhere and you'll chase
   ghosts.
 - CI: GitHub Actions builds and runs the tests on every push (`.github/workflows/ci.yml`).
+- **The terminal build stays the owner's quick test copy.** A copy run from a build folder knows it isn't
+  installed: Settings shows "Not installed" and it never checks or updates, and it doesn't touch the
+  "Start with Windows" entry on its own. It shares the single-instance lock with an installed Amber, so quit
+  the installed one (tray → Quit) before `dotnet run` on the same PC.
+
+## Releases
+
+- **Installer and updates: Velopack** (MIT) + GitHub Releases. Self-contained win-x64 (nothing else to install),
+  per-user install to `%LocalAppData%\Amber` (no admin), Start-menu shortcut, uninstall from Windows Settings →
+  Apps (it also removes the "Start with Windows" entry; settings stay). Setup ≈ 69 MB; updates download as
+  small deltas. Publisher shown: Dmitriy Ratushniak.
+- An installed Amber checks GitHub a minute after it starts, then every 24 h, and when Settings → Check is
+  clicked. Automatic failures are silent (retried after an hour). Installing resets the tint, quits, lets the
+  updater swap the app and restarts it — into the tray if the window was closed.
+- **One version number:** `<Version>` in `src/Amber/Amber.csproj`; About shows it in full.
+- **To release:** set `<Version>` (e.g. 1.0.1), commit, push; `git tag v1.0.1` and push the tag; GitHub Actions
+  builds a **draft** release; write the notes on GitHub and press Publish. Publish or delete each draft before
+  tagging the next version (the delta is built from the previous release).
+- **Licence:** GPL-3.0-or-later (`LICENSE`, shipped as `LICENSE.txt`); the name "Amber" and the icon aren't
+  covered (README). Third-party notices in `src/Amber/Licenses.txt`. Code signing is planned through the
+  SignPath Foundation (OSI licence, public repo, a first release, CI builds, approve each release); the
+  workflow has marked places for it.
 - One plan step per branch, merged into `main` after the owner approves it. (`step-4c-advanced` was never
   merged on its own; it reaches `main` together with step 5a, which was branched from it.)
 

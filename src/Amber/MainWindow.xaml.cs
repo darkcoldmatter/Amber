@@ -34,12 +34,12 @@ public partial class MainWindow : Window
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsAdvanced)) ShowAppMode();
-        // The tint of the mode you are in was switched on or off (here or from the tray): the tiles light up in a wave.
+        // The tint of the mode you are in was switched on or off (here or from the tray): the dots light up in a wave.
         if (e.PropertyName == (_settings.IsAdvanced ? nameof(Settings.AdvancedIsOn) : nameof(Settings.IsOn))) Wave.Play();
     }
 
 #if DEBUG
-    /// <summary>Debug builds only: F8 replays the wave without switching anything, to tweak its look (TileWave.cs).</summary>
+    /// <summary>Debug builds only: F8 replays the wave without switching anything, to tweak its look (DotWave.cs).</summary>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);

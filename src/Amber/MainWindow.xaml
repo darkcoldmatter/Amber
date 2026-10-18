@@ -11,8 +11,8 @@
     -->
     <Grid x:Name="Root" Width="724">
         <controls:Glow x:Name="Glow" IsHitTestVisible="False" />
-        <!-- Lights up as a wave when the tint is switched on or off; empty otherwise (TileWave.cs). -->
-        <controls:TileWaveLayer x:Name="Wave" />
+        <!-- Lights up as a wave when the tint is switched on or off; empty otherwise (DotWave.cs). -->
+        <controls:DotWaveLayer x:Name="Wave" />
 
         <Grid x:Name="ModeLayer">
             <Grid.RowDefinitions>

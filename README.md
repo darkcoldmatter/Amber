@@ -1,16 +1,14 @@
 # Amber
 
-A small, free Windows 10/11 app that reduces blue light by tinting the whole screen. It lives in the tray,
-uses almost no memory or CPU, and needs no admin rights.
+Amber is a free open-source app that reduces blue light by tinting the whole screen. It helps to make long or night work much more easier to handle.
+It lives in the tray uses almost no memory or CPU (3-5mb on background), and needs no admin rights.
 
-## Vibe coded
+While Windows already has in-built night mode, Amber provides **more flexibility by introducing different tint colors & advanced schedule and curve settings.**
 
-Amber was made by two: me, [Dmitriy Ratushniak](https://github.com/darkcoldmatter), a designer who doesn't
-write code, and [Claude](https://claude.ai), Anthropic's AI. I designed every screen in Figma, explained
-what I wanted in plain words, tested each step on my own PC and decided what stays. Claude wrote all of the
-code (the tint engine, the interface, the installer, the updates and the tests) in Claude Code.
+## Vibe code
 
-So no, I'm not a cool developer. But if there's an app you wish existed, you can build it too.
+This app was made by me and [Claude](https://claude.ai). I designed and tested each step on my PC, Claude wrote all of the
+code. The output is well-optimized, properly working convenient tool that suits for it's purpose. The goal was not to only craft a working solution, but also to make it appealing and user-friendly UX-wise.
 
 ## What it does
 
@@ -18,7 +16,12 @@ So no, I'm not a cool developer. But if there's an app you wish existed, you can
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
 - **Advanced mode:** several filters across the day, each with its own tint and either a steady level
   or a curve you draw. Neighbouring filters cross-fade, so the screen never flashes back to blue.
-- Starts with Windows if you like, and follows your 12- or 24-hour clock.
+- Starts with Windows if you like, and follows your 12- or 24-hour clock automatically.
+
+Tint types
+- **Golden hour** - yellow filter inspired by pre-evening time with when everything get lit with golden light. Soft tint for daily use.
+- **Amber** - stronger deep orange tint for evening/night work that cuts more of blue light.
+- **Deep night** - red tint inspired by astronomy and science: red is the only color that require no eyes adaptation when used in dark.
 
 ## Download
 

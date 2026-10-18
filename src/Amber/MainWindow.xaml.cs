@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using Amber.Views;
@@ -33,7 +34,20 @@ public partial class MainWindow : Window
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsAdvanced)) ShowAppMode();
+        // The tint of the mode you are in was switched on or off (here or from the tray): the tiles light up in a wave.
+        if (e.PropertyName == (_settings.IsAdvanced ? nameof(Settings.AdvancedIsOn) : nameof(Settings.IsOn))) Wave.Play();
     }
+
+#if DEBUG
+    /// <summary>Debug builds only: F8 replays the wave without switching anything, to tweak its look (TileWave.cs).</summary>
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Key != Key.F8) return;
+        Wave.Play();
+        e.Handled = true;
+    }
+#endif
 
     /// <summary>
     /// Simple and Advanced differ in width, body and header, and the ON/OFF button belongs to the mode you are in.

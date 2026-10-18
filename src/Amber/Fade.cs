@@ -9,9 +9,9 @@ public static class Fade
 {
     /// <summary>
     /// How long a plain fade takes, in seconds — on/off in both modes, and a schedule transition set to "Off".
-    /// A quick 0.2 s (the owner's choice), so the tint glides in and out instead of switching hard.
+    /// A quick 0.4 s (the owner's choice), so the tint glides in and out instead of switching hard.
     /// </summary>
-    public const double DefaultSeconds = 0.2;
+    public const double DefaultSeconds = 0.4;
 
 
     /// <param name="current">where the fade is now</param>
@@ -26,7 +26,7 @@ public static class Fade
 
     /// <summary>
     /// How often to step a fade of this length: about 1 % of it at a time, so it looks smooth, but never more often
-    /// than once a screen frame (1/60 s) and never less often than every 500 ms. A 0.2 s fade can't step by 1 %, so it
+    /// than once a screen frame (1/60 s) and never less often than every 500 ms. A 0.4 s fade can't step by 1 %, so it
     /// steps every frame instead, which looks just as smooth.
     /// </summary>
     public static TimeSpan Tick(double fadeSeconds) => TimeSpan.FromSeconds(Math.Clamp(fadeSeconds / 100, 1.0 / 60, 0.5));

@@ -42,18 +42,18 @@ public class FadeTests
     }
 
     [Fact]
-    public void Switching_on_or_off_glides_over_a_fifth_of_a_second()
+    public void Switching_on_or_off_glides_over_0_4_seconds()
     {
-        Assert.Equal(0.2, Fade.DefaultSeconds);
+        Assert.Equal(0.4, Fade.DefaultSeconds);
         var fade = 0.0;
         var steps = 0;
         while (fade < 1)
         {
             var next = Fade.Step(fade, wanted: true, Fade.Tick(Fade.DefaultSeconds).TotalSeconds, Fade.DefaultSeconds);
-            Assert.True(next - fade < 0.1);   // a dozen small steps, no jump
+            Assert.True(next - fade < 0.1);   // two dozen small steps, no jump
             fade = next;
             steps++;
         }
-        Assert.InRange(steps, 11, 13);
+        Assert.InRange(steps, 23, 25);
     }
 }

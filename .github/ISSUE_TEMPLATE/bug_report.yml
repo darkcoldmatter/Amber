@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in Amber doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report this! A few details help a lot.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can we make it happen again?
+      placeholder: |
+        1. Open Advanced mode
+        2. Add a Golden hour filter
+        3. …
+  - type: input
+    id: amber-version
+    attributes:
+      label: Amber version
+      description: Shown in Amber → About.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: screens
+    attributes:
+      label: Screens
+      description: Optional. Number of monitors, display scaling, HDR on or off.
+      placeholder: e.g. 2 monitors, 125 % and 100 %, HDR off
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots or a short video of Amber's window are welcome (the tint itself doesn't show up in screenshots).

@@ -1,0 +1,21 @@
+name: Idea
+description: Suggest a new feature or an improvement.
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would you like Amber to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+      description: When would you use it? What does it make easier?
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Sketches, examples from other apps, links.

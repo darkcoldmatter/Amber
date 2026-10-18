@@ -222,7 +222,7 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 - **Installer and updates: Velopack** (MIT) + GitHub Releases. Self-contained win-x64 (nothing else to install),
   per-user install to `%LocalAppData%\Amber` (no admin), Start-menu shortcut, uninstall from Windows Settings →
   Apps (it also removes the "Start with Windows" entry; settings stay). Setup ≈ 69 MB; updates download as
-  small deltas. Publisher shown: "Dmitriy Ratushniak & Claude".
+  small deltas. Publisher shown: "Dmitriy Ratushniak and Claude" (no "&": vpk writes it raw into XML and the pack fails).
 - An installed Amber checks GitHub a minute after it starts, then every 24 h, and when Settings → Check is
   clicked. Automatic failures are silent (retried after an hour). Installing resets the tint, quits, lets the
   updater swap the app and restarts it — into the tray if the window was closed.

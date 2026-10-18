@@ -33,11 +33,27 @@ public class FadeTests
     }
 
     [Fact]
-    public void A_fade_steps_about_1_percent_at_a_time_but_between_100_and_500_ms()
+    public void A_fade_steps_about_1_percent_at_a_time_but_between_one_frame_and_500_ms()
     {
         Assert.Equal(TimeSpan.FromMilliseconds(100), Fade.Tick(AdvancedSchedule.FadeSeconds));   // 10 s between filters
         Assert.Equal(TimeSpan.FromMilliseconds(300), Fade.Tick(30));
         Assert.Equal(TimeSpan.FromMilliseconds(500), Fade.Tick(30 * 60));   // a long fade still steps twice a second
-        Assert.Equal(TimeSpan.FromMilliseconds(100), Fade.Tick(2));         // never faster than 100 ms
+        Assert.Equal(TimeSpan.FromSeconds(1.0 / 60), Fade.Tick(Fade.DefaultSeconds));   // on/off steps every frame
+    }
+
+    [Fact]
+    public void Switching_on_or_off_glides_over_a_fifth_of_a_second()
+    {
+        Assert.Equal(0.2, Fade.DefaultSeconds);
+        var fade = 0.0;
+        var steps = 0;
+        while (fade < 1)
+        {
+            var next = Fade.Step(fade, wanted: true, Fade.Tick(Fade.DefaultSeconds).TotalSeconds, Fade.DefaultSeconds);
+            Assert.True(next - fade < 0.1);   // a dozen small steps, no jump
+            fade = next;
+            steps++;
+        }
+        Assert.InRange(steps, 11, 13);
     }
 }

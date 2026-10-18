@@ -4,7 +4,7 @@ namespace Amber;
 
 /// <summary>
 /// Turns "what the settings ask for" into "what the screen shows". When the tint comes or goes all at once — a mode
-/// switched on or off — it eases over the plain fade (<see cref="Amber.Fade.DefaultSeconds"/>, instant while that is 0);
+/// switched on or off — it eases over the plain fade (<see cref="Amber.Fade.DefaultSeconds"/>);
 /// advanced filters fade at their edges by themselves. The live preview is shown as it is, and releasing it snaps
 /// straight back to the real state.
 /// </summary>

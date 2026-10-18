@@ -36,10 +36,12 @@ public class ScheduleTests
     }
 
     [Fact]
-    public void Transition_0_turns_the_tint_on_at_once()
+    public void Transition_0_turns_the_tint_on_over_the_quick_plain_fade()
     {
         var start = new TimeOnly(20, 0);
-        Assert.Equal(1, Schedule.StrengthAt(start, start, End, 0), 3);
+        Assert.Equal(0, Schedule.StrengthAt(start, start, End, 0), 3);
+        Assert.Equal(0.5, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(Fade.DefaultSeconds / 2)), start, End, 0), 3);
+        Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(Fade.DefaultSeconds)), start, End, 0), 3);
         Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(1)), start, End, 0), 3);
     }
 

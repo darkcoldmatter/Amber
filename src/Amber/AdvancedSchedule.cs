@@ -8,7 +8,7 @@ namespace Amber;
 /// </summary>
 public static class AdvancedSchedule
 {
-    // Always 10 s, and not Fade.DefaultSeconds: that one keeps on/off instant (the owner's choice), but a hand-over
+    // Always 10 s, and not Fade.DefaultSeconds: that one keeps on/off quick (the owner's choice), but a hand-over
     // between filters should never snap, and advanced mode has no transition setting.
     public const double FadeSeconds = 10;
     const double DaySeconds = 24 * 60 * 60;

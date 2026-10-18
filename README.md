@@ -2,15 +2,18 @@
 
 ![Amber — free app for flexible blue light reduction, Windows 10/11](docs/images/cover.png)
 
-Amber is a free open-source app that reduces blue light by tinting the whole screen. It helps to make long or night work much more easier to handle.
-It lives in the tray uses almost no memory or CPU (3-5mb on background), and needs no admin rights.
+Amber is a free, open-source app that reduces blue light by tinting the whole screen. It makes long days
+and late-night work much easier on your eyes. It lives in the tray, uses almost no memory or CPU
+(3–5 MB in the background), and needs no admin rights.
 
-While Windows already has in-built night mode, Amber provides **more flexibility by introducing different tint colors & advanced schedule and curve settings.**
+Windows already has a built-in Night light, but Amber gives you **more flexibility: different tint colours,
+plus advanced schedules and curves.**
 
-## Vibe code
+## Vibe coded
 
-This app was made by me and [Claude](https://claude.ai). I designed and tested each step on my PC, Claude wrote all of the
-code. The output is well-optimized, properly working convenient tool that suits for it's purpose. The goal was not to only craft a working solution, but also to make it appealing and user-friendly UX-wise.
+This app was made by me and [Claude](https://claude.ai). I designed it and tested each step on my PC;
+Claude wrote all of the code. The result is a well-optimised tool that does its job, and the goal wasn't
+just to make it work but to make it pleasant and easy to use.
 
 ## What it does
 
@@ -24,10 +27,12 @@ code. The output is well-optimized, properly working convenient tool that suits 
   or a curve you draw. Neighbouring filters cross-fade, so the screen never flashes back to blue.
 - Starts with Windows if you like, and follows your 12- or 24-hour clock automatically.
 
-Tint types
-- **Golden hour** - yellow filter inspired by pre-evening time with when everything get lit with golden light. Soft tint for daily use.
-- **Amber** - stronger deep orange tint for evening/night work that cuts more of blue light.
-- **Deep night** - red tint inspired by astronomy and science: red is the only color that require no eyes adaptation when used in dark.
+**Tint types**
+
+- **Golden hour:** a yellow tint inspired by the late afternoon, when everything is lit with golden light.
+  Soft enough for everyday use.
+- **Amber:** a stronger, deep orange tint for evening and night work that cuts more blue light.
+- **Deep night:** a red tint inspired by astronomy. Red light doesn't disturb your eyes' adaptation to the dark.
 
 ## Download
 

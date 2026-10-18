@@ -13,13 +13,15 @@ public partial class MainWindow : Window
     const double SimpleWidth = 724, AdvancedWidth = 848;
 
     readonly Settings _settings;
+    readonly Updates _updates;
 
-    public MainWindow(Settings settings)
+    public MainWindow(Settings settings, Updates updates)
     {
         // The window is built afresh each time it opens: pick up a change to Windows' clock (12- or 24-hour) since last time.
         TimeFormat.Refresh();
         InitializeComponent();
         _settings = settings;
+        _updates = updates;
         DataContext = settings;
         ShowAppMode();
 
@@ -42,7 +44,7 @@ public partial class MainWindow : Window
         Root.Width = advanced ? AdvancedWidth : SimpleWidth;
         ScheduleButton.Visibility = advanced ? Visibility.Collapsed : Visibility.Visible;
         PowerButton.SetBinding(ToggleButton.IsCheckedProperty, advanced ? nameof(Settings.AdvancedIsOn) : nameof(Settings.IsOn));
-        ModeHost.Content = advanced ? new AdvancedView(_settings) : new SimpleView(_settings);
+        ModeHost.Content = advanced ? new AdvancedView(_settings, _updates) : new SimpleView(_settings, _updates);
         ShowGlow();
     }
 
@@ -74,7 +76,7 @@ public partial class MainWindow : Window
 
     void OnOpenSettings(object sender, RoutedEventArgs e)
     {
-        var view = new SettingsView();
+        var view = new SettingsView(_updates);
         view.CloseRequested += (_, _) => CloseOverlay();
         ShowOverlay(view);
     }

@@ -1,9 +1,11 @@
 <UserControl x:Class="Amber.Views.SimpleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:Amber.Controls">
+             xmlns:controls="clr-namespace:Amber.Controls"
+             xmlns:views="clr-namespace:Amber.Views">
     <!-- Figma "home" 94:1746 and "scheduled" 111:4498, below the 66 px header: subtract 66 from Figma's y. -->
     <Canvas x:Name="Root" Width="724" Height="286">
+
         <!-- The digits are centred on Figma's y 141.5. -->
         <Grid Width="724" Height="151">
             <controls:TrackedText x:Name="Percent" FontFamily="{StaticResource NumberFont}" FontSize="70" FontWeight="Medium" Tracking="-2.8"
@@ -39,5 +41,8 @@
             <Button x:Name="Transition" Canvas.Left="613" Canvas.Top="98" Style="{StaticResource FieldButton}" Click="OnTransitionClick"
                     AutomationProperties.Name="Transition" />
         </Canvas>
+
+        <!-- A new version, in the empty top right (Figma 125:456): the note's capitals at y 80, the buttons at 101, ending at x 700. -->
+        <views:UpdateNotice x:Name="Notice" Canvas.Right="24" Canvas.Top="11" Stacked="True" />
     </Canvas>
 </UserControl>

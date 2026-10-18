@@ -47,6 +47,9 @@
     <Geometry x:Key="IconPlus20">M10 16.6667V10M10 10V3.33333M10 10H3.33333M10 10H16.6667</Geometry>
     <Geometry x:Key="IconPlus16">M8 13.3333V8M8 8V2.66667M8 8H2.66667M8 8H13.3333</Geometry>
     <Geometry x:Key="IconRemove16">M2.66667 4.16667H13.3333M12 4L11.3686 12.1036C11.3145 12.7977 10.7355 13.3333 10.0392 13.3333H5.96075C5.26455 13.3333 4.68553 12.7977 4.63145 12.1036L4 4M6 4C6 2.89543 6.89543 2 8 2C9.10457 2 10 2.89543 10 4</Geometry>
+    <!-- 16×16, stroke, ink: the update notice's download and cross (Figma 125:553, 125:577). -->
+    <Geometry x:Key="IconDownload16">M8 2V11.8361M11.8889 7.90164L8 11.8361L4.11111 7.90164M3.33333 14L12.6667 14</Geometry>
+    <Geometry x:Key="IconCross16">M3.33333 12.6667L8 8M8 8L12.6667 3.33333M8 8L3.33333 3.33333M8 8L12.6667 12.6667</Geometry>
     <!-- 24×24, FILLED (Figma exports it as an outlined stroke). -->
     <Geometry x:Key="IconCurve">F1 M12 12L12.7057 12.254L12 12ZM6.62085 19.4768L6.28035 20.1451L6.62085 19.4768ZM4.52317 17.3792L3.85491 17.7196L4.52317 17.3792ZM19.4768 17.3792L20.1451 17.7196L19.4768 17.3792ZM17.3792 19.4768L17.7196 20.1451L17.3792 19.4768ZM17.3792 4.52317L17.7196 3.85491L17.3792 4.52317ZM19.4768 6.62085L20.1451 6.28035L19.4768 6.62085ZM6.62085 4.52317L6.28035 3.85491L6.62085 4.52317ZM4.52317 6.62085L3.85491 6.28035L4.52317 6.62085ZM16.8 8V7.25C15.6238 7.25 14.5118 7.58024 13.5496 8.33991C12.596 9.09272 11.8416 10.2257 11.2943 11.746L12 12L12.7057 12.254C13.1869 10.9172 13.804 10.0501 14.479 9.51723C15.1453 8.99119 15.9191 8.75 16.8 8.75V8ZM12 12L11.2943 11.746C10.8131 13.0828 10.196 13.9499 9.52098 14.4828C8.85465 15.0088 8.08093 15.25 7.2 15.25V16V16.75C8.37621 16.75 9.4882 16.4198 10.4504 15.6601C11.404 14.9073 12.1584 13.7743 12.7057 12.254L12 12ZM11.68 4V4.75H12.32V4V3.25H11.68V4ZM20 11.68H19.25V12.32H20H20.75V11.68H20ZM12.32 20V19.25H11.68V20V20.75H12.32V20ZM4 12.32H4.75V11.68H4H3.25V12.32H4ZM11.68 20V19.25C10.3235 19.25 9.35123 19.2494 8.58844 19.1871C7.83441 19.1255 7.35138 19.0073 6.96134 18.8086L6.62085 19.4768L6.28035 20.1451C6.91709 20.4695 7.6195 20.6129 8.4663 20.6821C9.30433 20.7506 10.3482 20.75 11.68 20.75V20ZM4 12.32H3.25C3.25 13.6518 3.24942 14.6957 3.31789 15.5337C3.38707 16.3805 3.53048 17.0829 3.85491 17.7196L4.52317 17.3792L5.19142 17.0387C4.99269 16.6486 4.87451 16.1656 4.81291 15.4116C4.75058 14.6488 4.75 13.6765 4.75 12.32H4ZM6.62085 19.4768L6.96134 18.8086C6.19928 18.4203 5.57971 17.8007 5.19142 17.0387L4.52317 17.3792L3.85491 17.7196C4.38701 18.7639 5.23605 19.613 6.28035 20.1451L6.62085 19.4768ZM20 12.32H19.25C19.25 13.6765 19.2494 14.6488 19.1871 15.4116C19.1255 16.1656 19.0073 16.6486 18.8086 17.0387L19.4768 17.3792L20.1451 17.7196C20.4695 17.0829 20.6129 16.3805 20.6821 15.5337C20.7506 14.6957 20.75 13.6518 20.75 12.32H20ZM12.32 20V20.75C13.6518 20.75 14.6957 20.7506 15.5337 20.6821C16.3805 20.6129 17.0829 20.4695 17.7196 20.1451L17.3792 19.4768L17.0387 18.8086C16.6486 19.0073 16.1656 19.1255 15.4116 19.1871C14.6488 19.2494 13.6765 19.25 12.32 19.25V20ZM19.4768 17.3792L18.8086 17.0387C18.4203 17.8007 17.8007 18.4203 17.0387 18.8086L17.3792 19.4768L17.7196 20.1451C18.7639 19.613 19.613 18.7639 20.1451 17.7196L19.4768 17.3792ZM12.32 4V4.75C13.6765 4.75 14.6488 4.75058 15.4116 4.81291C16.1656 4.87451 16.6486 4.99269 17.0387 5.19142L17.3792 4.52317L17.7196 3.85491C17.0829 3.53048 16.3805 3.38707 15.5337 3.31789C14.6957 3.24942 13.6518 3.25 12.32 3.25V4ZM20 11.68H20.75C20.75 10.3482 20.7506 9.30433 20.6821 8.4663C20.6129 7.6195 20.4695 6.91709 20.1451 6.28035L19.4768 6.62085L18.8086 6.96134C19.0073 7.35138 19.1255 7.83441 19.1871 8.58844C19.2494 9.35123 19.25 10.3235 19.25 11.68H20ZM17.3792 4.52317L17.0387 5.19142C17.8007 5.57971 18.4203 6.19928 18.8086 6.96134L19.4768 6.62085L20.1451 6.28035C19.613 5.23605 18.7639 4.38701 17.7196 3.85491L17.3792 4.52317ZM11.68 4V3.25C10.3482 3.25 9.30433 3.24942 8.4663 3.31789C7.6195 3.38707 6.91709 3.53048 6.28035 3.85491L6.62085 4.52317L6.96134 5.19142C7.35138 4.99269 7.83441 4.87451 8.58844 4.81291C9.35123 4.75058 10.3235 4.75 11.68 4.75V4ZM4 11.68H4.75C4.75 10.3235 4.75058 9.35123 4.81291 8.58844C4.87451 7.83441 4.99269 7.35138 5.19142 6.96134L4.52317 6.62085L3.85491 6.28035C3.53048 6.91709 3.38707 7.6195 3.31789 8.4663C3.24942 9.30433 3.25 10.3482 3.25 11.68H4ZM6.62085 4.52317L6.28035 3.85491C5.23605 4.38701 4.38701 5.23605 3.85491 6.28035L4.52317 6.62085L5.19142 6.96134C5.57971 6.19928 6.19928 5.57971 6.96134 5.19142L6.62085 4.52317Z</Geometry>
     <!-- 16×16, fill. -->
@@ -280,6 +283,86 @@
                               StrokeThickness="1.5" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <Path x:Name="HoverIcon" Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{StaticResource InkBrush}"
                               StrokeThickness="1.5" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        The update notice's buttons (Figma 125:550, 125:576): a white 30 px pill with its content in the middle, and a
+        white 30×30 circle with a 16 px ink icon (Tag = icon geometry). Both turn tan on hover, as the round icon buttons do.
+    -->
+    <Style x:Key="NoticeButton" TargetType="Button">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="Plain" CornerRadius="15" Background="White" />
+                        <Border x:Name="Hover" CornerRadius="15" Background="{StaticResource TanBrush}" Opacity="0" />
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="NoticeIconButton" TargetType="Button">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Plain" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Ellipse x:Name="Plain" Fill="White" />
+                        <Ellipse x:Name="Hover" Fill="{StaticResource TanBrush}" Opacity="0" />
+                        <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Stroke="{StaticResource InkBrush}"
+                              StrokeThickness="1.5" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

@@ -12,7 +12,10 @@ public enum UpdateStage
     Idle,
     Checking,
     UpToDate,
-    /// <summary>A newer version is on offer (<see cref="UpdateState.Version"/>).</summary>
+    /// <summary>
+    /// A newer version is on offer (<see cref="UpdateState.Version"/>). After a failed download it stays on offer, with
+    /// <see cref="UpdateState.DownloadFailed"/> set, so it can be tried again.
+    /// </summary>
     Available,
     /// <summary>Downloading the version on offer (<see cref="UpdateState.Percent"/>).</summary>
     Downloading,
@@ -20,12 +23,15 @@ public enum UpdateStage
     Restarting,
     /// <summary>A check the user asked for failed.</summary>
     CheckFailed,
-    /// <summary>Downloading or handing over to the updater failed; Amber carries on as it was.</summary>
+    /// <summary>Handing the downloaded update over to the updater failed; Amber carries on as it was.</summary>
     UpdateFailed,
 }
 
-/// <summary>The stage, the version on offer (Available, Downloading, Restarting) and how much of it has downloaded.</summary>
-public sealed record UpdateState(UpdateStage Stage, string? Version = null, int Percent = 0);
+/// <summary>
+/// The stage, the version on offer (Available, Downloading, Restarting), how much of it has downloaded, and whether the
+/// last try to download the version on offer failed.
+/// </summary>
+public sealed record UpdateState(UpdateStage Stage, string? Version = null, int Percent = 0, bool DownloadFailed = false);
 
 /// <summary>The part of updating that talks to GitHub and to the updater. Tests use a stand-in.</summary>
 public interface IUpdateServer
@@ -122,7 +128,10 @@ public sealed class Updates
         }
     }
 
-    /// <summary>Downloads the version on offer; true once it is ready for <see cref="ApplyOnExit"/>.</summary>
+    /// <summary>
+    /// Downloads the version on offer; true once it is ready for <see cref="ApplyOnExit"/>. If the download fails, the
+    /// version stays on offer, marked <see cref="UpdateState.DownloadFailed"/>, and can be tried again.
+    /// </summary>
     public async Task<bool> DownloadAsync()
     {
         if (_server is null || State.Stage != UpdateStage.Available) return false;
@@ -135,7 +144,8 @@ public sealed class Updates
         }
         catch (Exception)
         {
-            Show(new(UpdateStage.UpdateFailed));
+            // Offline, out of disk space, a broken file: nothing Amber can fix, but the next try may work.
+            Show(new(UpdateStage.Available, version, DownloadFailed: true));
             return false;
         }
         Show(new(UpdateStage.Restarting, version));

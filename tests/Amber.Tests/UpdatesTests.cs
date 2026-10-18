@@ -241,7 +241,7 @@ public class UpdatesTests
                 new(UpdateStage.Downloading, "1.1.0", 100), new(UpdateStage.Restarting, "1.1.0"),
             ],
             seen);
-        Assert.Equal(("Downloading 42 %", false, (string?)null), SettingsView.UpdateRow(seen[1]));
+        Assert.Equal(("Downloading 42%", false, (string?)null), SettingsView.UpdateRow(seen[1]));
         Assert.Equal(("Restarting…", false, (string?)null), SettingsView.UpdateRow(updates.State));
         Assert.NotNull(server.AppliedWith);
         Assert.Equal(["--tray"], server.AppliedWith);
@@ -258,15 +258,58 @@ public class UpdatesTests
     }
 
     [Fact]
-    public async Task A_failed_download_says_so_and_offers_a_new_check()
+    public async Task A_failed_download_keeps_the_version_on_offer_and_says_so()
     {
         var updates = Installed(new FakeServer { Newer = "1.1.0", DownloadFails = true });
         await updates.CheckAsync(userAsked: true, Start);
 
         Assert.False(await updates.DownloadAsync());
 
-        Assert.Equal(UpdateStage.UpdateFailed, updates.State.Stage);
-        Assert.Equal(("Check", true, "Couldn't update"), SettingsView.UpdateRow(updates.State));
+        Assert.Equal(new UpdateState(UpdateStage.Available, "1.1.0", DownloadFailed: true), updates.State);
+        Assert.True(updates.ShouldAnnounce);
+        Assert.Equal(("Update to 1.1.0", true, "Couldn't download"), SettingsView.UpdateRow(updates.State));
+    }
+
+    [Fact]
+    public async Task After_a_failed_download_it_can_be_tried_again()
+    {
+        var server = new FakeServer { Newer = "1.1.0", DownloadFails = true, Progress = [0, 40] };
+        var updates = Installed(server);
+        await updates.CheckAsync(userAsked: true, Start);
+        await updates.DownloadAsync();
+
+        server.DownloadFails = false;
+        var seen = new List<UpdateState>();
+        updates.Changed += () => seen.Add(updates.State);
+
+        Assert.True(await updates.DownloadAsync());
+        Assert.Equal(new UpdateState(UpdateStage.Downloading, "1.1.0"), seen[0]); // the failure note goes
+        Assert.Equal(new UpdateState(UpdateStage.Restarting, "1.1.0"), updates.State);
+    }
+
+    [Fact]
+    public async Task A_new_check_clears_a_failed_download()
+    {
+        var updates = Installed(new FakeServer { Newer = "1.1.0", DownloadFails = true });
+        await updates.CheckAsync(userAsked: true, Start);
+        await updates.DownloadAsync();
+
+        await updates.CheckAsync(userAsked: true, Start.AddMinutes(5));
+
+        Assert.Equal(new UpdateState(UpdateStage.Available, "1.1.0"), updates.State);
+    }
+
+    [Fact]
+    public async Task A_skipped_version_whose_download_failed_is_still_not_announced()
+    {
+        var updates = Installed(new FakeServer { Newer = "1.1.0", DownloadFails = true });
+        await updates.CheckAsync(userAsked: true, Start);
+        updates.Skip();
+
+        await updates.DownloadAsync();
+
+        Assert.True(updates.State.DownloadFailed);
+        Assert.False(updates.ShouldAnnounce);
     }
 
     [Fact]

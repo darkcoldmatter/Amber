@@ -22,11 +22,12 @@ public partial class AdvancedView : UserControl
     AdornerLayer? _hintLayer;
     Window? _window;
 
-    public AdvancedView(Settings settings)
+    public AdvancedView(Settings settings, Updates updates)
     {
         InitializeComponent();
         _settings = settings;
         DataContext = settings;
+        Notice.Updates = updates;
         Timeline.Filters = settings.Filters;
         Panel.Filters = settings.Filters;
 

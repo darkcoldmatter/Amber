@@ -5,6 +5,12 @@
              xmlns:views="clr-namespace:Amber.Views">
     <!-- Figma "Advanced" (section 111:10246), below the 66 px header: subtract 66 from Figma's y. -->
     <StackPanel Width="848">
+        <!--
+            A new version: one row under the header, ending at x 824 like the ON/OFF button, 24 px above whatever comes
+            next (as far as the header is from it), so everything below moves down by 54 px while it shows.
+        -->
+        <views:UpdateNotice x:Name="Notice" Margin="0,9,24,15" HorizontalAlignment="Right" />
+
         <!-- "How it works" (Figma 111:9513): shown while there are no filters, until it is closed. -->
         <Border x:Name="Intro" Margin="23,9,24,11" Height="105" Background="White" CornerRadius="14">
             <Grid>

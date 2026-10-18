@@ -143,7 +143,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 170 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 187 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -221,6 +221,11 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 - An installed Amber checks GitHub a minute after it starts, then every 24 h, and when Settings → Check is
   clicked. Automatic failures are silent (retried after an hour). Installing resets the tint, quits, lets the
   updater swap the app and restarts it — into the tray if the window was closed.
+- **Update notice** (Figma `125:292`): when a version is on offer, Simple shows "A new version is available"
+  with Update and ✕ at the top right; Advanced shows it as one row under the header and moves the rest down.
+  Update shows the download % and then restarts; ✕ skips that version (`SkippedVersion`); Settings still
+  offers it. Preview it from the terminal build: `dotnet run --project src\Amber -- --pretend-update 1.0.1`
+  (add `--pretend-fail` for the failed download) — Debug builds only, never in the installed app.
 - **One version number:** `<Version>` in `src/Amber/Amber.csproj`; About shows it in full.
 - **To release:** set `<Version>` (e.g. 1.0.1), commit, push; `git tag v1.0.1` and push the tag; GitHub Actions
   builds a **draft** release; write the notes on GitHub and press Publish. Publish or delete each draft before
@@ -236,7 +241,7 @@ Done and merged: tint engine, tray, single instance, start with Windows, setting
 schedule, advanced mode with curves, Settings and About — all on Figma Design 3.0 (steps 5a–5b), with
 10-second fades and cross-fades between advanced filters and the 1 % smoothness rule (5c).
 Built on branch `step-6a-installer-updates`: installer and auto-update (Velopack), version 1.0.0, release
-workflow, GPL-3.0 licence, public README; the in-app update notice (owner's Figma frame `125:292`) is next.
+workflow, GPL-3.0 licence, public README, and the in-app update notice (owner's Figma frame `125:292`).
 
 Next:
 1. Owner checks step 6a + the update notice; merge.

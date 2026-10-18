@@ -18,7 +18,11 @@ public partial class App : Application
     readonly DispatcherTimer _saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     readonly DispatcherTimer _scheduleTimer = new();
     readonly Updates _updates;
+    readonly bool _installed;
     readonly DispatcherTimer _updateTimer = new();
+#if DEBUG
+    readonly bool _pretending;
+#endif
     Mutex? _singleInstance;
     bool _previewing;
     TintMode? _previewMode;
@@ -45,7 +49,22 @@ public partial class App : Application
     }
 
     // A copy run from a build folder (dotnet run) isn't installed: it shows "Not installed" and never checks or updates.
-    public App() => _updates = new(VelopackServer.ForThisCopy(), _settings);
+    public App()
+    {
+        var server = VelopackServer.ForThisCopy();
+        _installed = server is not null;
+#if DEBUG
+        // dotnet run -- --pretend-update 1.0.1: a pretend version on offer, to preview the update notice (PretendUpdates.cs).
+        // Skipping it is remembered in settings of its own, never in the real file.
+        if (PretendUpdateServer.FromArgs(Environment.GetCommandLineArgs()) is { } pretend)
+        {
+            _updates = new(pretend, new Settings());
+            _pretending = true;
+            return;
+        }
+#endif
+        _updates = new(server, _settings);
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -69,7 +88,7 @@ public partial class App : Application
         ThreadPool.RegisterWaitForSingleObject(showRequest, (_, _) => Dispatcher.InvokeAsync(ShowWindow), null, Timeout.Infinite, false);
 
         // Keep the sign-in entry pointing at this exe, in case Amber was moved; never from a build run from source.
-        if (StartupRegistration.ShouldRefresh(_updates.IsInstalled, StartupRegistration.IsEnabled)) StartupRegistration.IsEnabled = true;
+        if (StartupRegistration.ShouldRefresh(_installed, StartupRegistration.IsEnabled)) StartupRegistration.IsEnabled = true;
 
         // Never leave the screen tinted if the app crashes.
         DispatcherUnhandledException += (_, _) => ScreenTint.Reset();
@@ -100,6 +119,9 @@ public partial class App : Application
 
         _updateTimer.Tick += async (_, _) => await CheckForUpdates(userAsked: false);
         ScheduleUpdateCheck();
+#if DEBUG
+        if (_pretending) _ = CheckForUpdates(userAsked: false); // the pretend version is on offer at once
+#endif
 
         if (startInTray) ReleaseMemorySoon();
         else ShowWindow();
@@ -139,6 +161,9 @@ public partial class App : Application
     public async void InstallUpdate()
     {
         if (!await _updates.DownloadAsync()) return;
+#if DEBUG
+        if (_pretending) return; // nothing to install: the notice stays at "Restarting…"
+#endif
 
         // Every exit path leaves the screen untinted; the new Amber puts the tint back once it starts.
         ScreenTint.Reset();
@@ -265,7 +290,7 @@ public partial class App : Application
         if (_window is null)
         {
             // Closing the window frees it; Amber keeps running in the tray.
-            _window = new MainWindow(_settings);
+            _window = new MainWindow(_settings, _updates);
             _window.Closed += (_, _) =>
             {
                 _window = null;

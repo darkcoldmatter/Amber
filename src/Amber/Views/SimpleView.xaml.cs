@@ -14,11 +14,12 @@ public partial class SimpleView : UserControl
     readonly Settings _settings;
     readonly Dictionary<TintMode, RadioButton> _chips;
 
-    public SimpleView(Settings settings)
+    public SimpleView(Settings settings, Updates updates)
     {
         InitializeComponent();
         _settings = settings;
         DataContext = settings;
+        Notice.Updates = updates;
         _chips = new()
         {
             [TintMode.GoldenHour] = GoldenHourChip,

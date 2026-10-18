@@ -20,16 +20,16 @@
                 <TextBlock Style="{StaticResource BodyText}" Margin="16,50,19,0" VerticalAlignment="Top" TextWrapping="Wrap"
                            LineHeight="20" LineStackingStrategy="BlockLineHeight">
                     <Run Text="Advanced mode lets you schedule" /> <Bold Foreground="{StaticResource InkBrush}">more than one</Bold> <Run
-                        Text="display filter and apply a" /> <Bold Foreground="{StaticResource InkBrush}">dynamic tint</Bold> <Run
-                        Text="level. Click the “+” button below to add the first filter." />
+                        Text="filter, each with its own tint and a level that can" /> <Bold Foreground="{StaticResource InkBrush}">change over time</Bold><Run
+                        Text=". Click “Add filter” below to add the first one." />
                 </TextBlock>
                 <Button Style="{StaticResource IconButton}" Tag="{StaticResource IconCross}" Foreground="{StaticResource InkBrush}"
                         Margin="0,2,2,0" HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnCloseIntro"
-                        AutomationProperties.Name="Close how it works" />
+                        AutomationProperties.Name="Close How it works" />
             </Grid>
         </Border>
 
-        <controls:AdvancedTimeline x:Name="Timeline" Width="800" Height="112" Margin="0,9,0,0" AutomationProperties.Name="Filters" />
+        <controls:AdvancedTimeline x:Name="Timeline" Width="800" Height="112" Margin="0,9,0,0" AutomationProperties.Name="Filter timeline" />
 
         <!-- Nothing selected: add a filter. Selected: its settings. -->
         <Button x:Name="AddButton" Style="{StaticResource AddFilterButton}" Content="Add filter" Margin="0,36,0,36" HorizontalAlignment="Center"

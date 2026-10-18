@@ -36,11 +36,11 @@ public partial class SettingsView : UserControl
         UpdateStage.NotInstalled => ("Not installed", false, null),
         UpdateStage.Checking => ("Checking…", false, null),
         UpdateStage.UpToDate => ("Up to date", false, null),
-        UpdateStage.Available => ($"Update to {state.Version}", true, state.DownloadFailed ? "Couldn't download" : null),
+        UpdateStage.Available => ($"Update to {state.Version}", true, state.DownloadFailed ? "Couldn't download the update" : null),
         UpdateStage.Downloading => ($"Downloading {state.Percent}%", false, null),
         UpdateStage.Restarting => ("Restarting…", false, null),
-        UpdateStage.CheckFailed => ("Check", true, "Couldn't check"),
-        UpdateStage.UpdateFailed => ("Check", true, "Couldn't update"),
+        UpdateStage.CheckFailed => ("Check", true, "Couldn't check for updates"),
+        UpdateStage.UpdateFailed => ("Check", true, "Couldn't install the update"),
         _ => ("Check", true, null),
     };
 

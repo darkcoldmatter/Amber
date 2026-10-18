@@ -14,9 +14,9 @@ So no, I'm not a cool developer. But if there's an app you wish existed, you can
 
 ## What it does
 
-- **Three looks:** Golden hour, Amber and Deep night, each with its own strength from 0 to 100 %.
-- **Simple mode:** pick a look and a strength, optionally on a daily schedule with a smooth transition.
-- **Advanced mode:** several filters across the day, each with its own look and either a steady strength
+- **Three tints:** Golden hour, Amber and Deep night, each with its own level from 0 to 100 %.
+- **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
+- **Advanced mode:** several filters across the day, each with its own tint and either a steady level
   or a curve you draw. Neighbouring filters cross-fade, so the screen never flashes back to blue.
 - Starts with Windows if you like, and follows your 12- or 24-hour clock.
 

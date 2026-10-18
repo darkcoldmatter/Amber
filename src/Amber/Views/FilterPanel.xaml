@@ -5,7 +5,7 @@
     <!-- The selected filter, under the timeline: Figma 111:3891 from its row at y 229, and 111:4240 with the curve open. -->
     <StackPanel Width="848">
         <Canvas Height="42">
-            <Button x:Name="ModeField" Canvas.Left="24" Style="{StaticResource ModeDropdown}" Click="OnModeClick" AutomationProperties.Name="Mode" />
+            <Button x:Name="ModeField" Canvas.Left="24" Style="{StaticResource ModeDropdown}" Click="OnModeClick" AutomationProperties.Name="Tint" />
 
             <!--
                 From x 190 to Figma's x 776: the times, then the level slider from 40 px after them to x 700, and its number

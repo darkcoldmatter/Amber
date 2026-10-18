@@ -183,6 +183,11 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
   (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
+**Words (use them everywhere, UI and docs):** *tint* = Golden hour / Amber / Deep night, and the effect on the
+screen; *level* = its strength, 0–100 %; *filter* = one scheduled block in Advanced; *schedule* and
+*transition* = Simple's time range and its fade; *mode* only for Simple and Advanced. Never "display mode",
+"display filter" or "dynamic tint". (In code the tints are still `TintMode`.)
+
 Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night),
 which stay exactly as they are. The About screen names no creator (owner's choice: GitHub tells that story).
 **Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, notices, installer

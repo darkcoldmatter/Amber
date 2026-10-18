@@ -24,7 +24,7 @@ public class CurveEditor : FrameworkElement
     // Room between time labels; a label closer than EndGap to an end label would read as one with it.
     const double MinLabelGap = 16, EndGap = 4;
     const double TextSize = 12; // every text on the card
-    const string Hint = "Left-click to add a point, right-click to remove one";
+    const string Hint = "Click to add a point. Right-click a point to remove it.";
 
     static readonly int[] LabelStrides = [30, 60, 120, 180, 240, 360, 720];
     static readonly int[] LevelLines = [25, 50, 75];

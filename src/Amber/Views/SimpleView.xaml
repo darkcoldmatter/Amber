@@ -28,7 +28,7 @@
 
         <Canvas x:Name="SchedulePanel" Canvas.Top="282" Width="724" Height="164">
             <controls:ScheduleBar Canvas.Left="24" Width="676" Height="74" Start="{Binding ScheduleStart}" End="{Binding ScheduleEnd}"
-                                  AutomationProperties.Name="Schedule bar" />
+                                  AutomationProperties.Name="Schedule timeline" />
 
             <!-- The fields are wider on the 12-hour clock: the dash and the end time move along with them. -->
             <StackPanel Canvas.Left="24" Canvas.Top="98" Orientation="Horizontal">

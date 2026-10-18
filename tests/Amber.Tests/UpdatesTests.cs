@@ -108,7 +108,7 @@ public class UpdatesTests
         await updates.CheckAsync(userAsked: true, Start);
 
         Assert.Equal(UpdateStage.CheckFailed, updates.State.Stage);
-        Assert.Equal(("Check", true, "Couldn't check"), SettingsView.UpdateRow(updates.State));
+        Assert.Equal(("Check", true, "Couldn't check for updates"), SettingsView.UpdateRow(updates.State));
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class UpdatesTests
 
         Assert.Equal(new UpdateState(UpdateStage.Available, "1.1.0", DownloadFailed: true), updates.State);
         Assert.True(updates.ShouldAnnounce);
-        Assert.Equal(("Update to 1.1.0", true, "Couldn't download"), SettingsView.UpdateRow(updates.State));
+        Assert.Equal(("Update to 1.1.0", true, "Couldn't download the update"), SettingsView.UpdateRow(updates.State));
     }
 
     [Fact]
@@ -322,6 +322,7 @@ public class UpdatesTests
         Assert.False(updates.ApplyOnExit([]));
 
         Assert.Equal(UpdateStage.UpdateFailed, updates.State.Stage);
+        Assert.Equal(("Check", true, "Couldn't install the update"), SettingsView.UpdateRow(updates.State));
     }
 
     [Fact]

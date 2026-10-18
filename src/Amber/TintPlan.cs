@@ -38,6 +38,9 @@ public sealed class TintPlan
         }
 
         if (target is not null) _lastTint = target;
+        // A fade that starts from rest begins with one small step: the time spent standing still before it doesn't
+        // count, or switching on after a quiet minute would jump straight to the full tint.
+        if (!IsFading) seconds = Math.Min(seconds, Amber.Fade.Tick(fadeSeconds).TotalSeconds);
         Fade = Amber.Fade.Step(Fade, target is not null, seconds, fadeSeconds);
 
         if (_lastTint is null || Fade <= 0) return null;

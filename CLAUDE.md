@@ -40,9 +40,10 @@ public and the first release come next.
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
   screen; weights over 1 are shared out. Used where one filter hands over to the next.
-- **Fades:** `Fade.DefaultSeconds` — **0.4 s, the owner's choice** — covers on/off in both modes and a
-  simple-schedule transition set to "Off"; any other transition setting fades over the time it names. That quick
-  fade steps once a screen frame (`Fade.Tick` never goes below 1/60 s), about 24 steps.
+- **Fades:** `Fade.DefaultSeconds` — **2 s, the owner's choice** — covers on/off in both modes and a
+  simple-schedule transition set to "Off"; any other transition setting fades over the time it names. It steps
+  1 % every 20 ms (`Fade.Tick` never goes below 1/60 s). A fade that starts from rest ignores the idle time
+  before it (`TintPlan`), or it would jump straight to the end.
   **Advanced filter edges always fade over 10 s** (`AdvancedSchedule`, no setting): each edge is a 10 s ramp
   centred on it (starts 5 s before, done 5 s after). Two filters that touch run their ramps over the same
   10 s with weights adding up to 1 — a cross-fade, so the screen never goes untinted between them. Any real
@@ -75,7 +76,7 @@ public and the first release come next.
   midnight, is never shorter than 15 minutes, and start == end means the whole 24 h. An edge never jumps
   over the other one — you fill the day by dragging the long way round. **Transition** is one dropdown that
   mixes units — Off, 10 s, 30 s, 1, 2, 5, 10, 15, 30 min — never more than half the range; "Off" uses the
-  fade constant (0.4 s). Stored in seconds.
+  fade constant (2 s). Stored in seconds.
 - **Advanced mode:** several filters, each a time range with a mode and either a flat level or a curve.
   - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
     When no free stretch of 15 min is left, the add menu greys out.

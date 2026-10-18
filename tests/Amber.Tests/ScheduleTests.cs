@@ -42,7 +42,7 @@ public class ScheduleTests
         Assert.Equal(0, Schedule.StrengthAt(start, start, End, 0), 3);
         Assert.Equal(0.5, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(Fade.DefaultSeconds / 2)), start, End, 0), 3);
         Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(Fade.DefaultSeconds)), start, End, 0), 3);
-        Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(1)), start, End, 0), 3);
+        Assert.Equal(1, Schedule.StrengthAt(start.Add(TimeSpan.FromSeconds(Fade.DefaultSeconds + 1)), start, End, 0), 3);
     }
 
     [Fact]

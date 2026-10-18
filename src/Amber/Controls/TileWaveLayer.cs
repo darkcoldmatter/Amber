@@ -21,6 +21,14 @@ public class TileWaveLayer : FrameworkElement
         return (Brush)brush;
     }).ToArray();
 
+    static readonly Brush[] ShadowBrushes = Enumerable.Range(0, Steps + 1).Select(step =>
+    {
+        var brush = new SolidColorBrush(Colors.Black) { Opacity = TileWave.ShadowOpacity * step / Steps };
+        brush.Freeze();
+        return (Brush)brush;
+    }).ToArray();
+
+    readonly List<(Rect Tile, int Step, double Swell)> _lit = [];
     readonly Stopwatch _clock = new();
     bool _running;
     double _seconds;
@@ -52,6 +60,8 @@ public class TileWaveLayer : FrameworkElement
         CompositionTarget.Rendering -= OnFrame;
         _clock.Reset();
         _running = false;
+        _lit.Clear();
+        _lit.TrimExcess();
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -63,6 +73,8 @@ public class TileWaveLayer : FrameworkElement
         var farthest = Math.Sqrt(center.X * center.X + center.Y * center.Y);
         const double stepX = TileWave.TileWidth + TileWave.Gap, stepY = TileWave.TileHeight + TileWave.Gap;
 
+        // The lit tiles, each raised and pushed along its line from the centre; shadows all go under all the tiles.
+        _lit.Clear();
         for (var row = 0; row * stepY < height; row++)
         {
             var top = row * stepY;
@@ -71,12 +83,27 @@ public class TileWaveLayer : FrameworkElement
             {
                 var dx = left + TileWave.TileWidth / 2 - center.X;
                 var dy = top + TileWave.TileHeight / 2 - center.Y;
-                var opacity = TileWave.Opacity(Math.Sqrt(dx * dx + dy * dy), _seconds, farthest);
-                var step = (int)Math.Round(opacity / TileWave.PeakOpacity * Steps);
+                var distance = Math.Sqrt(dx * dx + dy * dy);
+                var swell = TileWave.Swell(distance, _seconds, farthest);
+                var step = (int)Math.Round(swell * Steps);
                 if (step <= 0) continue;
-                dc.DrawRoundedRectangle(TileBrushes[Math.Min(step, Steps)], null, new Rect(left, top, TileWave.TileWidth, TileWave.TileHeight),
-                    TileWave.Radius, TileWave.Radius);
+
+                var push = distance > 0 ? TileWave.Offset(distance, _seconds, farthest) / distance : 0;
+                double scale = TileWave.Scale(distance, _seconds, farthest), w = TileWave.TileWidth * scale, h = TileWave.TileHeight * scale;
+                var tile = new Rect(center.X + dx * (1 + push) - w / 2, center.Y + dy * (1 + push) - h / 2, w, h);
+                _lit.Add((tile, Math.Min(step, Steps), swell));
             }
         }
+
+        if (TileWave.ShadowOpacity > 0)
+            foreach (var (tile, step, swell) in _lit)
+            {
+                var shadow = tile;
+                shadow.Offset(0, TileWave.ShadowDrop * swell);
+                Draw(dc, ShadowBrushes[step], shadow);
+            }
+        foreach (var (tile, step, _) in _lit) Draw(dc, TileBrushes[step], tile);
     }
+
+    static void Draw(DrawingContext dc, Brush brush, Rect tile) => dc.DrawRoundedRectangle(brush, null, tile, TileWave.Radius, TileWave.Radius);
 }

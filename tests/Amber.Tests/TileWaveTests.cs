@@ -48,6 +48,43 @@ public class TileWaveTests
     }
 
     [Fact]
+    public void On_the_ring_a_tile_is_lifted_and_pushed_outward_the_most()
+    {
+        var seconds = TileWave.Duration / 3;
+        var ring = TileWave.RingRadius(seconds, Far);
+
+        Assert.Equal(1 + TileWave.LiftScale, TileWave.Scale(ring, seconds, Far), 6);
+        Assert.Equal(TileWave.Push, TileWave.Offset(ring, seconds, Far), 6);
+        Assert.Equal(1 + TileWave.LiftScale / 2, TileWave.Scale(ring + TileWave.BandWidth / 4, seconds, Far), 6);
+        Assert.Equal(TileWave.Push / 2, TileWave.Offset(ring + TileWave.BandWidth / 4, seconds, Far), 6);
+    }
+
+    [Fact]
+    public void Behind_the_ring_a_tile_settles_with_a_small_damped_bob()
+    {
+        var distance = 200.0;
+        var reached = TileWave.Duration * (1 - Math.Cbrt(1 - distance / Far));
+        var halfSwing = 1 / (2 * TileWave.BobFrequency);
+
+        // Half a swing later it has bobbed inward, by less than it was pushed out.
+        var inward = TileWave.Offset(distance, reached + halfSwing, Far);
+        Assert.True(inward < 0 && -inward < TileWave.Push / 2, inward.ToString());
+        Assert.Equal(1, TileWave.Scale(distance, reached + TileWave.Trail, Far));
+        Assert.Equal(0, TileWave.Offset(distance, reached + TileWave.Trail, Far));
+    }
+
+    [Fact]
+    public void Nothing_moves_before_the_wave_or_after_it()
+    {
+        foreach (var seconds in new[] { -0.1, TileWave.TotalSeconds, TileWave.TotalSeconds + 1 })
+            for (var d = 0.0; d <= Far; d += 10)
+            {
+                Assert.Equal(1, TileWave.Scale(d, seconds, Far));
+                Assert.Equal(0, TileWave.Offset(d, seconds, Far));
+            }
+    }
+
+    [Fact]
     public void Nothing_shows_before_the_wave_or_after_it()
     {
         Assert.Equal(0, TileWave.Opacity(100, -0.1, Far));

@@ -12,12 +12,12 @@ public static class DotWave
     // The screen of dots.
     /// <summary>Distance (px) from one dot to the next.</summary>
     public const double Pitch = 8;
-    /// <summary>Side (px) of an average dot; square, not rounded.</summary>
-    public const double DotSize = 2.5;
+    /// <summary>Side (px) of a dot; square, not rounded.</summary>
+    public const double DotSize = 3.25;
     /// <summary>The classic screentone angle: the grid turned 45°, same spacing. False: a plain square grid.</summary>
     public const bool Screen45 = false;
-    /// <summary>Each dot keeps its own size, up to this much bigger or smaller than <see cref="DotSize"/> (0.4 = ±40 %)…</summary>
-    public const double SizeJitter = 0.4;
+    /// <summary>Each dot can keep its own size, up to this much bigger or smaller than <see cref="DotSize"/> (0.4 = ±40 %; 0 = all one size)…</summary>
+    public const double SizeJitter = 0;
     /// <summary>…and its own strength, between this share of the peak and the full peak.</summary>
     public const double FaintestDot = 0.4;
     /// <summary>The seed of each dot's size and strength, so the screen is the same every time and never flickers.</summary>
@@ -25,8 +25,10 @@ public static class DotWave
     public static readonly Color DotColor = Colors.White;
 
     // The ring.
-    /// <summary>Seconds the ring takes from the centre to the farthest corner, slowing down as it goes (cubic ease-out).</summary>
-    public const double Duration = 0.8;
+    /// <summary>Seconds the ring takes from the centre to the farthest corner, slowing down as it goes (see <see cref="EasePower"/>).</summary>
+    public const double Duration = 1.0;
+    /// <summary>How hard the ring slows down: 3 = cubic ease-out, higher = a faster start and a longer, slower finish.</summary>
+    public const double EasePower = 5;
     /// <summary>How wide (px) the lit band around the ring is: full at its centre line, nothing at its edges.</summary>
     public const double BandWidth = 80;
     /// <summary>Opacity of the strongest dots right on the ring.</summary>
@@ -45,8 +47,8 @@ public static class DotWave
     /// <summary>How long the whole wave lasts, its trail included.</summary>
     public const double TotalSeconds = Duration + Trail;
 
-    /// <summary>The cubic ease-out: fast at first, settling at the end.</summary>
-    public static double Ease(double progress) => 1 - Math.Pow(1 - Math.Clamp(progress, 0, 1), 3);
+    /// <summary>The ease-out: fast at first, settling at the end.</summary>
+    public static double Ease(double progress) => 1 - Math.Pow(1 - Math.Clamp(progress, 0, 1), EasePower);
 
     /// <summary>How far (px) the ring has got <paramref name="seconds"/> after it started, reaching <paramref name="farthest"/> at the end.</summary>
     public static double RingRadius(double seconds, double farthest) => farthest * Ease(seconds / Duration);
@@ -71,7 +73,7 @@ public static class DotWave
         }
 
         // When the ring reached this dot: the inverse of the ease-out.
-        var reached = Duration * (1 - Math.Cbrt(1 - Math.Clamp(distance / farthest, 0, 1)));
+        var reached = Duration * (1 - Math.Pow(1 - Math.Clamp(distance / farthest, 0, 1), 1 / EasePower));
         var since = (seconds - reached) / Trail;
         return since >= 1 ? 0 : Smooth(1 - since);
     }

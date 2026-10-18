@@ -4,7 +4,7 @@ public class DotWaveTests
 {
     const double Far = 400; // centre to the farthest corner
 
-    static double Reached(double distance) => DotWave.Duration * (1 - Math.Cbrt(1 - distance / Far));
+    static double Reached(double distance) => DotWave.Duration * (1 - Math.Pow(1 - distance / Far, 1 / DotWave.EasePower));
 
     [Fact]
     public void The_ring_starts_at_the_centre_and_reaches_the_far_corners_at_the_end()
@@ -73,7 +73,7 @@ public class DotWaveTests
     [Fact]
     public void Each_dot_keeps_the_same_size_and_strength_within_the_jitter()
     {
-        var sizes = new List<double>();
+        var strengths = new List<double>();
         for (var column = 0; column < 40; column++)
             for (var row = 0; row < 40; row++)
             {
@@ -81,8 +81,8 @@ public class DotWaveTests
                 Assert.Equal((size, strength), DotWave.Character(column, row));
                 Assert.InRange(size, 1 - DotWave.SizeJitter, 1 + DotWave.SizeJitter);
                 Assert.InRange(strength, DotWave.FaintestDot, 1);
-                sizes.Add(size);
+                strengths.Add(strength);
             }
-        Assert.True(sizes.Distinct().Count() > 1000); // they really do differ
+        Assert.True(strengths.Distinct().Count() > 1000); // their strengths really do differ
     }
 }

@@ -21,6 +21,11 @@ public partial class AboutView : UserControl
 
     void OnGitHubClick(object sender, RoutedEventArgs e) => Open(RepositoryUrl);
 
+    // The issue forms in .github/ISSUE_TEMPLATE.
+    void OnReportBugClick(object sender, RoutedEventArgs e) => Open(RepositoryUrl + "/issues/new?template=bug_report.yml");
+
+    void OnSuggestIdeaClick(object sender, RoutedEventArgs e) => Open(RepositoryUrl + "/issues/new?template=idea.yml");
+
     void OnLicensesClick(object sender, RoutedEventArgs e) => Open(Path.Combine(AppContext.BaseDirectory, "Licenses.txt"));
 
     void OnClose(object sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);

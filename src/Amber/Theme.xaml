@@ -226,6 +226,11 @@
         </Style.Triggers>
     </Style>
 
+    <!-- The same link, always underlined: About's feedback links. -->
+    <Style x:Key="UnderlinedCaptionLink" TargetType="Hyperlink" BasedOn="{StaticResource CaptionLink}">
+        <Setter Property="TextDecorations" Value="Underline" />
+    </Style>
+
     <!-- White card on Settings and About, and the hairline between its rows (0.5 px in Figma = 1 px at half strength). -->
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="White" />

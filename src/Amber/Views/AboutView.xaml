@@ -32,6 +32,14 @@
                 <TextBlock Style="{StaticResource CaptionText}" Margin="24,201.5,0,0" VerticalAlignment="Top">
                     <Run Text="Version:" /> <Run x:Name="VersionRun" />
                 </TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="127,201.5,0,0" VerticalAlignment="Top">
+                    <TextBlock Style="{StaticResource CaptionText}">
+                        <Hyperlink Style="{StaticResource UnderlinedCaptionLink}" Click="OnReportBugClick">Report a bug</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource CaptionText}" Margin="16,0,0,0">
+                        <Hyperlink Style="{StaticResource UnderlinedCaptionLink}" Click="OnSuggestIdeaClick">Suggest an idea</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
                 <TextBlock Style="{StaticResource CaptionText}" Margin="0,201.5,24,0" HorizontalAlignment="Right" VerticalAlignment="Top">
                     <Hyperlink Style="{StaticResource CaptionLink}" Click="OnLicensesClick" AutomationProperties.Name="Licenses">Licenses</Hyperlink>
                 </TextBlock>

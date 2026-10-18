@@ -1,5 +1,6 @@
 ﻿Amber
 Copyright © 2026 Dmitriy Ratushniak
+Designed by Dmitriy Ratushniak, vibe coded with Claude (Anthropic's AI).
 Source code: https://github.com/darkcoldmatter/Amber
 
 Amber is free software: you can redistribute it and/or modify it under the terms of the

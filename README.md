@@ -3,6 +3,15 @@
 A small, free Windows 10/11 app that reduces blue light by tinting the whole screen. It lives in the tray,
 uses almost no memory or CPU, and needs no admin rights.
 
+## Vibe coded
+
+Amber was made by two: me, [Dmitriy Ratushniak](https://github.com/darkcoldmatter), a designer who doesn't
+write code, and [Claude](https://claude.ai), Anthropic's AI. I designed every screen in Figma, explained
+what I wanted in plain words, tested each step on my own PC and decided what stays. Claude wrote all of the
+code (the tint engine, the interface, the installer, the updates and the tests) in Claude Code.
+
+So no, I'm not a cool developer. But if there's an app you wish existed, you can build it too.
+
 ## What it does
 
 - **Three looks:** Golden hour, Amber and Deep night, each with its own strength from 0 to 100 %.
@@ -52,7 +61,7 @@ A copy run from source works like the installed app, except that it never update
 
 ## Licence
 
-Copyright © 2026 Dmitriy Ratushniak.
+Copyright © 2026 Dmitriy Ratushniak. Designed by Dmitriy Ratushniak, vibe coded with Claude.
 
 Amber is free software under the [GNU General Public License v3.0 or later](LICENSE): you may use, study,
 share and change it, and anything you distribute that's based on it must stay under the same licence,

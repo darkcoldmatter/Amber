@@ -32,7 +32,7 @@
                 <TextBlock Style="{StaticResource CaptionText}" Margin="24,201.5,0,0" VerticalAlignment="Top">
                     <Run Text="Version:" /> <Run x:Name="VersionRun" />
                 </TextBlock>
-                <TextBlock Style="{StaticResource CaptionText}" Margin="127,201.5,0,0" VerticalAlignment="Top" Text="Credit: Dmitriy Ratushniak" />
+                <TextBlock Style="{StaticResource CaptionText}" Margin="127,201.5,0,0" VerticalAlignment="Top" Text="Credit: Dmitriy Ratushniak &amp; Claude" />
                 <TextBlock Style="{StaticResource CaptionText}" Margin="0,201.5,24,0" HorizontalAlignment="Right" VerticalAlignment="Top">
                     <Hyperlink Style="{StaticResource CaptionLink}" Click="OnLicensesClick" AutomationProperties.Name="Licenses">Licenses</Hyperlink>
                 </TextBlock>

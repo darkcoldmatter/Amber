@@ -184,7 +184,10 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
 Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night)
-and the About credit ("Credit: Dmitriy Ratushniak"), which stay exactly as they are.
+and the About credit ("Credit: Dmitriy Ratushniak & Claude"), which stay exactly as they are.
+**Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, About, notices,
+installer publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team
+roles stay in Dmitriy's name only.
 
 ## Working here
 
@@ -207,13 +210,14 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   installed: Settings shows "Not installed" and it never checks or updates, and it doesn't touch the
   "Start with Windows" entry on its own. It shares the single-instance lock with an installed Amber, so quit
   the installed one (tray → Quit) before `dotnet run` on the same PC.
+- One plan step per branch, merged into `main` after the owner approves it.
 
 ## Releases
 
 - **Installer and updates: Velopack** (MIT) + GitHub Releases. Self-contained win-x64 (nothing else to install),
   per-user install to `%LocalAppData%\Amber` (no admin), Start-menu shortcut, uninstall from Windows Settings →
   Apps (it also removes the "Start with Windows" entry; settings stay). Setup ≈ 69 MB; updates download as
-  small deltas. Publisher shown: Dmitriy Ratushniak.
+  small deltas. Publisher shown: "Dmitriy Ratushniak & Claude".
 - An installed Amber checks GitHub a minute after it starts, then every 24 h, and when Settings → Check is
   clicked. Automatic failures are silent (retried after an hour). Installing resets the tint, quits, lets the
   updater swap the app and restarts it — into the tray if the window was closed.
@@ -225,21 +229,22 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   covered (README). Third-party notices in `src/Amber/Licenses.txt`. Code signing is planned through the
   SignPath Foundation (OSI licence, public repo, a first release, CI builds, approve each release); the
   workflow has marked places for it.
-- One plan step per branch, merged into `main` after the owner approves it. (`step-4c-advanced` was never
-  merged on its own; it reaches `main` together with step 5a, which was branched from it.)
 
 ## Where things stand
 
-Done: tint engine, tray, single instance, start with Windows, settings, simple mode with its schedule,
-the schedule engine, advanced mode (timeline, filter cards, curve editor), Settings and About.
-Design 3.0: step 5a (merged) — fonts, cursor, Deep night rename, transition in seconds, new shell, Simple
-mode, Settings and About. Step 5b (branch `step-5b-design3-advanced`) — Advanced mode: selectable bars, add
-menu, filter panel, intro card and hint, curve editor; `CurveMath.Fit` no longer leaves a trail of points
-when a range grows; curves whose ends don't reach the range ends are fixed up on load.
+Done and merged: tint engine, tray, single instance, start with Windows, settings, simple mode and its
+schedule, advanced mode with curves, Settings and About — all on Figma Design 3.0 (steps 5a–5b), with
+10-second fades and cross-fades between advanced filters and the 1 % smoothness rule (5c).
+Built on branch `step-6a-installer-updates`: installer and auto-update (Velopack), version 1.0.0, release
+workflow, GPL-3.0 licence, public README; the in-app update notice (owner's Figma frame `125:292`) is next.
 
 Next:
-1. **Installer** and auto-update, with the "Check for updates" button in Settings wired up
-   (it does nothing today), and `Licenses.txt` extended with the app's own licence.
-2. **Beta, then release** on GitHub.
+1. Owner checks step 6a + the update notice; merge.
+2. Before going public: rewrite the history so every commit uses the owner's GitHub no-reply address
+   (`328485409+darkcoldmatter@users.noreply.github.com`) and delete the old merged step branches; then the
+   repo becomes public (owner confirms the switch).
+3. First release v1.0.0 (unsigned), then the owner applies to SignPath Foundation; later releases signed.
+4. Owner's designs still to come: new app and tray icons.
 
-Open question for the owner: the repo is private; it becomes public and gets a licence at release.
+Decided: free and open source (GPL-3.0-or-later), public repo, SignPath Foundation signing, self-contained
+installer, automatic update checks with an in-app notice.

@@ -65,7 +65,7 @@ jobs:
       - name: Pack
         run: >-
           dotnet vpk pack --packId Amber --packVersion $env:VERSION --packTitle Amber
-          --packAuthors "Dmitriy Ratushniak" --shortcuts StartMenuRoot
+          --packAuthors "Dmitriy Ratushniak & Claude" --shortcuts StartMenuRoot
           --packDir publish --mainExe Amber.exe --icon src/Amber/Assets/amber.ico
           --runtime win10-x64 --noPortable -o releases
 

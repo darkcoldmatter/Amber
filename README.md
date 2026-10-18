@@ -1,5 +1,7 @@
 # Amber
 
+![Amber — free app for flexible blue light reduction, Windows 10/11](docs/images/cover.png)
+
 Amber is a free open-source app that reduces blue light by tinting the whole screen. It helps to make long or night work much more easier to handle.
 It lives in the tray uses almost no memory or CPU (3-5mb on background), and needs no admin rights.
 
@@ -11,6 +13,10 @@ This app was made by me and [Claude](https://claude.ai). I designed and tested e
 code. The output is well-optimized, properly working convenient tool that suits for it's purpose. The goal was not to only craft a working solution, but also to make it appealing and user-friendly UX-wise.
 
 ## What it does
+
+![Simple mode: tint and level control, scheduling](docs/images/simple-mode.png)
+
+![Advanced mode: several filters through the day, curve editor](docs/images/advanced-mode.png)
 
 - **Three tints:** Golden hour, Amber and Deep night, each with its own level from 0 to 100 %.
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.

@@ -183,10 +183,10 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
   (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
-Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night)
-and the About credit ("Credit: Dmitriy Ratushniak & Claude"), which stay exactly as they are.
-**Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, About, notices,
-installer publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team
+Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night),
+which stay exactly as they are. The About screen names no creator (owner's choice: GitHub tells that story).
+**Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, notices, installer
+publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team
 roles stay in Dmitriy's name only.
 
 ## Working here

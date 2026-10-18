@@ -11,12 +11,12 @@ public class TintPlanTests
     {
         var plan = new TintPlan();
 
-        var justStarted = plan.Next(Target, eased: true, 0.1, fadeSeconds: 2);
+        var justStarted = plan.Next(Target, eased: true, 0.02, fadeSeconds: 2);
         Assert.NotNull(justStarted);
         Assert.True(plan.Fade < 0.1, "the tint should only just be starting");
         Assert.True(justStarted![12] > Target[12], "barely any tint yet");
 
-        plan.Next(Target, eased: true, 0.9, fadeSeconds: 2);
+        plan.Next(Target, eased: true, 0.98, fadeSeconds: 2);
         Assert.Equal(0.5, plan.Fade, 2);
 
         var full = plan.Next(Target, eased: true, 1, fadeSeconds: 2);
@@ -28,15 +28,31 @@ public class TintPlanTests
     public void Switching_off_eases_back_to_a_clear_screen()
     {
         var plan = new TintPlan();
-        plan.Next(Target, eased: true, 2, fadeSeconds: 2);
+        plan.SnapTo(Target);
 
-        plan.Next(null, eased: true, 1, fadeSeconds: 2);
+        plan.Next(null, eased: true, 0.02, fadeSeconds: 2);
+        plan.Next(null, eased: true, 0.98, fadeSeconds: 2);
         Assert.Equal(0.5, plan.Fade, 2);
         Assert.True(plan.IsFading);
 
         Assert.Null(plan.Next(null, eased: true, 1, fadeSeconds: 2));
         Assert.Equal(0, plan.Fade);
         Assert.False(plan.IsFading);
+    }
+
+    [Fact]
+    public void A_fade_after_a_quiet_spell_starts_small_instead_of_jumping()
+    {
+        // The app passes the time since the screen last changed, which can be minutes when the tint sat still.
+        var plan = new TintPlan();
+        plan.Next(Target, eased: true, 90, Fade.DefaultSeconds);
+        Assert.True(plan.IsFading);
+        Assert.True(plan.Fade < 0.1, "switching on should begin a fade, not jump to the full tint");
+
+        plan.SnapTo(Target);
+        plan.Next(null, eased: true, 90, Fade.DefaultSeconds);
+        Assert.True(plan.IsFading);
+        Assert.True(plan.Fade > 0.9, "switching off should begin a fade too");
     }
 
     [Fact]

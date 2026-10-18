@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -117,6 +118,31 @@ public partial class MainWindow : Window
         OverlayHost.Content = null;
         ModeLayer.Visibility = Visibility.Visible;
         ShowGlow();
+    }
+
+    /// <summary>
+    /// Shows "New in this version" over the whole window, unless it is showing already; <paramref name="closed"/> runs
+    /// when it is closed with Close or Esc. The hint bubble (in the window's adorner layer, above all content) hides meanwhile.
+    /// </summary>
+    public void ShowNotes(IReadOnlyList<string> bullets, Action closed)
+    {
+        if (NotesHost.Content is not null) return;
+        var view = new WhatsNewView(bullets);
+        view.CloseRequested += (_, _) =>
+        {
+            NotesHost.Visibility = Visibility.Collapsed;
+            NotesHost.Content = null;
+            ShowAdorners(true);
+            closed();
+        };
+        NotesHost.Content = view;
+        NotesHost.Visibility = Visibility.Visible;
+        ShowAdorners(false);
+    }
+
+    void ShowAdorners(bool show)
+    {
+        if (AdornerLayer.GetAdornerLayer(Root) is { } layer) layer.Visibility = show ? Visibility.Visible : Visibility.Hidden;
     }
 
     const int MONITOR_DEFAULTTONEAREST = 2;

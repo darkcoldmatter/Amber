@@ -102,6 +102,29 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_version_whose_notes_were_shown_is_remembered()
+    {
+        new Settings { NotesShownVersion = "1.0.2" }.Save(SettingsPath);
+
+        Assert.Equal("1.0.2", Settings.Load(SettingsPath).NotesShownVersion);
+        Assert.DoesNotContain(nameof(Settings.HadFile), File.ReadAllText(SettingsPath));
+    }
+
+    [Fact]
+    public void Loading_tells_whether_there_was_a_settings_file()
+    {
+        // A fresh install has no file, and no folder either.
+        Assert.False(Settings.Load(SettingsPath).HadFile);
+
+        new Settings().Save(SettingsPath);
+        Assert.True(Settings.Load(SettingsPath).HadFile);
+
+        // Unreadable, but there: Amber has run here before.
+        File.WriteAllText(SettingsPath, "{ not json");
+        Assert.True(Settings.Load(SettingsPath).HadFile);
+    }
+
+    [Fact]
     public void A_file_from_before_the_layout_version_still_loads()
     {
         Directory.CreateDirectory(_folder);
@@ -114,6 +137,7 @@ public class SettingsTests : IDisposable
 
         Assert.Equal(0, loaded.SettingsVersion);
         Assert.Null(loaded.SkippedVersion);
+        Assert.Null(loaded.NotesShownVersion);
         Assert.True(loaded.IsOn);
         Assert.Equal(TintMode.Amber, loaded.Mode);
         Assert.Equal(30, loaded.Level);

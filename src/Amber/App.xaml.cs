@@ -22,7 +22,10 @@ public partial class App : Application
     readonly DispatcherTimer _updateTimer = new();
 #if DEBUG
     readonly bool _pretending;
+    bool _pretendNotes;
 #endif
+    // "New in this version" bullets waiting for the window to show them; null once they have been closed, or if none.
+    IReadOnlyList<string>? _notes;
     Mutex? _singleInstance;
     bool _previewing;
     TintMode? _previewMode;
@@ -116,6 +119,7 @@ public partial class App : Application
             _saveTimer.Start();
         };
         ApplyTint();
+        DecideNotes(e.Args);
 
         _updateTimer.Tick += async (_, _) => await CheckForUpdates(userAsked: false);
         ScheduleUpdateCheck();
@@ -285,6 +289,42 @@ public partial class App : Application
         _scheduleTimer.Start();
     }
 
+    /// <summary>
+    /// After an update, this version's notes show once, the next time the window is open (WhatsNew.Decide). A fresh
+    /// install shows nothing: its first settings file already counts them as seen.
+    /// </summary>
+    void DecideNotes(string[] args)
+    {
+        var notes = ReleaseNotes.Bundled();
+#if DEBUG
+        // dotnet run -- --pretend-notes: the bullets of ReleaseNotes.md whatever version it names; closing remembers nothing.
+        if (args.Contains(PretendNotes.Argument))
+        {
+            _pretendNotes = true;
+            if (notes.Bullets.Count > 0) _notes = notes.Bullets;
+            return;
+        }
+#endif
+        switch (WhatsNew.Decide(_installed, _settings.HadFile, notes, WhatsNew.ThisVersion, _settings.NotesShownVersion))
+        {
+            case NotesAction.Show:
+                _notes = notes.Bullets;
+                break;
+            case NotesAction.MarkSilently:
+                _settings.NotesShownVersion = WhatsNew.ThisVersion;
+                break;
+        }
+    }
+
+    void OnNotesClosed()
+    {
+        _notes = null;
+#if DEBUG
+        if (_pretendNotes) return;
+#endif
+        _settings.NotesShownVersion = WhatsNew.ThisVersion;
+    }
+
     void ShowWindow()
     {
         if (_window is null)
@@ -300,6 +340,7 @@ public partial class App : Application
         _window.Show();
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
         _window.Activate();
+        if (_notes is not null) _window.ShowNotes(_notes, OnNotesClosed);
     }
 
     void SaveSettings()

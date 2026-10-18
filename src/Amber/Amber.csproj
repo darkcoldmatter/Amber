@@ -31,6 +31,8 @@
     <None Update="Licenses.txt" CopyToOutputDirectory="PreserveNewest" />
     <!-- The GPL's full text ships with the program, next to Amber.exe. -->
     <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- What's new in this version, shown once after an update (ReleaseNotes.cs). The release workflow checks its version. -->
+    <EmbeddedResource Include="ReleaseNotes.md" LogicalName="Amber.ReleaseNotes.md" />
     <Resource Include="Assets\Fonts\*.ttf" />
     <Resource Include="Assets\resize.cur" />
   </ItemGroup>

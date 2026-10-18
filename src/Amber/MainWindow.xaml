@@ -40,5 +40,8 @@
         </Grid>
 
         <ContentControl x:Name="OverlayHost" Visibility="Collapsed" Focusable="False" />
+
+        <!-- "New in this version", over everything else, header included (WhatsNewView). -->
+        <ContentControl x:Name="NotesHost" Visibility="Collapsed" Focusable="False" />
     </Grid>
 </Window>

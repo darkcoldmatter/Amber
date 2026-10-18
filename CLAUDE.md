@@ -98,7 +98,7 @@ public and the first release come next.
 
 ```json
 {
-  "SettingsVersion": 1, "SkippedVersion": null,
+  "SettingsVersion": 1, "SkippedVersion": null, "NotesShownVersion": null,
   "IsAdvanced": false, "AdvancedIsOn": false, "AdvancedIntroClosed": false, "FilterHintDone": false,
   "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "16:00:00",
                  "Level": 50, "CurveEnabled": true,
@@ -111,6 +111,7 @@ public and the first release come next.
 
 `SettingsVersion` (always written first) is for future format changes: old files without it read 0 and
 still load. `SkippedVersion` is the update the user dismissed with ✕ — not announced again.
+`NotesShownVersion` is the version whose "New in this version" window was closed (null in files from before it).
 `Mode` is one of `GoldenHour`, `Amber`, `DeepNight` (an old file that still says `Astronomic` fails to
 parse and loads as defaults). Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
@@ -133,10 +134,12 @@ filters silently fail to load.
 | `TimeFormat.cs` | Every time shown in the UI, in Windows' 12- or 24-hour format |
 | `TextLook.cs` | Makes grey, unsnapped text smoothing the default for every element, menus included |
 | `Updates.cs` | Update checks and installs through Velopack + GitHub Releases (see "Releases" below) |
+| `ReleaseNotes.md`, `ReleaseNotes.cs` | This version's notes (embedded in the exe); parsing them and deciding when "New in this version" shows (`WhatsNew.Decide`) |
+| `PretendUpdates.cs` | Debug-only previews: `--pretend-update` (the update notice) and `--pretend-notes` ("New in this version") |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider; simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
-| `Views/*` | `SimpleView`, `AdvancedView` (intro card, timeline, add menu or `FilterPanel`), `SettingsView`, `AboutView` |
+| `Views/*` | `SimpleView`, `AdvancedView` (intro card, timeline, add menu or `FilterPanel`), `SettingsView`, `AboutView`, `WhatsNewView` ("New in this version") |
 | `MainWindow`, `Theme.xaml` | The shell (header, width switch, overlays) and all styles/icons (icons are exact Figma geometry) |
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
 | `tools/make-cursor.ps1` | Regenerates `Assets/resize.cur`, the double-arrow cursor for timeline edges |
@@ -144,7 +147,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 187 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 207 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -156,6 +159,10 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Light theme only, not resizable. **724 px wide in Simple, 848 px in Advanced**: the window sizes itself to
   its content (so the inside matches the Figma frame) and keeps its centre when the width changes. Max 800 px
   tall; the header stays put and the rest scrolls. Settings and About cover the whole window and close with ✕.
+- "New in this version" (Figma `132:4828`): an amber scrim (`#F99E43` at 40 %) over the whole window, header
+  included, and a 350 px white card centred on it: title, the bullets, a divider and a dark Close button. Only the
+  list's height changes the card's height. Close or Esc closes it; nothing behind it can be clicked or typed into;
+  it sits above Settings/About and the update notice.
 - Header: settings and about buttons, the "Advanced" switch, the Schedule button (Simple only), and ON/OFF
   for the mode you're in.
 - Simple mode: big level % above the level slider, mode chips at the bottom; with the schedule on, the
@@ -232,10 +239,17 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   Update shows the download % and then restarts; ✕ skips that version (`SkippedVersion`); Settings still
   offers it. Preview it from the terminal build: `dotnet run --project src\Amber -- --pretend-update 1.0.1`
   (add `--pretend-fail` for the failed download) — Debug builds only, never in the installed app.
+- **"New in this version"**: after an update, an installed Amber shows the bullets of `src/Amber/ReleaseNotes.md`
+  once, the next time its window is open (straight away, or when opened from the tray). Only when the file's
+  `## x.y.z` line is Amber's own version; closing it sets `NotesShownVersion`. A fresh install (no settings file
+  yet) shows nothing and marks the version seen. The file holds only the version about to be released: its first
+  `## x.y.z` line, then `- ` bullets (`**bold**` shows as plain text; other lines are ignored). Preview it from the
+  terminal build: `dotnet run --project src\Amber -- --pretend-notes` (any version line; closing remembers nothing).
 - **One version number:** `<Version>` in `src/Amber/Amber.csproj`; About shows it in full.
-- **To release:** set `<Version>` (e.g. 1.0.1), commit, push; `git tag v1.0.1` and push the tag; GitHub Actions
-  builds a **draft** release; write the notes on GitHub and press Publish. Publish or delete each draft before
-  tagging the next version (the delta is built from the previous release).
+- **To release:** set `<Version>` (e.g. 1.0.1) and write `src/Amber/ReleaseNotes.md` (`## 1.0.1` and its bullets),
+  commit, push; `git tag v1.0.1` and push the tag; GitHub Actions checks the tag, `<Version>` and the notes' version
+  all match, and builds a **draft** release whose notes are the file's bullets; check them on GitHub and press
+  Publish. Publish or delete each draft before tagging the next version (the delta is built from the previous release).
 - **Licence:** GPL-3.0-or-later (`LICENSE`, shipped as `LICENSE.txt`); the name "Amber" and the icon aren't
   covered (README). Third-party notices in `src/Amber/Licenses.txt`. Code signing is planned through the
   SignPath Foundation (OSI licence, public repo, a first release, CI builds, approve each release); the

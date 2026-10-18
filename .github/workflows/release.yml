@@ -1,5 +1,6 @@
-# Builds a release when a version tag is pushed (v1.0.0, matching <Version> in src/Amber/Amber.csproj) and uploads it
-# to GitHub Releases as a DRAFT. Installed copies only see a release once the owner has reviewed the draft (its notes)
+# Builds a release when a version tag is pushed (v1.0.0, matching <Version> in src/Amber/Amber.csproj and the
+# "## 1.0.0" line of src/Amber/ReleaseNotes.md) and uploads it to GitHub Releases as a DRAFT, its notes taken from the
+# bullets of ReleaseNotes.md. Installed copies only see a release once the owner has reviewed the draft (its notes)
 # and pressed Publish. To re-run by hand: Actions > Release > Run workflow, and pick the version tag under
 # "Use workflow from".
 name: Release
@@ -43,6 +44,14 @@ jobs:
           $version = $Matches[1]
           $project = ([xml](Get-Content -Raw src/Amber/Amber.csproj)).Project.PropertyGroup.Version | Where-Object { $_ }
           if ($project -ne $version) { throw "Tag $env:TAG doesn't match <Version>$project</Version> in src/Amber/Amber.csproj." }
+          # The notes Amber shows after updating, and the draft's notes: the file minus its "## x.y.z" line.
+          $notes = Get-Content src/Amber/ReleaseNotes.md
+          $heading = $notes | Where-Object { $_ -match '^##\s' } | Select-Object -First 1
+          $named = if ($heading -match '^##\s+(\S+)') { $Matches[1] } else { 'no version' }
+          if ($named -ne $version) {
+            throw "src/Amber/ReleaseNotes.md is for $named, not $version. Write this version's notes there, starting with the line ""## $version""."
+          }
+          $notes | Where-Object { $_ -ne $heading } | Set-Content -Encoding utf8 "$env:RUNNER_TEMP/release-notes.md"
           "VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Test
@@ -67,12 +76,13 @@ jobs:
           dotnet vpk pack --packId Amber --packVersion $env:VERSION --packTitle Amber
           --packAuthors "Dmitriy Ratushniak and Claude" --shortcuts StartMenuRoot
           --packDir publish --mainExe Amber.exe --icon src/Amber/Assets/amber.ico
-          --runtime win10-x64 --noPortable -o releases
+          --runtime win10-x64 --noPortable -o releases --releaseNotes $env:RUNNER_TEMP/release-notes.md
 
       # ---- SIGNING, part 2 (later, SignPath): sign releases/Amber-win-Setup.exe here, after packing.
       # vpk also adds Velopack's Update.exe and a small launcher to the package; to sign those as well, give vpk pack a
       # --signTemplate command (it runs it for each file before packing) and --signExclude for Microsoft's files.
 
+      # The draft's text is the --releaseNotes given to vpk pack (vpk reads it back from the new package).
       - name: Upload as a draft release
         env:
           VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}

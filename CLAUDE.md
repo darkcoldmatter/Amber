@@ -52,9 +52,10 @@ public and the first release come next.
   mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
 - **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved): `TintMatrix.EInk` turns
   every colour grey by luma and spreads it from an ink colour to a paper colour with the matrix's offset row, so
-  there's no pure black or white. Two looks in `EInkLook`: *Crisp* (Claude's take: cream paper, near-black ink, a bit
-  more contrast) and *Soft* (as discussed: 15 % charcoal to 88 % paper). `TintMatrix.EInk(look, amber)` puts Amber's
-  level-100 look on top at strength amber / 100 (`TintMatrix.Multiply`: one matrix, then the other); 0 is the plain look.
+  there's no pure black. Two looks in `EInkLook`: *Crisp* (Claude's take: cream paper, near-black ink, a bit more
+  contrast) and *Soft* (15 % charcoal to pure white — the owner's change from an 88 % paper). `TintMatrix.EInk(look,
+  amber)` puts Amber's level-100 look on top (`TintMatrix.Multiply`: one matrix, then the other); the slider's 0–100
+  covers 0 to the look's `MaxAmber` (Crisp 40 %, the owner's ideal range; Soft 100 %); 0 is the plain look.
   Picked with Simple's "E-ink 1" / "E-ink 2" chips after Custom, or the tray menu (the two stay in sync; the ticked one
   again in the tray leaves it; greyed out in Advanced, and switching to Advanced leaves it). While one is picked it
   replaces Simple's tint and the level slider and big % are the amber amount: shown only while ON, with the schedule
@@ -179,7 +180,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 250 of them; 246 in Release builds): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 251 of them; 247 in Release builds): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 

@@ -19,12 +19,12 @@ public class EInkTests
     }
 
     [Fact]
-    public void The_soft_look_lifts_black_to_charcoal_and_pulls_white_down_to_paper()
+    public void The_soft_look_lifts_black_to_charcoal_and_keeps_white_white()
     {
         var m = TintMatrix.EInk(EInkLook.Soft);
         Near(EInkLook.Soft.Ink, Show(m, 0, 0, 0));
         Near(EInkLook.Soft.Paper, Show(m, 1, 1, 1));
-        Near((0.515, 0.51, 0.49), Show(m, 0.5, 0.5, 0.5));   // halfway between ink and paper
+        Near((0.575, 0.575, 0.575), Show(m, 0.5, 0.5, 0.5));   // halfway between charcoal and white
     }
 
     [Fact]
@@ -108,11 +108,11 @@ public class EInkTests
     }
 
     [Fact]
-    public void Amber_goes_on_top_of_the_e_ink_look()
+    public void Amber_goes_on_top_of_the_e_ink_look_up_to_the_looks_limit()
     {
-        var amber = TintMatrix.Build(TintMode.Amber, 100);
         foreach (var look in EInkLook.All)
         {
+            var amber = TintMatrix.Blend(TintMode.Amber, 100, look.MaxAmber / 100);
             var m = TintMatrix.EInk(look, 100);
             foreach (var (r, g, b) in new[] { (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), (0.2, 0.7, 0.4), (0.0, 0.0, 1.0) })
             {
@@ -127,12 +127,21 @@ public class EInkTests
     {
         // Amber's level-100 colour is (1, 0.45, 0.02). It is 85 % monochrome, so the slightly warm paper comes out a touch
         // off the plain product: hence the tolerance.
-        foreach (var look in EInkLook.All)
+        foreach (var look in EInkLook.All.Where(l => l.MaxAmber == 100))
         {
             var paperGrey = look.High;   // the brightness that shows as paper
             var shown = Show(TintMatrix.EInk(look, 100), paperGrey, paperGrey, paperGrey);
             Near((look.Paper.R * 1.00, look.Paper.G * 0.45, look.Paper.B * 0.02), shown, 0.03);
         }
+    }
+
+    [Fact]
+    public void Crisp_spreads_0_to_40_percent_amber_over_the_whole_slider()
+    {
+        Assert.Equal(40, EInkLook.Crisp.MaxAmber);
+        var plain = TintMatrix.EInk(EInkLook.Crisp);
+        Assert.Equal(TintMatrix.Multiply(plain, TintMatrix.Blend(TintMode.Amber, 100, 0.4)), TintMatrix.EInk(EInkLook.Crisp, 100));
+        Assert.Equal(TintMatrix.Multiply(plain, TintMatrix.Blend(TintMode.Amber, 100, 0.2)), TintMatrix.EInk(EInkLook.Crisp, 50));
     }
 
     [Fact]

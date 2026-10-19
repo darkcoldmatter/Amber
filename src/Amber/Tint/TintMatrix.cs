@@ -172,11 +172,12 @@ public static class TintMatrix
     }
 
     /// <summary>
-    /// The e-ink look with Amber on top (an experiment, Debug builds only for now): <paramref name="amber"/> 0–100 is how
-    /// strongly Amber's level-100 look covers it, 0 being the plain e-ink look and 100 the full Amber look over it.
+    /// The e-ink look with Amber on top (an experiment, Debug builds only for now): <paramref name="amber"/> 0–100 is the
+    /// slider, 0 being the plain e-ink look and 100 Amber's level-100 look over it at the look's
+    /// <see cref="EInkLook.MaxAmber"/> strength, so the whole slider covers the useful range.
     /// </summary>
     public static float[] EInk(EInkLook look, double amber) =>
-        Multiply(EInk(look), Blend(TintMode.Amber, 100, amber / 100));
+        Multiply(EInk(look), Blend(TintMode.Amber, 100, Math.Clamp(amber, 0, 100) / 100 * look.MaxAmber / 100));
 
     /// <summary>One matrix that does <paramref name="a"/> first and then <paramref name="b"/> (the product a × b, since colours are row vectors).</summary>
     public static float[] Multiply(float[] a, float[] b)
@@ -194,20 +195,22 @@ public static class TintMatrix
 }
 
 /// <summary>The darkest and lightest an e-ink look shows (0–1 per channel), and the brightness range it spreads between them.</summary>
-public sealed record EInkLook(string Name, (double R, double G, double B) Ink, (double R, double G, double B) Paper, double Low, double High)
+/// <param name="MaxAmber">how strong Amber gets at the end of the slider, 0–100 % (the owner found 40 % plenty for Crisp)</param>
+public sealed record EInkLook(string Name, (double R, double G, double B) Ink, (double R, double G, double B) Paper, double Low, double High,
+    double MaxAmber)
 {
     /// <summary>
     /// Variant 1, Claude's take on e-ink: warm cream paper and near-black warm ink, like a Kindle page, with a little
     /// extra contrast so text reads crisply: 5 % grey already shows as ink and 95 % as paper, so black comes out about
-    /// 7 % grey (still not pure black) and white a touch lighter than the paper.
+    /// 7 % grey (still not pure black) and white a touch lighter than the paper. Its slider goes up to 40 % amber.
     /// </summary>
-    public static readonly EInkLook Crisp = new("E-ink 1: crisp paper", (0.12, 0.11, 0.10), (0.96, 0.93, 0.85), 0.05, 0.95);
+    public static readonly EInkLook Crisp = new("E-ink 1: crisp paper", (0.12, 0.11, 0.10), (0.96, 0.93, 0.85), 0.05, 0.95, 40);
 
     /// <summary>
-    /// Variant 2, as discussed with the owner: black lifted to charcoal (15 % grey), white pulled down to a soft, slightly
-    /// warm paper (88 %), and everything else spread evenly in between — gentler, lower contrast.
+    /// Variant 2: black lifted to charcoal (15 % grey) and white kept pure white (the owner's change; it was a soft 88 %
+    /// paper), everything else spread evenly in between — gentler blacks, full whites. Its slider goes up to full amber.
     /// </summary>
-    public static readonly EInkLook Soft = new("E-ink 2: soft", (0.15, 0.15, 0.15), (0.88, 0.87, 0.83), 0, 1);
+    public static readonly EInkLook Soft = new("E-ink 2: soft", (0.15, 0.15, 0.15), (1, 1, 1), 0, 1, 100);
 
     public static readonly EInkLook[] All = [Crisp, Soft];
 }

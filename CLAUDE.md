@@ -294,7 +294,7 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 ## Where things stand
 
-Released: v1.0.0 and v1.0.1 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.0.2 adds the dot
+Released: v1.0.0 and v1.0.1 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
 wave (7a), "New in this version" (7b) and the Custom tint with its colour bar and brightness floor (8a).
 
 Next ideas: tune Custom's numbers on the owner's screen; SignPath signing once the repo has some history; the

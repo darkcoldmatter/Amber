@@ -10,7 +10,7 @@
     <!-- Per-monitor DPI and the Windows 10/11 compatibility entry. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- The one place the version lives. A release is tagged v + this (v1.0.0), and the release workflow checks they match. -->
-    <Version>1.0.2</Version>
+    <Version>1.2.0</Version>
     <!-- Amber's UI is English: leave out .NET's translated framework messages (13 languages, ~8 MB in a self-contained build). -->
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>

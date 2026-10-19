@@ -23,6 +23,8 @@ public partial class App : Application
 #if DEBUG
     readonly bool _pretending;
     bool _pretendNotes;
+    // The e-ink experiment picked from the tray, shown instead of the tint (test builds only, never saved).
+    EInkLook? _eink;
 #endif
     // "New in this version" bullets waiting for the window to show them; null once they have been closed, or if none.
     IReadOnlyList<string>? _notes;
@@ -105,6 +107,14 @@ public partial class App : Application
             else _settings.IsOn = !_settings.IsOn;
         };
         _tray.QuitRequested += () => Shutdown();
+#if DEBUG
+        _tray.EInkRequested += look =>
+        {
+            _eink = look == _eink ? null : look;
+            _tray.EInk = _eink;
+            ApplyTint();
+        };
+#endif
 
         _saveTimer.Tick += (_, _) => SaveSettings();
         _scheduleTimer.Tick += (_, _) => ApplyTint();
@@ -235,6 +245,10 @@ public partial class App : Application
             return _previewMode is { } mode
                 ? TintMatrix.Build(mode, _previewLevel, _previewHue)
                 : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
+
+#if DEBUG
+        if (_eink is not null) return TintMatrix.EInk(_eink);
+#endif
 
         if (!IsOn) return null;
 

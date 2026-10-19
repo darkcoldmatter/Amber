@@ -50,6 +50,11 @@ public and the first release come next.
   `CustomStrongMono`, `CustomMinBrightness`). `Build` and `Blend` take the hue as an
   optional last argument, which the other tints ignore; everything that builds a look (screen, preview, advanced
   mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
+- **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved): `TintMatrix.EInk` turns
+  every colour grey by luma and spreads it from an ink colour to a paper colour with the matrix's offset row, so
+  there's no pure black or white. Two looks in `EInkLook`: *Crisp* (Claude's take: cream paper, near-black ink, a bit
+  more contrast) and *Soft* (as discussed: 15 % charcoal to 88 % paper). Picked from the tray menu; it replaces the
+  tint while shown.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted

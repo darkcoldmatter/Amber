@@ -147,4 +147,46 @@ public static class TintMatrix
                 m[i * 5 + j] = (float)(color[j] * ((i == j ? 1 - mono : 0) + mono * Luma[i]));
         return m;
     }
+
+    /// <summary>
+    /// An e-ink look (an experiment, Debug builds only for now): every colour turns grey by its brightness (luma), and
+    /// that grey is spread from <see cref="EInkLook.Ink"/> to <see cref="EInkLook.Paper"/>, so the screen has no pure
+    /// black and no pure white. Brightness <see cref="EInkLook.Low"/> shows as ink and <see cref="EInkLook.High"/> as paper:
+    /// a range narrower than 0–1 makes the line steeper, for more contrast. The line carries on past both ends (the
+    /// screen only clips at 0 and 1), so then black comes out a little darker than the ink and white a little lighter.
+    /// </summary>
+    public static float[] EInk(EInkLook look)
+    {
+        // output[j] = ink[j] + (paper[j] - ink[j]) * (luma - low) / (high - low), a straight line in luma:
+        // the luma weights go into the colour rows and the constant into the last row, which adds a fixed amount.
+        double[] ink = [look.Ink.R, look.Ink.G, look.Ink.B];
+        double[] paper = [look.Paper.R, look.Paper.G, look.Paper.B];
+        var m = Identity;
+        for (var j = 0; j < 3; j++)
+        {
+            var slope = (paper[j] - ink[j]) / (look.High - look.Low);
+            for (var i = 0; i < 3; i++) m[i * 5 + j] = (float)(slope * Luma[i]);
+            m[20 + j] = (float)(ink[j] - slope * look.Low);
+        }
+        return m;
+    }
+}
+
+/// <summary>The darkest and lightest an e-ink look shows (0–1 per channel), and the brightness range it spreads between them.</summary>
+public sealed record EInkLook(string Name, (double R, double G, double B) Ink, (double R, double G, double B) Paper, double Low, double High)
+{
+    /// <summary>
+    /// Variant 1, Claude's take on e-ink: warm cream paper and near-black warm ink, like a Kindle page, with a little
+    /// extra contrast so text reads crisply: 5 % grey already shows as ink and 95 % as paper, so black comes out about
+    /// 7 % grey (still not pure black) and white a touch lighter than the paper.
+    /// </summary>
+    public static readonly EInkLook Crisp = new("E-ink 1: crisp paper", (0.12, 0.11, 0.10), (0.96, 0.93, 0.85), 0.05, 0.95);
+
+    /// <summary>
+    /// Variant 2, as discussed with the owner: black lifted to charcoal (15 % grey), white pulled down to a soft, slightly
+    /// warm paper (88 %), and everything else spread evenly in between — gentler, lower contrast.
+    /// </summary>
+    public static readonly EInkLook Soft = new("E-ink 2: soft", (0.15, 0.15, 0.15), (0.88, 0.87, 0.83), 0, 1);
+
+    public static readonly EInkLook[] All = [Crisp, Soft];
 }

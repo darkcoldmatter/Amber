@@ -36,6 +36,8 @@ just to make it work but to make it pleasant and easy to use.
 - **Deep night:** a red tint inspired by astronomy. Red light doesn't disturb your eyes' adaptation to the dark.
 - **Custom:** any color from the color bar. Dark colors are lightened just enough to keep the screen readable.
 
+![Tint types: Golden hour (yellow), Amber (orange), Deep night (red), plus a custom color](docs/images/tint-types.png)
+
 ## Download
 
 Get **`Amber-win-Setup.exe`** from the [latest release](https://github.com/darkcoldmatter/Amber/releases/latest)

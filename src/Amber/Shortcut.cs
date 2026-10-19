@@ -26,10 +26,6 @@ public sealed record Shortcut(ModifierKeys Modifiers, Key Key)
         return Check(modifiers, key) == ShortcutProblem.None ? new Shortcut(modifiers, key) : null;
     }
 
-    /// <summary>"Ctrl+Alt", as the jump-to-level row saves its modifiers; null if a part isn't a modifier or one repeats.</summary>
-    public static ModifierKeys? ParseModifiers(string? text) =>
-        string.IsNullOrWhiteSpace(text) ? ModifierKeys.None : ParseModifiers(text.Split('+').Select(p => p.Trim()).ToArray());
-
     static ModifierKeys? ParseModifiers(string[] parts)
     {
         var modifiers = ModifierKeys.None;
@@ -102,29 +98,4 @@ public sealed class ShortcutJsonConverter : JsonConverter<Shortcut>
 
     public override void Write(Utf8JsonWriter writer, Shortcut value, JsonSerializerOptions options) =>
         writer.WriteStringValue(value.ToString());
-}
-
-/// <summary>
-/// The jump-to-level modifiers as text, "Ctrl+Alt"; none is null. Never throws: an unreadable value, or modifiers without
-/// Ctrl, Alt or Win (Shift+1 would take over typing), load as none.
-/// </summary>
-public sealed class ModifiersJsonConverter : JsonConverter<ModifierKeys>
-{
-    public override bool HandleNull => true;
-
-    public override ModifierKeys Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType == JsonTokenType.String)
-            return Shortcut.ParseModifiers(reader.GetString()) is { } modifiers && Shortcut.Check(modifiers, Key.D1) == ShortcutProblem.None
-                ? modifiers
-                : ModifierKeys.None;
-        reader.Skip();
-        return ModifierKeys.None;
-    }
-
-    public override void Write(Utf8JsonWriter writer, ModifierKeys value, JsonSerializerOptions options)
-    {
-        if (value == ModifierKeys.None) writer.WriteNullValue();
-        else writer.WriteStringValue(string.Join("+", Shortcut.ModifierNames(value)));
-    }
 }

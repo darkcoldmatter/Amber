@@ -66,10 +66,8 @@ public partial class SettingsView : UserControl
         _ => ("Check", true, null),
     };
 
-    /// <summary>What a shortcut's pill shows: "Ctrl + Alt + A", "Ctrl + Alt + 1 … 0" for the jump row, "Not set" for none.</summary>
-    public static string PillText(ShortcutSettings shortcuts, ShortcutAction action) => action == ShortcutAction.LevelJump
-        ? shortcuts.LevelJump == ModifierKeys.None ? NotSet : string.Join(" + ", Shortcut.ModifierNames(shortcuts.LevelJump)) + " + 1 … 0"
-        : shortcuts.Get(action)?.Display ?? NotSet;
+    /// <summary>What a shortcut's pill shows: "Ctrl + Alt + A", or "Not set" for none.</summary>
+    public static string PillText(ShortcutSettings shortcuts, ShortcutAction action) => shortcuts.Get(action)?.Display ?? NotSet;
 
     public const string NotSet = "Not set", Listening = "Press keys…", HeldElsewhere = "In use by another app";
 
@@ -174,7 +172,7 @@ public partial class SettingsView : UserControl
     void Take(Key key, ModifierKeys modifiers)
     {
         if (_listening is not { } action) return;
-        var result = ShortcutCapture.Read(key, modifiers, digitOnly: action == ShortcutAction.LevelJump);
+        var result = ShortcutCapture.Read(key, modifiers);
         switch (result.Kind)
         {
             case CaptureKind.Cancel:
@@ -204,7 +202,7 @@ public partial class SettingsView : UserControl
 
     void OnResetShortcutsClick(object sender, RoutedEventArgs e) => _settings.Shortcuts = new();
 
-    /// <summary>Plus Jakarta Sans for the words, Onest for the numbers: "Ctrl + Alt + 1 … 0", "Jump to level 10–100%", "F12".</summary>
+    /// <summary>Plus Jakarta Sans for the words, Onest for the numbers: "Ctrl + Alt + 1", "F12".</summary>
     void SetText(TextBlock block, string text)
     {
         block.Inlines.Clear();
@@ -218,8 +216,8 @@ public partial class SettingsView : UserControl
         if (at < text.Length) block.Inlines.Add(new Run(text[at..]));
     }
 
-    // A run of digits, with the dashes, ellipses and spaces between them and a % after: "10–100%", "1 … 0".
-    [GeneratedRegex(@"\d(?:[\s…–]*\d)*%?")]
+    // A run of digits: "1", "12".
+    [GeneratedRegex(@"\d+")]
     private static partial Regex NumberPattern();
 
     void OnStartWithWindowsClick(object sender, RoutedEventArgs e) =>

@@ -100,12 +100,12 @@ public partial class App : Application
 
         _tray = new TrayIcon();
         _tray.OpenRequested += ShowWindow;
-        _tray.ToggleRequested += () => ShortcutCommands.Run(ShortcutAction.Toggle, 0, _settings);
+        _tray.ToggleRequested += () => ShortcutCommands.Run(ShortcutAction.Toggle, _settings);
         _tray.QuitRequested += () => Shutdown();
 
         // Global keyboard shortcuts, working with the window closed too.
         _hotkeys = new GlobalHotkeys();
-        _hotkeys.Pressed += binding => ShortcutCommands.Run(binding.Action, binding.Level, _settings);
+        _hotkeys.Pressed += binding => ShortcutCommands.Run(binding.Action, _settings);
         _hotkeys.Changed += ShowTrayShortcut;
         UseShortcuts();
 

@@ -229,7 +229,7 @@ public class SettingsTests : IDisposable
         var shortcuts = new ShortcutSettings { Enabled = false }
             .With(ShortcutAction.Toggle, Shortcut.Parse("Win+Shift+T"))
             .With(ShortcutAction.LevelUp, Shortcut.Parse("Ctrl+F12"))
-            .With(ShortcutAction.LevelJump, Shortcut.Parse("Alt+Win+1"))
+            .With(ShortcutAction.Amber, Shortcut.Parse("Alt+Win+1"))
             .With(ShortcutAction.Custom, null);
         new Settings { Shortcuts = shortcuts }.Save(SettingsPath);
 
@@ -238,7 +238,8 @@ public class SettingsTests : IDisposable
 
         Assert.Contains("\"Toggle\": \"Shift+Win+T\"", text);
         Assert.Contains("\"LevelDown\": \"Ctrl+Alt+-\"", text);
-        Assert.Contains("\"LevelJump\": \"Alt+Win\"", text);
+        Assert.Contains("\"Amber\": \"Alt+Win+1\"", text);
+        Assert.DoesNotContain("LevelJump", text);
         Assert.Contains("\"Custom\": null", text);
         Assert.Equal(shortcuts, loaded.Shortcuts);
     }
@@ -271,10 +272,29 @@ public class SettingsTests : IDisposable
         Assert.Null(loaded.Shortcuts.Toggle);
         Assert.Null(loaded.Shortcuts.LevelUp);
         Assert.Null(loaded.Shortcuts.LevelDown);
-        Assert.Equal(System.Windows.Input.ModifierKeys.None, loaded.Shortcuts.LevelJump); // Shift + digits would take over typing
         Assert.Null(loaded.Shortcuts.Amber);
         Assert.Equal(new ShortcutSettings().GoldenHour, loaded.Shortcuts.GoldenHour); // missing: its default
         Assert.True(loaded.Shortcuts.Enabled);
+    }
+
+    [Fact]
+    public void A_file_from_the_first_shortcuts_build_still_loads()
+    {
+        // Its jump-to-level entry no longer exists: ignored. Its Shift tint shortcuts are kept as saved.
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "Level": 30, "Shortcuts": { "Enabled": true, "Toggle": "Ctrl+Alt+A", "LevelUp": "Ctrl+Alt+=", "LevelDown": "Ctrl+Alt+-",
+              "LevelJump": "Ctrl+Alt", "GoldenHour": "Ctrl+Alt+Shift+1", "Amber": "Ctrl+Alt+Shift+2",
+              "DeepNight": "Ctrl+Alt+Shift+3", "Custom": "Ctrl+Alt+Shift+4" } }
+            """);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Equal(30, loaded.Level);
+        Assert.True(loaded.Shortcuts.Enabled);
+        Assert.Equal("Ctrl+Alt+A", loaded.Shortcuts.Toggle!.ToString());
+        Assert.Equal("Ctrl+Alt+Shift+2", loaded.Shortcuts.Amber!.ToString());
+        Assert.Equal(7, loaded.Shortcuts.Bindings().Count());
     }
 
     [Fact]

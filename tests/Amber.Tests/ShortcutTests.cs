@@ -103,52 +103,30 @@ public class ShortcutTests
         Assert.Equal("Ctrl+Alt+A", shortcuts.Toggle!.ToString());
         Assert.Equal("Ctrl+Alt+=", shortcuts.LevelUp!.ToString());
         Assert.Equal("Ctrl+Alt+-", shortcuts.LevelDown!.ToString());
-        Assert.Equal(CtrlAlt, shortcuts.LevelJump);
-        Assert.Equal("Ctrl+Alt+Shift+1", shortcuts.GoldenHour!.ToString());
-        Assert.Equal("Ctrl+Alt+Shift+2", shortcuts.Amber!.ToString());
-        Assert.Equal("Ctrl+Alt+Shift+3", shortcuts.DeepNight!.ToString());
-        Assert.Equal("Ctrl+Alt+Shift+4", shortcuts.Custom!.ToString());
+        Assert.Equal("Ctrl+Alt+1", shortcuts.GoldenHour!.ToString());
+        Assert.Equal("Ctrl+Alt+2", shortcuts.Amber!.ToString());
+        Assert.Equal("Ctrl+Alt+3", shortcuts.DeepNight!.ToString());
+        Assert.Equal("Ctrl+Alt+4", shortcuts.Custom!.ToString());
     }
 
     [Fact]
-    public void The_jump_row_is_ten_shortcuts_from_1_for_10_percent_to_0_for_100()
+    public void Defaults_make_7_different_combinations()
     {
-        var jumps = new ShortcutSettings().Bindings().Where(b => b.Action == ShortcutAction.LevelJump).ToList();
+        var bindings = new ShortcutSettings().Bindings().ToList();
 
-        Assert.Equal(10, jumps.Count);
-        Assert.Equal([10, 20, 30, 40, 50, 60, 70, 80, 90, 100], jumps.Select(b => b.Level));
-        Assert.Equal(new Shortcut(CtrlAlt, Key.D1), jumps[0].Keys);
-        Assert.Equal(new Shortcut(CtrlAlt, Key.D5), jumps[4].Keys);
-        Assert.Equal(new Shortcut(CtrlAlt, Key.D0), jumps[9].Keys);
-    }
-
-    [Fact]
-    public void Defaults_make_17_different_combinations()
-    {
-        var keys = new ShortcutSettings().Bindings().Select(b => b.Keys).ToList();
-
-        Assert.Equal(17, keys.Count);
-        Assert.Equal(17, keys.Distinct().Count());
+        Assert.Equal(Enum.GetValues<ShortcutAction>(), bindings.Select(b => b.Action));
+        Assert.Equal(7, bindings.Select(b => b.Keys).Distinct().Count());
     }
 
     [Fact]
     public void A_shortcut_set_to_none_is_left_out()
     {
-        var shortcuts = new ShortcutSettings().With(ShortcutAction.Toggle, null).With(ShortcutAction.LevelJump, null);
+        var shortcuts = new ShortcutSettings().With(ShortcutAction.Toggle, null).With(ShortcutAction.DeepNight, null);
 
         Assert.Null(shortcuts.Toggle);
-        Assert.Equal(ModifierKeys.None, shortcuts.LevelJump);
-        Assert.DoesNotContain(shortcuts.Bindings(), b => b.Action is ShortcutAction.Toggle or ShortcutAction.LevelJump);
-        Assert.Equal(6, shortcuts.Bindings().Count());
-    }
-
-    [Fact]
-    public void The_jump_row_takes_only_the_modifiers_of_what_was_pressed()
-    {
-        var shortcuts = new ShortcutSettings().With(ShortcutAction.LevelJump, new Shortcut(ModifierKeys.Windows | ModifierKeys.Alt, Key.D7));
-
-        Assert.Equal(ModifierKeys.Windows | ModifierKeys.Alt, shortcuts.LevelJump);
-        Assert.Contains(shortcuts.Bindings(), b => b.Keys == new Shortcut(ModifierKeys.Windows | ModifierKeys.Alt, Key.D0) && b.Level == 100);
+        Assert.Null(shortcuts.DeepNight);
+        Assert.DoesNotContain(shortcuts.Bindings(), b => b.Action is ShortcutAction.Toggle or ShortcutAction.DeepNight);
+        Assert.Equal(5, shortcuts.Bindings().Count());
     }
 
     [Fact]
@@ -171,8 +149,9 @@ public class ShortcutTests
         var shortcuts = new ShortcutSettings();
 
         Assert.Equal(ShortcutAction.Toggle, shortcuts.UsedBy(ShortcutAction.Amber, Shortcut.Parse("Ctrl+Alt+A")!));
-        Assert.Equal(ShortcutAction.LevelJump, shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+5")!));
+        Assert.Equal(ShortcutAction.DeepNight, shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+3")!));
         Assert.Null(shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+T")!));
+        Assert.Null(shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+Shift+3")!)); // Shift makes it different
     }
 
     [Fact]
@@ -181,24 +160,12 @@ public class ShortcutTests
         var shortcuts = new ShortcutSettings();
 
         Assert.Null(shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+A")!));
-        Assert.Null(shortcuts.UsedBy(ShortcutAction.LevelJump, Shortcut.Parse("Ctrl+Alt+3")!));
-    }
-
-    [Fact]
-    public void Jump_modifiers_clash_with_any_digit_shortcut_of_the_same_modifiers()
-    {
-        var shortcuts = new ShortcutSettings();
-
-        // Ctrl+Alt+Shift is the tints' (1–4): taking it for the ten jumps would take theirs.
-        Assert.Equal(ShortcutAction.GoldenHour, shortcuts.UsedBy(ShortcutAction.LevelJump, Shortcut.Parse("Ctrl+Alt+Shift+9")!));
-        Assert.Null(shortcuts.UsedBy(ShortcutAction.LevelJump, Shortcut.Parse("Win+Alt+1")!));
-        // A tint moved to Ctrl+Alt+7 would take a jump.
-        Assert.Equal(ShortcutAction.LevelJump, shortcuts.UsedBy(ShortcutAction.Custom, Shortcut.Parse("Ctrl+Alt+7")!));
+        Assert.Null(shortcuts.UsedBy(ShortcutAction.Amber, Shortcut.Parse("Ctrl+Alt+2")!));
     }
 
     [Theory]
     [InlineData(ShortcutAction.Toggle, "Turn on / off")]
-    [InlineData(ShortcutAction.LevelJump, "Jump to level 10–100%")]
+    [InlineData(ShortcutAction.LevelUp, "Level up")]
     [InlineData(ShortcutAction.DeepNight, "Deep night")]
     public void Actions_have_their_settings_words(ShortcutAction action, string label)
     {
@@ -211,41 +178,44 @@ public class ShortcutTests
     public void On_off_acts_on_the_current_mode_like_the_tray()
     {
         var simple = new Settings();
-        ShortcutCommands.Run(ShortcutAction.Toggle, 0, simple);
+        ShortcutCommands.Run(ShortcutAction.Toggle, simple);
         Assert.True(simple.IsOn);
-        ShortcutCommands.Run(ShortcutAction.Toggle, 0, simple);
+        ShortcutCommands.Run(ShortcutAction.Toggle, simple);
         Assert.False(simple.IsOn);
 
         var advanced = new Settings { IsAdvanced = true };
-        ShortcutCommands.Run(ShortcutAction.Toggle, 0, advanced);
+        ShortcutCommands.Run(ShortcutAction.Toggle, advanced);
         Assert.True(advanced.AdvancedIsOn);
         Assert.False(advanced.IsOn);
     }
 
     [Fact]
-    public void Level_steps_one_percent_and_stays_within_0_to_100()
+    public void Level_steps_two_percent_and_stays_within_0_to_100()
     {
         var settings = new Settings { Level = 50 };
-        ShortcutCommands.Run(ShortcutAction.LevelUp, 0, settings);
-        Assert.Equal(51, settings.Level);
-        ShortcutCommands.Run(ShortcutAction.LevelDown, 0, settings);
-        ShortcutCommands.Run(ShortcutAction.LevelDown, 0, settings);
-        Assert.Equal(49, settings.Level);
+        ShortcutCommands.Run(ShortcutAction.LevelUp, settings);
+        Assert.Equal(52, settings.Level);
+        ShortcutCommands.Run(ShortcutAction.LevelDown, settings);
+        ShortcutCommands.Run(ShortcutAction.LevelDown, settings);
+        Assert.Equal(48, settings.Level);
 
-        Assert.Equal(100, ShortcutCommands.Step(100, +1));
-        Assert.Equal(0, ShortcutCommands.Step(0, -1));
-        Assert.Equal(51, ShortcutCommands.Step(50.4, +1));  // whole percents: rounded first
-        Assert.Equal(50, ShortcutCommands.Step(50.5, -1));
+        Assert.Equal(100, ShortcutCommands.Step(100, +2));
+        Assert.Equal(100, ShortcutCommands.Step(99, +2));   // only the ends clip
+        Assert.Equal(0, ShortcutCommands.Step(1, -2));
+        Assert.Equal(0, ShortcutCommands.Step(0, -2));
+        Assert.Equal(52, ShortcutCommands.Step(50.4, +2));  // whole percents: rounded first
+        Assert.Equal(49, ShortcutCommands.Step(50.5, -2));
     }
 
     [Fact]
-    public void A_jump_sets_that_level()
+    public void An_odd_level_keeps_stepping_by_two()
     {
         var settings = new Settings { Level = 37 };
-        ShortcutCommands.Run(ShortcutAction.LevelJump, 80, settings);
-        Assert.Equal(80, settings.Level);
-        ShortcutCommands.Run(ShortcutAction.LevelJump, 100, settings);
-        Assert.Equal(100, settings.Level);
+        ShortcutCommands.Run(ShortcutAction.LevelUp, settings);
+        Assert.Equal(39, settings.Level);
+        ShortcutCommands.Run(ShortcutAction.LevelDown, settings);
+        ShortcutCommands.Run(ShortcutAction.LevelDown, settings);
+        Assert.Equal(35, settings.Level);
     }
 
     [Theory]
@@ -256,7 +226,7 @@ public class ShortcutTests
     public void A_tint_shortcut_picks_that_tint(ShortcutAction action, TintMode mode)
     {
         var settings = new Settings { Mode = action == ShortcutAction.Amber ? TintMode.DeepNight : TintMode.Amber };
-        ShortcutCommands.Run(action, 0, settings);
+        ShortcutCommands.Run(action, settings);
         Assert.Equal(mode, settings.Mode);
     }
 
@@ -264,13 +234,12 @@ public class ShortcutTests
     public void Level_and_tint_shortcuts_never_switch_the_tint_on()
     {
         var settings = new Settings { IsOn = false, Level = 20 };
-        ShortcutCommands.Run(ShortcutAction.LevelUp, 0, settings);
-        ShortcutCommands.Run(ShortcutAction.LevelJump, 60, settings);
-        ShortcutCommands.Run(ShortcutAction.DeepNight, 0, settings);
+        ShortcutCommands.Run(ShortcutAction.LevelUp, settings);
+        ShortcutCommands.Run(ShortcutAction.DeepNight, settings);
 
         Assert.False(settings.IsOn);
         Assert.False(settings.AdvancedIsOn);
-        Assert.Equal(60, settings.Level);
+        Assert.Equal(22, settings.Level);
         Assert.Equal(TintMode.DeepNight, settings.Mode);
     }
 
@@ -281,9 +250,9 @@ public class ShortcutTests
         var changes = new List<string?>();
         settings.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
 
-        foreach (var action in new[] { ShortcutAction.LevelUp, ShortcutAction.LevelDown, ShortcutAction.LevelJump,
+        foreach (var action in new[] { ShortcutAction.LevelUp, ShortcutAction.LevelDown,
                      ShortcutAction.GoldenHour, ShortcutAction.DeepNight, ShortcutAction.Custom })
-            ShortcutCommands.Run(action, 90, settings);
+            ShortcutCommands.Run(action, settings);
 
         Assert.Empty(changes);
     }
@@ -297,21 +266,21 @@ public class ShortcutTests
     [InlineData(Key.LWin)]
     public void Lone_modifiers_wait_for_the_rest(Key key)
     {
-        Assert.Equal(CaptureKind.Wait, ShortcutCapture.Read(key, ModifierKeys.Control, digitOnly: false).Kind);
+        Assert.Equal(CaptureKind.Wait, ShortcutCapture.Read(key, ModifierKeys.Control).Kind);
     }
 
     [Fact]
     public void Esc_cancels_and_backspace_or_delete_clear()
     {
-        Assert.Equal(CaptureKind.Cancel, ShortcutCapture.Read(Key.Escape, ModifierKeys.None, false).Kind);
-        Assert.Equal(CaptureKind.Clear, ShortcutCapture.Read(Key.Back, ModifierKeys.None, false).Kind);
-        Assert.Equal(CaptureKind.Clear, ShortcutCapture.Read(Key.Delete, ModifierKeys.None, true).Kind);
+        Assert.Equal(CaptureKind.Cancel, ShortcutCapture.Read(Key.Escape, ModifierKeys.None).Kind);
+        Assert.Equal(CaptureKind.Clear, ShortcutCapture.Read(Key.Back, ModifierKeys.None).Kind);
+        Assert.Equal(CaptureKind.Clear, ShortcutCapture.Read(Key.Delete, ModifierKeys.None).Kind);
     }
 
     [Fact]
     public void A_usable_press_is_the_new_shortcut()
     {
-        var result = ShortcutCapture.Read(Key.T, CtrlAlt, digitOnly: false);
+        var result = ShortcutCapture.Read(Key.T, CtrlAlt);
 
         Assert.Equal(CaptureKind.Done, result.Kind);
         Assert.Equal(new Shortcut(CtrlAlt, Key.T), result.Keys);
@@ -320,18 +289,11 @@ public class ShortcutTests
     [Fact]
     public void Unusable_presses_are_refused_with_a_reason()
     {
-        Assert.Equal(CaptureProblem.NeedsModifier, ShortcutCapture.Read(Key.T, ModifierKeys.None, false).Problem);
-        Assert.Equal(CaptureProblem.NeedsModifier, ShortcutCapture.Read(Key.T, ModifierKeys.Shift, false).Problem);
-        Assert.Equal(CaptureProblem.KeyNotAllowed, ShortcutCapture.Read(Key.Space, CtrlAlt, false).Problem);
-        Assert.Equal(CaptureProblem.KeyNotAllowed, ShortcutCapture.Read(Key.Escape, CtrlAlt, false).Problem);
-        Assert.Equal(CaptureKind.Refused, ShortcutCapture.Read(Key.Space, CtrlAlt, false).Kind);
-    }
-
-    [Fact]
-    public void The_jump_row_wants_a_digit()
-    {
-        Assert.Equal(CaptureProblem.NeedsDigit, ShortcutCapture.Read(Key.A, CtrlAlt, digitOnly: true).Problem);
-        Assert.Equal(CaptureKind.Done, ShortcutCapture.Read(Key.D4, ModifierKeys.Windows, digitOnly: true).Kind);
+        Assert.Equal(CaptureProblem.NeedsModifier, ShortcutCapture.Read(Key.T, ModifierKeys.None).Problem);
+        Assert.Equal(CaptureProblem.NeedsModifier, ShortcutCapture.Read(Key.T, ModifierKeys.Shift).Problem);
+        Assert.Equal(CaptureProblem.KeyNotAllowed, ShortcutCapture.Read(Key.Space, CtrlAlt).Problem);
+        Assert.Equal(CaptureProblem.KeyNotAllowed, ShortcutCapture.Read(Key.Escape, CtrlAlt).Problem);
+        Assert.Equal(CaptureKind.Refused, ShortcutCapture.Read(Key.Space, CtrlAlt).Kind);
     }
 
     // What Settings shows
@@ -343,9 +305,8 @@ public class ShortcutTests
 
         Assert.Equal("Ctrl + Alt + A", SettingsView.PillText(shortcuts, ShortcutAction.Toggle));
         Assert.Equal("Ctrl + Alt + =", SettingsView.PillText(shortcuts, ShortcutAction.LevelUp));
-        Assert.Equal("Ctrl + Alt + 1 … 0", SettingsView.PillText(shortcuts, ShortcutAction.LevelJump));
+        Assert.Equal("Ctrl + Alt + 1", SettingsView.PillText(shortcuts, ShortcutAction.GoldenHour));
         Assert.Equal("Not set", SettingsView.PillText(shortcuts, ShortcutAction.Custom));
-        Assert.Equal("Not set", SettingsView.PillText(shortcuts.With(ShortcutAction.LevelJump, null), ShortcutAction.LevelJump));
     }
 
     [Fact]
@@ -395,7 +356,7 @@ public class ShortcutTests
     {
         RunOnSta(() =>
         {
-            var rare = new ShortcutBinding(ShortcutAction.LevelJump, Shortcut.Parse("Ctrl+Alt+Shift+F11")!, 70);
+            var rare = new ShortcutBinding(ShortcutAction.LevelUp, Shortcut.Parse("Ctrl+Alt+Shift+F11")!);
             using var hotkeys = new GlobalHotkeys();
             var pressed = new List<ShortcutBinding>();
             hotkeys.Pressed += pressed.Add;

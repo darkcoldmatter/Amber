@@ -155,6 +155,7 @@ filters silently fail to load.
 | `Updates.cs` | Update checks and installs through Velopack + GitHub Releases (see "Releases" below) |
 | `ReleaseNotes.md`, `ReleaseNotes.cs` | This version's notes (embedded in the exe); parsing them and deciding when "New in this version" shows (`WhatsNew.Decide`) |
 | `PretendUpdates.cs` | Debug-only previews: `--pretend-update` (the update notice) and `--pretend-notes` ("New in this version") |
+| `DotWave.cs`, `Controls/DotWaveLayer.cs` | The halftone dot wave across the window when the tint turns on or off: the maths (constants at the top) and the drawing (runs only while the wave plays) |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider and Custom's colour bar (`HueBar`, a level slider with a rainbow and a colour handle); simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
@@ -218,6 +219,10 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   labels, time fields "6 : 00 PM" with one 12 AM–11 PM hour list. 24-hour looks exactly like the Figma frames.
   The owner's own PC is 24-hour (`ru-UA`); PowerShell 5.1's `Get-Culture` misreports it as `en-US`.
 - Time fields: click the hours or the minutes for a short list; the mouse wheel steps them.
+- **Dot wave** (no Figma frame, tuned with the owner): when the current mode's ON/OFF flips, a ring of tiny white
+  square dots (one size, 3.25 px on an 8 px grid, random strength) spreads from the window's centre over 1.5 s, starting
+  fast and slowing down (quintic ease-out), with a small ripple that pushes the dots; each dot fades over 0.45 s after
+  the ring passes. Invisible at rest. Skipped when Windows' "Animation effects" is off. F8 replays it (Debug only).
 - Hovers and state changes animate ~0.3 s, except the ON/OFF button, which changes instantly (owner's
   choice); nothing moves on the timeline or inside the graph.
 - Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
@@ -289,19 +294,11 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 ## Where things stand
 
-Done and merged: tint engine, tray, single instance, start with Windows, settings, simple mode and its
-schedule, advanced mode with curves, Settings and About — all on Figma Design 3.0 (steps 5a–5b), with
-10-second fades and cross-fades between advanced filters and the 1 % smoothness rule (5c).
-Built on branch `step-6a-installer-updates`: installer and auto-update (Velopack), version 1.0.0, release
-workflow, GPL-3.0 licence, public README, and the in-app update notice (owner's Figma frame `125:292`).
+Released: v1.0.0 and v1.0.1 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.0.2 adds the dot
+wave (7a), "New in this version" (7b) and the Custom tint with its colour bar and brightness floor (8a).
 
-Next:
-1. Owner checks step 6a + the update notice; merge.
-2. Before going public: rewrite the history so every commit uses the owner's GitHub no-reply address
-   (`328485409+darkcoldmatter@users.noreply.github.com`) and delete the old merged step branches; then the
-   repo becomes public (owner confirms the switch).
-3. First release v1.0.0 (unsigned), then the owner applies to SignPath Foundation; later releases signed.
-4. Owner's designs still to come: new app and tray icons.
+Next ideas: tune Custom's numbers on the owner's screen; SignPath signing once the repo has some history; the
+owner's new app and tray icons.
 
 Decided: free and open source (GPL-3.0-or-later), public repo, SignPath Foundation signing, self-contained
-installer, automatic update checks with an in-app notice.
+installer, automatic update checks with an in-app notice, instant on/off (no fade).

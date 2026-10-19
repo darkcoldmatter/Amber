@@ -31,7 +31,7 @@ public class DotWaveTests
         var reached = Reached(200);
 
         Assert.Equal(DotWave.PeakOpacity / 2, DotWave.Opacity(200, reached + DotWave.Trail / 2, Far), 6);
-        Assert.Equal(0, DotWave.Opacity(200, reached + DotWave.Trail, Far));
+        Assert.Equal(0, DotWave.Opacity(200, reached + DotWave.Trail, Far), 6);
     }
 
     [Fact]

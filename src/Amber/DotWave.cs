@@ -26,7 +26,7 @@ public static class DotWave
 
     // The ring.
     /// <summary>Seconds the ring takes from the centre to the farthest corner, slowing down as it goes (see <see cref="EasePower"/>).</summary>
-    public const double Duration = 1.0;
+    public const double Duration = 1.5;
     /// <summary>How hard the ring slows down: 3 = cubic ease-out, higher = a faster start and a longer, slower finish.</summary>
     public const double EasePower = 5;
     /// <summary>How wide (px) the lit band around the ring is: full at its centre line, nothing at its edges.</summary>
@@ -34,7 +34,7 @@ public static class DotWave
     /// <summary>Opacity of the strongest dots right on the ring.</summary>
     public const double PeakOpacity = 0.8;
     /// <summary>Seconds a dot takes to fade back to nothing once the ring has passed it.</summary>
-    public const double Trail = 0.3;
+    public const double Trail = 0.45;
 
     // The ripple: the ring bends the screen, pushing dots ahead of it outward and those just behind it inward.
     /// <summary>How far (px) the ripple moves a dot at most, along its line from the centre.</summary>

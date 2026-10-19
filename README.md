@@ -21,7 +21,7 @@ just to make it work but to make it pleasant and easy to use.
 
 ![Advanced mode: several filters through the day, curve editor](docs/images/advanced-mode.png)
 
-- **Three tints:** Golden hour, Amber and Deep night, each with its own level from 0 to 100 %.
+- **Four tints:** Golden hour, Amber, Deep night and Custom (any colour you like), each with a level from 0 to 100 %.
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
 - **Advanced mode:** several filters across the day, each with its own tint and either a steady level
   or a curve you draw. Neighbouring filters cross-fade, so the screen never flashes back to blue.
@@ -33,6 +33,7 @@ just to make it work but to make it pleasant and easy to use.
   Soft enough for everyday use.
 - **Amber:** a stronger, deep orange tint for evening and night work that cuts more blue light.
 - **Deep night:** a red tint inspired by astronomy. Red light doesn't disturb your eyes' adaptation to the dark.
+- **Custom:** any colour from the colour bar. Dark colours are lightened just enough to keep the screen readable.
 
 ## Download
 

@@ -233,7 +233,8 @@ screen; *level* = its strength, 0–100 %; *filter* = one scheduled block in Adv
 *transition* = Simple's time range and its fade; *mode* only for Simple and Advanced. Never "display mode",
 "display filter" or "dynamic tint". (In code the tints are still `TintMode`.)
 
-Copy rules: improve the English of any UI text, **except** the tint names (Golden hour, Amber, Deep night, Custom),
+Copy rules: **American English** everywhere — UI, README, release notes (color, license, optimized; owner's choice, it
+matches how people search). Improve the English of any UI text, **except** the tint names (Golden hour, Amber, Deep night, Custom),
 which stay exactly as they are. The About screen names no creator (owner's choice: GitHub tells that story).
 **Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, notices, installer
 publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team

@@ -1,18 +1,19 @@
-# Amber
+# Amber — blue light filter for Windows 10 and 11
 
 ![Amber — free app for flexible blue light reduction, Windows 10/11](docs/images/cover.png)
 
-Amber is a free, open-source app that reduces blue light by tinting the whole screen. It makes long days
-and late-night work much easier on your eyes. It lives in the tray, uses almost no memory or CPU
-(3–5 MB in the background), and needs no admin rights.
+Amber is a free, open-source **blue light filter for Windows 10 and 11**. It tints the whole screen warmer to
+reduce eye strain during long days and late-night work — a more flexible alternative to Windows Night light
+and f.lux. It lives in the system tray, uses almost no memory or CPU (3–5 MB in the background), and needs no
+admin rights.
 
-Windows already has a built-in Night light, but Amber gives you **more flexibility: different tint colours,
-plus advanced schedules and curves.**
+Windows already has a built-in Night light, but Amber gives you **more flexibility: different tint colors,
+including any color you pick, plus advanced schedules and curves.**
 
 ## Vibe coded
 
 This app was made by me and [Claude](https://claude.ai). I designed it and tested each step on my PC;
-Claude wrote all of the code. The result is a well-optimised tool that does its job, and the goal wasn't
+Claude wrote all of the code. The result is a well-optimized tool that does its job, and the goal wasn't
 just to make it work but to make it pleasant and easy to use.
 
 ## What it does
@@ -21,10 +22,10 @@ just to make it work but to make it pleasant and easy to use.
 
 ![Advanced mode: several filters through the day, curve editor](docs/images/advanced-mode.png)
 
-- **Four tints:** Golden hour, Amber, Deep night and Custom (any colour you like), each with a level from 0 to 100 %.
+- **Four tints:** Golden hour, Amber, Deep night and Custom (any color you like), each with a level from 0 to 100 %.
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
 - **Advanced mode:** several filters across the day, each with its own tint and either a steady level
-  or a curve you draw. Neighbouring filters cross-fade, so the screen never flashes back to blue.
+  or a curve you draw. Neighboring filters cross-fade, so the screen never flashes back to blue.
 - Starts with Windows if you like, and follows your 12- or 24-hour clock automatically.
 
 **Tint types**
@@ -33,7 +34,7 @@ just to make it work but to make it pleasant and easy to use.
   Soft enough for everyday use.
 - **Amber:** a stronger, deep orange tint for evening and night work that cuts more blue light.
 - **Deep night:** a red tint inspired by astronomy. Red light doesn't disturb your eyes' adaptation to the dark.
-- **Custom:** any colour from the colour bar. Dark colours are lightened just enough to keep the screen readable.
+- **Custom:** any color from the color bar. Dark colors are lightened just enough to keep the screen readable.
 
 ## Download
 
@@ -43,9 +44,37 @@ version when it starts and once a day, and asks before installing. Uninstall it 
 
 ## How it works
 
-Amber uses the Windows Magnification API (`MagSetFullscreenColorEffect`) to apply a colour matrix to the
+Amber uses the Windows Magnification API (`MagSetFullscreenColorEffect`) to apply a color matrix to the
 whole screen — no overlay window. If Amber closes or crashes, Windows removes the tint. The mouse cursor
 isn't tinted, and screenshots show your screen without the tint.
+
+## FAQ
+
+**Is Amber free?**
+Yes. Amber is free and open source under the GPL-3.0 license, with no ads, accounts or paid features.
+
+**How is Amber different from Windows Night light?**
+Night light has one warm tint with a strength slider and one schedule. Amber has four tints, including any color you choose, a level
+from 0 to 100 %, and an Advanced mode with several filters through the day, each with its own tint and level
+curve. Neighboring filters cross-fade smoothly.
+
+**Is Amber an alternative to f.lux?**
+Yes. Like f.lux, Amber warms your screen on a schedule to cut blue light. Amber is open source, offers
+several tint colors (or any color you pick), and lets you draw how the tint changes through the day.
+
+**Does Amber need admin rights?**
+No. It installs for your user only and runs without admin rights.
+
+**Does Amber collect any data?**
+No. Amber has no analytics or telemetry. It only goes online to check this project's GitHub releases for
+updates.
+
+**Which versions of Windows does it support?**
+Windows 10 and Windows 11, 64-bit.
+
+**How do I uninstall it?**
+From Windows Settings → Apps: find Amber and choose Uninstall. Your settings stay in
+`%AppData%\Amber` in case you install it again.
 
 ## Privacy
 
@@ -74,16 +103,16 @@ dotnet test
 
 A copy run from source works like the installed app, except that it never updates itself.
 
-## Licence
+## License
 
 Copyright © 2026 Dmitriy Ratushniak. Designed by Dmitriy Ratushniak, vibe coded with Claude.
 
 Amber is free software under the [GNU General Public License v3.0 or later](LICENSE): you may use, study,
-share and change it, and anything you distribute that's based on it must stay under the same licence,
+share and change it, and anything you distribute that's based on it must stay under the same license,
 with its full source.
 
-**The name "Amber" and the Amber icon are not covered by the licence.** If you publish a modified version,
+**The name "Amber" and the Amber icon are not covered by the license.** If you publish a modified version,
 please give it a different name and icon so people can tell it apart from this app.
 
-Third-party components (the Plus Jakarta Sans and Onest fonts, Velopack, .NET) and their licences are
+Third-party components (the Plus Jakarta Sans and Onest fonts, Velopack, .NET) and their licenses are
 listed in [`src/Amber/Licenses.txt`](src/Amber/Licenses.txt).

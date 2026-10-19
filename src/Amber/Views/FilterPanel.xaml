@@ -39,7 +39,7 @@
 
                 <!-- Custom only: its colour bar, as wide as the slider, 12 px under it; with the curve on, centred in the slider's row. -->
                 <controls:HueBar x:Name="Hue" Grid.Column="1" Grid.Row="1" Margin="40,12,76,0" VerticalAlignment="Center" Style="{StaticResource HueBar}"
-                                 Value="{Binding Hue}" AutomationProperties.Name="Colour" />
+                                 Value="{Binding Hue}" AutomationProperties.Name="Color" />
             </Grid>
 
             <ToggleButton x:Name="CurveToggle" Canvas.Left="788" Canvas.Top="3" Style="{StaticResource CurveButton}"

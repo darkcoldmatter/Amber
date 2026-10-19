@@ -17,7 +17,7 @@
 
         <!-- Custom only: its colour bar, 12 px under the level slider; everything below moves down to make room. -->
         <controls:HueBar x:Name="Hue" Canvas.Left="162" Canvas.Top="187" Width="400" Style="{StaticResource HueBar}"
-                         Value="{Binding CustomHue}" AutomationProperties.Name="Colour" />
+                         Value="{Binding CustomHue}" AutomationProperties.Name="Color" />
 
         <StackPanel x:Name="Chips" Canvas.Top="230" Width="724">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

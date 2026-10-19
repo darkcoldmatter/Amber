@@ -34,15 +34,20 @@ public and the first release come next.
   | Amber | 1.00, 0.93, 0.82, 0.00 | 1.00, 0.45, 0.02, 0.85 |
   | Deep night | 1.00, 0.92, 0.90, 0.15 | 1.00, 0.25, 0.05, 1.00 |
 
-  | Custom (colour C) | 1 + 0.15 · (C − 1) per channel, 0.00 | C, 0.85 |
+  | Custom (colour C′) | 1 + 0.15 · (C′ − 1) per channel, 0.00 | C′, 0.85 |
 
   The Deep night level-100 matrix (the mode was called "Astronomic" before Design 3.0) is the one the owner
   tested before this project started; don't "improve" these numbers without asking — they were tuned on his screen.
   **Custom** takes its colour from a **hue, 0–360** (a double; 0 = red, the default): C = HSV(hue, 1, 1) → RGB
-  (`TintMatrix.HueColor`; 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta, 360 red again). Level 0 is a faint
-  wash of the colour, level 100 the colour itself, as monochrome as Amber's strong look so text stays readable
-  whatever the hue. Its numbers are **a first guess, to be tuned by eye** — named constants at the top of
-  `TintMatrix` (`CustomWeakAmount`, `CustomWeakMono`, `CustomStrongMono`). `Build` and `Blend` take the hue as an
+  (`TintMatrix.HueColor`; 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta, 360 red again). **Brightness
+  floor:** pure blue keeps only ~7 % of white's brightness and the screen looks blacked out, so the colour actually
+  used is C′ = `TintMatrix.CustomColor(hue)`: C itself when its Rec.709 luma (the weights above) is at least
+  `CustomMinBrightness` = 0.40 (about Deep night's white at level 100), otherwise C + t · (1 − C) per channel with
+  t = (floor − luma) / (1 − luma), which lands exactly on the floor (blue → ≈ 0.353, 0.353, 1; red → 1, 0.238, 0.238;
+  magenta → 1, 0.161, 1; yellow, green, cyan unchanged). Level 0 is a faint wash of C′, level 100 C′ itself, as
+  monochrome as Amber's strong look so text stays readable whatever the hue. Its numbers are **a first guess, to be
+  tuned by eye** — named constants at the top of `TintMatrix` (`CustomWeakAmount`, `CustomWeakMono`,
+  `CustomStrongMono`, `CustomMinBrightness`). `Build` and `Blend` take the hue as an
   optional last argument, which the other tints ignore; everything that builds a look (screen, preview, advanced
   mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
@@ -161,7 +166,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 227 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 238 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -182,19 +187,22 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Simple mode: big level % above the level slider, tint chips at the bottom (Golden hour, Amber, Deep night,
   Custom); with the schedule on, the timeline, the from/to time fields and Transition below.
 - **Custom's colour bar** (no Figma frame — built from the owner's description): only while Custom is the tint, 12 px
-  under the level slider, the same width, 42 px height and 14 px corners as its track, filled with the rainbow
-  (hue 0 → 360, between the handle's centres at either end). The handle is the bar's height with the same corners,
-  a 6 px white border and the picked colour inside; its white reaches 1 px past the bar all round (44 px), because
-  drawn exactly on the bar's rounded ends the bar's red showed as a rim. It feels like the level slider: press
-  anywhere and drag, the same double-arrow cursor over the handle and while dragging. The window grows by 54 px
-  while it shows (Simple: 352 → 406 tall, 512 → 566 with the schedule).
+  under the level slider and as wide (400 Simple / 270 Advanced), 22 px tall and fully rounded: the level slider's
+  tan track with the rainbow 2 px inside it (18 px, hue 0 → 360 between the handle's centres at either end). The
+  handle is an 18 px circle inside that margin, a 4 px white border round the picked colour as the screen will show
+  it (C′, the floored colour; only the bar is the pure rainbow). The rainbow's rounded
+  ends are red discs exactly where the handle sits at hue 0 and 360; drawn on the same edge they leaked a red rim
+  round the circle, so each disc fades out over the handle's last 4 px towards it (`HueBar.EndOpacities`). It feels
+  like the level slider: press anywhere and drag (presses count 6 px above and below what's drawn, 34 px in all), the
+  same double-arrow cursor over the handle and while dragging. The window grows by 34 px while it shows (Simple:
+  352 → 386 tall, 512 → 546 with the schedule).
 - Advanced mode: the timeline's bars show a dome in the bar colour (`#FFE063` / `#FFAE5D` / `#FF7C7C` —
-  brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`; a Custom filter uses its own colour,
-  full strength) and the level, or a small curve
+  brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`; a Custom filter uses its own colour
+  as the screen shows it, C′) and the level, or a small curve
   icon when the curve is on; content hides when it doesn't fit. Selected bar white with a trash icon, the
   others at 70 %. The curve opens as a white graph card under the filter panel (the slider hides), filled in the
   same colour. In the menus Custom's mark is the rainbow. A selected Custom filter shows its colour bar under the
-  level slider (the panel grows by 54 px); with the curve on, the colour bar takes the slider's row.
+  level slider (the panel grows by 34 px); with the curve on, the colour bar takes the slider's row, centred in it.
 - Fonts: **Plus Jakarta Sans** for words, **Onest** for every number (both SIL OFL, bundled, licences in
   `Licenses.txt`). The Figma file uses Satoshi, whose licence doesn't allow shipping it — never use it.
   WPF has no letter-spacing, so tracked text goes through `TrackedText`.

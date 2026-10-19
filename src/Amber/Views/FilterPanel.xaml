@@ -4,7 +4,7 @@
              xmlns:controls="clr-namespace:Amber.Controls">
     <!-- The selected filter, under the timeline: Figma 111:3891 from its row at y 229, and 111:4240 with the curve open. -->
     <StackPanel Width="848">
-        <!-- 42 px tall, or 96 with Custom's colour bar in a second row (FilterPanel.ShowHue). -->
+        <!-- 42 px tall, or 76 with Custom's colour bar in a second row (FilterPanel.ShowHue). -->
         <Canvas x:Name="Rows" Height="42">
             <Button x:Name="ModeField" Canvas.Left="24" Style="{StaticResource ModeDropdown}" Click="OnModeClick" AutomationProperties.Name="Tint" />
 
@@ -37,8 +37,8 @@
                                           IsHitTestVisible="False" />
                 </Grid>
 
-                <!-- Custom only: its colour bar, as wide as the slider, 12 px under it; with the curve on, in the slider's row. -->
-                <controls:HueBar x:Name="Hue" Grid.Column="1" Grid.Row="1" Margin="40,12,76,0" Style="{StaticResource HueBar}"
+                <!-- Custom only: its colour bar, as wide as the slider, 12 px under it; with the curve on, centred in the slider's row. -->
+                <controls:HueBar x:Name="Hue" Grid.Column="1" Grid.Row="1" Margin="40,12,76,0" VerticalAlignment="Center" Style="{StaticResource HueBar}"
                                  Value="{Binding Hue}" AutomationProperties.Name="Colour" />
             </Grid>
 

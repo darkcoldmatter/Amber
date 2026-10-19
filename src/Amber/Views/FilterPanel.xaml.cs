@@ -16,7 +16,7 @@ namespace Amber.Views;
 public partial class FilterPanel : UserControl
 {
     static readonly TintMode[] Modes = Enum.GetValues<TintMode>();
-    const double RowHeight = 42, RowGap = 12;
+    const double RowHeight = 42, RowGap = 12, HueHeight = 22;
 
     Filter? _filter;
     bool _filling, _previewing;
@@ -135,7 +135,7 @@ public partial class FilterPanel : UserControl
         Hue.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
         Grid.SetRow(Hue, inSliderRow ? 0 : 1);
         Hue.Margin = new Thickness(40, inSliderRow ? 0 : RowGap, 76, 0);
-        Rows.Height = custom && !inSliderRow ? 2 * RowHeight + RowGap : RowHeight;
+        Rows.Height = custom && !inSliderRow ? RowHeight + RowGap + HueHeight : RowHeight;
         if (custom) Fade(Hue, 0, 1, animate);
     }
 

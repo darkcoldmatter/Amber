@@ -150,9 +150,9 @@ public class TintMatrixTests
     [Fact]
     public void Custom_at_100_turns_white_into_its_colour_and_greys_the_rest()
     {
-        var m = TintMatrix.Build(TintMode.Custom, 100, 240);   // blue
+        var m = TintMatrix.Build(TintMode.Custom, 100, 240);   // blue, lifted to the brightness floor
 
-        Assert.Equal([0f, 0f, 1f], White(m), new FloatNear());
+        Assert.Equal([0.35329f, 0.35329f, 1f], White(m), new FloatNear());
         // Mostly monochrome, as Amber at 100: red, green and blue all turn into shades of the colour.
         Assert.Equal(0.85 * 0.2126, m[0 * 5 + 2], 5);
         Assert.Equal(0.85 * 0.7152, m[1 * 5 + 2], 5);
@@ -206,6 +206,68 @@ public class TintMatrixTests
             foreach (var level in Levels)
                 foreach (var channel in White(TintMatrix.Build(TintMode.Custom, level, hue)))
                     Assert.InRange(channel, 0f, 1.0001f);
+    }
+
+    // Custom's brightness floor (TintMatrix.CustomMinBrightness), by the same Rec.709 luma the looks use.
+    const double Floor = 0.40;
+    static double Brightness((double R, double G, double B) c) => 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B;
+
+    [Fact]
+    public void No_custom_colour_is_darker_than_the_floor_and_dark_hues_reach_it_exactly()
+    {
+        for (var hue = 0; hue < 360; hue++)
+        {
+            var pure = TintMatrix.HueColor(hue);
+            var lifted = TintMatrix.CustomColor(hue);
+            Assert.True(Brightness(lifted) >= Floor - 1e-9, $"hue {hue} is too dark");
+            if (Brightness(pure) < Floor) Assert.Equal(Floor, Brightness(lifted), 9);
+        }
+    }
+
+    [Theory]
+    [InlineData(60)]    // yellow
+    [InlineData(120)]   // green
+    [InlineData(180)]   // cyan
+    [InlineData(30)]    // orange
+    public void Bright_hues_keep_their_pure_colour(double hue)
+    {
+        Assert.Equal(TintMatrix.HueColor(hue), TintMatrix.CustomColor(hue));
+    }
+
+    [Theory]
+    [InlineData(240, 0.3533, 0.3533, 1)]   // blue: pure blue keeps only about 7 % of white's brightness
+    [InlineData(0, 1, 0.2380, 0.2380)]     // red
+    [InlineData(300, 1, 0.1611, 1)]        // magenta
+    public void Dark_hues_get_just_enough_white(double hue, double r, double g, double b)
+    {
+        var colour = TintMatrix.CustomColor(hue);
+
+        Assert.Equal(r, colour.R, 3);
+        Assert.Equal(g, colour.G, 3);
+        Assert.Equal(b, colour.B, 3);
+    }
+
+    [Fact]
+    public void The_lifted_colour_changes_smoothly_round_the_whole_bar()
+    {
+        var previous = TintMatrix.CustomColor(0);
+        for (var tenths = 1; tenths <= 3600; tenths++)   // in 0.1° steps, back round to 360 = 0
+        {
+            var colour = TintMatrix.CustomColor(tenths / 10.0);
+            var step = Math.Max(Math.Abs(colour.R - previous.R), Math.Max(Math.Abs(colour.G - previous.G), Math.Abs(colour.B - previous.B)));
+            Assert.True(step < 0.005, $"jump of {step:F4} at {tenths / 10.0}°");
+            previous = colour;
+        }
+    }
+
+    [Fact]
+    public void Custom_at_100_turns_white_into_the_lifted_colour()
+    {
+        for (var hue = 0; hue < 360; hue += 15)
+        {
+            var (r, g, b) = TintMatrix.CustomColor(hue);
+            Assert.Equal([(float)r, (float)g, (float)b], White(TintMatrix.Build(TintMode.Custom, 100, hue)), new FloatNear());
+        }
     }
 
     sealed class FloatNear : IEqualityComparer<float>

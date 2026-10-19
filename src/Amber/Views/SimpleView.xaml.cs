@@ -11,8 +11,8 @@ public partial class SimpleView : UserControl
 {
     const double ScheduleHeight = 446, PlainHeight = 286, TransitionListWidth = 75;
     // Where the chips and the schedule rows sit (as in the XAML), and how far down Custom's colour bar moves them:
-    // its 42 px and the 12 px gap above it.
-    const double ChipsTop = 230, ScheduleTop = 282, HueRoom = 54;
+    // its 22 px and the 12 px gap above it.
+    const double ChipsTop = 230, ScheduleTop = 282, HueRoom = 34;
 
     readonly Settings _settings;
     readonly Dictionary<TintMode, RadioButton> _chips;

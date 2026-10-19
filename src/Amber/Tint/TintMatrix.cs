@@ -26,13 +26,17 @@ public static class TintMatrix
     // Custom's look. A first guess, to be tuned by eye on the owner's screen: at level 0 white goes only this far
     // towards the colour (a faint wash), and at level 100 it is the colour itself, as monochrome as Amber's strong
     // look so text stays readable whatever the hue.
+    // Also a first guess: the least bright white may turn (Rec.709 luma, about Deep night's at level 100). Pure blue
+    // keeps only about 7 % of white's brightness and the screen looks blacked out, so darker hues get just enough
+    // white mixed in to reach this.
     const double CustomWeakAmount = 0.15;
     const double CustomWeakMono = 0.00;
     const double CustomStrongMono = 0.85;
+    const double CustomMinBrightness = 0.40;
 
     static (Look Weak, Look Strong) CustomRange(double hue)
     {
-        var (r, g, b) = HueColor(hue);
+        var (r, g, b) = CustomColor(hue);
         double Weak(double c) => 1 + CustomWeakAmount * (c - 1);
         return (new(Weak(r), Weak(g), Weak(b), CustomWeakMono), new(r, g, b, CustomStrongMono));
     }
@@ -50,6 +54,22 @@ public static class TintMatrix
             return 1 - Math.Clamp(Math.Min(k, 4 - k), 0, 1);
         }
         return (Channel(5), Channel(3), Channel(1));
+    }
+
+    /// <summary>
+    /// What white turns into under Custom at level 100: the hue's colour (<see cref="HueColor"/>), with just enough white
+    /// mixed in that it is never less bright than <see cref="CustomMinBrightness"/>. Bright hues stay as they are.
+    /// </summary>
+    public static (double R, double G, double B) CustomColor(double hue)
+    {
+        var (r, g, b) = HueColor(hue);
+        var brightness = Luma[0] * r + Luma[1] * g + Luma[2] * b;
+        if (brightness >= CustomMinBrightness) return (r, g, b);
+
+        // Moving each channel this far towards 1 brings the brightness up to exactly the floor.
+        var t = (CustomMinBrightness - brightness) / (1 - brightness);
+        double Lift(double c) => c + t * (1 - c);
+        return (Lift(r), Lift(g), Lift(b));
     }
 
     public static float[] Identity =>

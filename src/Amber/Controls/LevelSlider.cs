@@ -89,11 +89,14 @@ public class LevelSlider : Slider
         Value = ValueAt(e.GetPosition(track).X, track.ActualWidth, track.Thumb?.ActualWidth ?? 0, Minimum, Maximum);
     }
 
+    /// <summary>Whether the pointer at <paramref name="x"/> (on the track) is on the grip. The colour bar's grip is its whole handle.</summary>
+    protected virtual bool IsOnGrip(double x, Track track) =>
+        IsOnGrip(x, Value, track.ActualWidth, track.Thumb?.ActualWidth ?? 0, Minimum, Maximum);
+
     /// <summary>The double arrow over the grip and all through a drag (the grip follows the pointer); the arrow elsewhere.</summary>
     void ShowCursor(MouseEventArgs e)
     {
         if (GetTemplateChild("PART_Track") is not Track track) return;
-        var onGrip = IsOnGrip(e.GetPosition(track).X, Value, track.ActualWidth, track.Thumb?.ActualWidth ?? 0, Minimum, Maximum);
-        Cursor = IsMouseCaptured || onGrip ? Timeline.ResizeCursor : Cursors.Arrow;
+        Cursor = IsMouseCaptured || IsOnGrip(e.GetPosition(track).X, track) ? Timeline.ResizeCursor : Cursors.Arrow;
     }
 }

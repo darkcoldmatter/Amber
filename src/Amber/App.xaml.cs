@@ -22,11 +22,14 @@ public partial class App : Application
     readonly DispatcherTimer _updateTimer = new();
 #if DEBUG
     readonly bool _pretending;
+    bool _pretendNotes;
 #endif
+    // "New in this version" bullets waiting for the window to show them; null once they have been closed, or if none.
+    IReadOnlyList<string>? _notes;
     Mutex? _singleInstance;
     bool _previewing;
     TintMode? _previewMode;
-    double _previewLevel;
+    double _previewLevel, _previewHue;
     readonly TintPlan _plan = new();
     float[]? _shown;
     DateTime _lastFadeStep = DateTime.UtcNow;
@@ -116,6 +119,7 @@ public partial class App : Application
             _saveTimer.Start();
         };
         ApplyTint();
+        DecideNotes(e.Args);
 
         _updateTimer.Tick += async (_, _) => await CheckForUpdates(userAsked: false);
         ScheduleUpdateCheck();
@@ -174,22 +178,24 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// While the user drags a level, the screen shows that tint whatever the on/off state.
-    /// Advanced cards pass their own mode and level; simple mode uses the screen's.
+    /// While the user drags a level or Custom's colour, the screen shows that tint whatever the on/off state.
+    /// Advanced cards pass their own mode, level and hue; simple mode uses the screen's.
     /// </summary>
-    public void StartPreview(TintMode? mode = null, double level = 0)
+    public void StartPreview(TintMode? mode = null, double level = 0, double hue = 0)
     {
         _previewing = true;
         _previewMode = mode;
         _previewLevel = level;
+        _previewHue = hue;
         ApplyTint();
     }
 
-    public void UpdatePreview(TintMode mode, double level)
+    public void UpdatePreview(TintMode mode, double level, double hue)
     {
         if (!_previewing) return;
         _previewMode = mode;
         _previewLevel = level;
+        _previewHue = hue;
         ApplyTint();
     }
 
@@ -226,24 +232,19 @@ public partial class App : Application
     float[]? TintNow()
     {
         if (_previewing)
-            return TintMatrix.Build(_previewMode ?? _settings.Mode, _previewMode is null ? _settings.Level : _previewLevel);
+            return _previewMode is { } mode
+                ? TintMatrix.Build(mode, _previewLevel, _previewHue)
+                : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
 
         if (!IsOn) return null;
 
-        if (_settings.IsAdvanced)
-        {
-            var now = TimeOnly.FromDateTime(DateTime.Now);
-            var showing = AdvancedSchedule.Weights(_settings.Filters, now);
-            if (showing.Count == 0) return null;
-            return TintMatrix.Mix(showing.Select(s =>
-                (TintMatrix.Build(s.Filter.Mode, AdvancedSchedule.LevelAt(s.Filter, now)), s.Weight)));
-        }
+        if (_settings.IsAdvanced) return AdvancedSchedule.Matrix(_settings.Filters, TimeOnly.FromDateTime(DateTime.Now));
 
-        if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level);
+        if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
 
         var strength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
             _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
-        return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength) : null;
+        return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength, _settings.CustomHue) : null;
     }
 
     float[]? Faded(float[]? target)
@@ -285,6 +286,42 @@ public partial class App : Application
         _scheduleTimer.Start();
     }
 
+    /// <summary>
+    /// After an update, this version's notes show once, the next time the window is open (WhatsNew.Decide). A fresh
+    /// install shows nothing: its first settings file already counts them as seen.
+    /// </summary>
+    void DecideNotes(string[] args)
+    {
+        var notes = ReleaseNotes.Bundled();
+#if DEBUG
+        // dotnet run -- --pretend-notes: the bullets of ReleaseNotes.md whatever version it names; closing remembers nothing.
+        if (args.Contains(PretendNotes.Argument))
+        {
+            _pretendNotes = true;
+            if (notes.Bullets.Count > 0) _notes = notes.Bullets;
+            return;
+        }
+#endif
+        switch (WhatsNew.Decide(_installed, _settings.HadFile, notes, WhatsNew.ThisVersion, _settings.NotesShownVersion))
+        {
+            case NotesAction.Show:
+                _notes = notes.Bullets;
+                break;
+            case NotesAction.MarkSilently:
+                _settings.NotesShownVersion = WhatsNew.ThisVersion;
+                break;
+        }
+    }
+
+    void OnNotesClosed()
+    {
+        _notes = null;
+#if DEBUG
+        if (_pretendNotes) return;
+#endif
+        _settings.NotesShownVersion = WhatsNew.ThisVersion;
+    }
+
     void ShowWindow()
     {
         if (_window is null)
@@ -300,6 +337,7 @@ public partial class App : Application
         _window.Show();
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
         _window.Activate();
+        if (_notes is not null) _window.ShowNotes(_notes, OnNotesClosed);
     }
 
     void SaveSettings()

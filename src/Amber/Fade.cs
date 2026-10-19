@@ -9,7 +9,7 @@ public static class Fade
 {
     /// <summary>
     /// How long a plain fade takes, in seconds — on/off in both modes, and a schedule transition set to "Off".
-    /// 0 means no fade at all (the owner's choice for now).
+    /// 0 means no fade at all (the owner's choice).
     /// </summary>
     public const double DefaultSeconds = 0;
 
@@ -26,7 +26,8 @@ public static class Fade
 
     /// <summary>
     /// How often to step a fade of this length: about 1 % of it at a time, so it looks smooth, but never more often
-    /// than every 100 ms and never less often than every 500 ms.
+    /// than once a screen frame (1/60 s) and never less often than every 500 ms. A fade shorter than
+    /// 1.7 s can't step by 1 %, so it steps every frame instead, which looks just as smooth.
     /// </summary>
-    public static TimeSpan Tick(double fadeSeconds) => TimeSpan.FromSeconds(Math.Clamp(fadeSeconds / 100, 0.1, 0.5));
+    public static TimeSpan Tick(double fadeSeconds) => TimeSpan.FromSeconds(Math.Clamp(fadeSeconds / 100, 1.0 / 60, 0.5));
 }

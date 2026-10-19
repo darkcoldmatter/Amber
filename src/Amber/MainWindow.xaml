@@ -11,6 +11,8 @@
     -->
     <Grid x:Name="Root" Width="724">
         <controls:Glow x:Name="Glow" IsHitTestVisible="False" />
+        <!-- Lights up as a wave when the tint is switched on or off; empty otherwise (DotWave.cs). -->
+        <controls:DotWaveLayer x:Name="Wave" />
 
         <Grid x:Name="ModeLayer">
             <Grid.RowDefinitions>
@@ -38,5 +40,8 @@
         </Grid>
 
         <ContentControl x:Name="OverlayHost" Visibility="Collapsed" Focusable="False" />
+
+        <!-- "New in this version", over everything else, header included (WhatsNewView). -->
+        <ContentControl x:Name="NotesHost" Visibility="Collapsed" Focusable="False" />
     </Grid>
 </Window>

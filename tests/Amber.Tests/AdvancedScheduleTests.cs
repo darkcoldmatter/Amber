@@ -244,4 +244,33 @@ public class AdvancedScheduleTests
             }
         }
     }
+
+    [Fact]
+    public void Custom_filters_show_in_their_own_colours_and_cross_fade_between_them()
+    {
+        var green = new Filter { Mode = TintMode.Custom, Hue = 120, Start = Time(8), End = Time(9), Level = 100 };
+        var blue = new Filter { Mode = TintMode.Custom, Hue = 240, Start = Time(9), End = Time(10), Level = 40 };
+        Filter[] filters = [green, blue, Between(Time(10), Time(11), TintMode.Amber, 70)];
+
+        AssertNear(TintMatrix.Build(TintMode.Custom, 100, 120), AdvancedSchedule.Matrix(filters, Time(8, 30)));
+        AssertNear(TintMatrix.Build(TintMode.Custom, 40, 240), AdvancedSchedule.Matrix(filters, Time(9, 30)));
+        AssertNear(TintMatrix.Build(TintMode.Amber, 70), AdvancedSchedule.Matrix(filters, Time(10, 30)));
+
+        // At 9:00 both are half way: half of each colour, nothing of a clear screen.
+        var handOver = TintMatrix.Mix([(TintMatrix.Build(TintMode.Custom, 100, 120), 0.5), (TintMatrix.Build(TintMode.Custom, 40, 240), 0.5)]);
+        AssertNear(handOver, AdvancedSchedule.Matrix(filters, Time(9)));
+    }
+
+    [Fact]
+    public void With_no_filter_showing_the_screen_is_clear()
+    {
+        Assert.Null(AdvancedSchedule.Matrix([Between(Time(8), Time(9))], Time(12)));
+        Assert.Null(AdvancedSchedule.Matrix([], Time(12)));
+    }
+
+    static void AssertNear(float[] expected, float[]? actual)
+    {
+        Assert.NotNull(actual);
+        for (var k = 0; k < 25; k++) Assert.Equal(expected[k], actual[k], 0.0001f);
+    }
 }

@@ -41,4 +41,13 @@ public sealed class PretendUpdateServer(string version, bool failFirst, TimeSpan
     /// <summary>Never reached: Amber stops before handing a pretend update over (App.InstallUpdate).</summary>
     public void ApplyOnExit(string[] restartArgs) { }
 }
+
+/// <summary>
+/// Debug builds only, to preview "New in this version": <c>dotnet run -- --pretend-notes</c> shows it with the bullets of
+/// ReleaseNotes.md, whatever version that file names. Closing it remembers nothing in the settings.
+/// </summary>
+public static class PretendNotes
+{
+    public const string Argument = "--pretend-notes";
+}
 #endif

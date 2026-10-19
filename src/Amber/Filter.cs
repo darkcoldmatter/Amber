@@ -13,6 +13,9 @@ public sealed class Filter : INotifyPropertyChanged
 {
     public TintMode Mode { get; set => Set(ref field, value); }
 
+    /// <summary>This filter's own colour while its tint is Custom, as a hue of 0–360 (red by default).</summary>
+    public double Hue { get; set => Set(ref field, value); }
+
     public TimeOnly Start
     {
         get;

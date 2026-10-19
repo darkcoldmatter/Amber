@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using Amber.Views;
@@ -33,7 +35,20 @@ public partial class MainWindow : Window
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Settings.IsAdvanced)) ShowAppMode();
+        // The tint of the mode you are in was switched on or off (here or from the tray): the dots light up in a wave.
+        if (e.PropertyName == (_settings.IsAdvanced ? nameof(Settings.AdvancedIsOn) : nameof(Settings.IsOn))) Wave.Play();
     }
+
+#if DEBUG
+    /// <summary>Debug builds only: F8 replays the wave without switching anything, to tweak its look (DotWave.cs).</summary>
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Key != Key.F8) return;
+        Wave.Play();
+        e.Handled = true;
+    }
+#endif
 
     /// <summary>
     /// Simple and Advanced differ in width, body and header, and the ON/OFF button belongs to the mode you are in.
@@ -103,6 +118,31 @@ public partial class MainWindow : Window
         OverlayHost.Content = null;
         ModeLayer.Visibility = Visibility.Visible;
         ShowGlow();
+    }
+
+    /// <summary>
+    /// Shows "New in this version" over the whole window, unless it is showing already; <paramref name="closed"/> runs
+    /// when it is closed with Close or Esc. The hint bubble (in the window's adorner layer, above all content) hides meanwhile.
+    /// </summary>
+    public void ShowNotes(IReadOnlyList<string> bullets, Action closed)
+    {
+        if (NotesHost.Content is not null) return;
+        var view = new WhatsNewView(bullets);
+        view.CloseRequested += (_, _) =>
+        {
+            NotesHost.Visibility = Visibility.Collapsed;
+            NotesHost.Content = null;
+            ShowAdorners(true);
+            closed();
+        };
+        NotesHost.Content = view;
+        NotesHost.Visibility = Visibility.Visible;
+        ShowAdorners(false);
+    }
+
+    void ShowAdorners(bool show)
+    {
+        if (AdornerLayer.GetAdornerLayer(Root) is { } layer) layer.Visibility = show ? Visibility.Visible : Visibility.Hidden;
     }
 
     const int MONITOR_DEFAULTTONEAREST = 2;

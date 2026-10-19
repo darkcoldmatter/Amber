@@ -123,7 +123,7 @@ public class CurveEditor : FrameworkElement
         if (!CaptureMouse()) return; // without the mouse, the drag (and its preview) could never end
 
         _dragging = index;
-        App.Current.StartPreview(_filter.Mode, _filter.Curve[index].Level);
+        App.Current.StartPreview(_filter.Mode, _filter.Curve[index].Level, _filter.Hue);
         e.Handled = true;
     }
 
@@ -140,7 +140,7 @@ public class CurveEditor : FrameworkElement
         }
 
         _filter.Curve = CurveMath.Move(_filter.Curve, _dragging, MinutesAt(point.X), LevelAt(point.Y), _filter.LengthMinutes);
-        App.Current.UpdatePreview(_filter.Mode, _filter.Curve[_dragging].Level);
+        App.Current.UpdatePreview(_filter.Mode, _filter.Curve[_dragging].Level, _filter.Hue);
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
@@ -279,7 +279,7 @@ public class CurveEditor : FrameworkElement
         }
         area.Freeze();
 
-        var color = ((SolidColorBrush)FindResource(_filter!.Mode + "Bar")).Color;
+        var color = ((SolidColorBrush)AdvancedTimeline.BarBrush(this, _filter!)).Color;
         var fill = new LinearGradientBrush(Color.FromArgb(0x80, color.R, color.G, color.B), Color.FromArgb(0, color.R, color.G, color.B), 90);
         fill.Freeze();
         dc.DrawGeometry(fill, null, area);

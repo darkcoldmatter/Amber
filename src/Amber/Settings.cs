@@ -63,6 +63,10 @@ public sealed class Settings : INotifyPropertyChanged
     public bool IsOn { get; set => Set(ref field, value); }
     public TintMode Mode { get; set => Set(ref field, value); }
     public double Level { get; set => Set(ref field, value); } = 50;
+
+    /// <summary>Custom's colour in simple mode, as a hue of 0–360 (red by default). Like the level, switching tints keeps it.</summary>
+    public double CustomHue { get; set => Set(ref field, value); }
+
     public bool ScheduleEnabled { get; set => Set(ref field, value); }
     public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(12, 0);
     public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(13, 0);
@@ -73,6 +77,13 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>The update version the user chose to skip, so it isn't announced again (<see cref="Updates.Skip"/>).</summary>
     public string? SkippedVersion { get; set => Set(ref field, value); }
 
+    /// <summary>The version whose "New in this version" window was closed, so it shows once (<see cref="WhatsNew"/>).</summary>
+    public string? NotesShownVersion { get; set => Set(ref field, value); }
+
+    /// <summary>Whether <see cref="Load"/> found a settings file; false the first time Amber ever starts. Not saved.</summary>
+    [JsonIgnore]
+    public bool HadFile { get; private set; }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Returns default settings if the file is missing or unreadable.</summary>
@@ -81,6 +92,7 @@ public sealed class Settings : INotifyPropertyChanged
         try
         {
             var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(path), JsonOptions) ?? new();
+            settings.HadFile = true;
             // Older versions could save a curve that stops short of its range's ends: carry it on to them, same shape.
             foreach (var filter in settings.Filters)
                 if (CurveMath.ReachEnds(filter.Curve, filter.LengthMinutes) is var curve && !curve.SequenceEqual(filter.Curve)) filter.Curve = curve;
@@ -88,7 +100,8 @@ public sealed class Settings : INotifyPropertyChanged
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException)
         {
-            return new();
+            // A file that is there but unreadable still means Amber has run here before.
+            return new() { HadFile = e is not (FileNotFoundException or DirectoryNotFoundException) };
         }
     }
 

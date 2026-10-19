@@ -22,6 +22,19 @@
     <SolidColorBrush x:Key="GoldenHourAccent" Color="#FEC960" />
     <SolidColorBrush x:Key="AmberAccent" Color="#F99E43" />
     <SolidColorBrush x:Key="DeepNightAccent" Color="#FD867F" />
+    <!--
+        Custom has no colour of its own: its menu mark is the rainbow of the colour bar. Hues 0 to 360 at full strength;
+        straight lines between these six colours in sRGB are exactly the hues between them.
+    -->
+    <LinearGradientBrush x:Key="CustomAccent" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF0000" Offset="0" />
+        <GradientStop Color="#FFFF00" Offset="0.16667" />
+        <GradientStop Color="#00FF00" Offset="0.33333" />
+        <GradientStop Color="#00FFFF" Offset="0.5" />
+        <GradientStop Color="#0000FF" Offset="0.66667" />
+        <GradientStop Color="#FF00FF" Offset="0.83333" />
+        <GradientStop Color="#FF0000" Offset="1" />
+    </LinearGradientBrush>
     <!-- Brighter versions on the advanced timeline's bars and under the curve. -->
     <SolidColorBrush x:Key="GoldenHourBar" Color="#FFE063" />
     <SolidColorBrush x:Key="AmberBar" Color="#FFAE5D" />
@@ -705,6 +718,60 @@
                             </Track.Thumb>
                         </Track>
                     </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Custom's colour bar: as wide as the level slider, half as tall (22 px) and fully rounded, a tan track like the
+        slider's with the rainbow 2 px inside it, and an 18 px circle for the handle: a 4 px white border round the
+        picked colour. The handle's centre is the hue, so the rainbow runs between the handle's centres at either end
+        (9 px in), and the rainbow's rounded ends are red discs under it. Those discs are exactly where the handle sits at
+        hue 0 and 360, and two shapes drawn on the same edge leak the lower one's colour as a thin rim, so each disc fades
+        out over the last 4 px of the handle's way to its end (HueBar.EndOpacities): there the circle sits on the tan track.
+        Presses work 6 px above and below what's drawn, so the thin bar is as easy to grab as the slider.
+    -->
+    <Style x:Key="HueHandle" TargetType="Thumb">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border CornerRadius="9" BorderBrush="White" BorderThickness="4" Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="HueBar" TargetType="controls:HueBar">
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="360" />
+        <Setter Property="SmallChange" Value="1" />
+        <Setter Property="LargeChange" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:HueBar">
+                    <Grid Margin="0,-6" Background="Transparent">
+                        <Border Height="22" CornerRadius="11" Background="{StaticResource TanBrush}">
+                            <Grid Margin="2">
+                                <Ellipse x:Name="StartEnd" Width="18" Height="18" HorizontalAlignment="Left" Fill="#FF0000" />
+                                <Ellipse x:Name="EndEnd" Width="18" Height="18" HorizontalAlignment="Right" Fill="#FF0000" />
+                                <Rectangle Margin="9,0" Fill="{StaticResource CustomAccent}" />
+                                <Track x:Name="PART_Track" IsHitTestVisible="False">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource SliderRest}" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource SliderRest}" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource HueHandle}" Background="{TemplateBinding HandleBrush}" />
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

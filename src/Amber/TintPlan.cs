@@ -4,7 +4,7 @@ namespace Amber;
 
 /// <summary>
 /// Turns "what the settings ask for" into "what the screen shows". When the tint comes or goes all at once — a mode
-/// switched on or off — it eases over the plain fade (<see cref="Amber.Fade.DefaultSeconds"/>, instant while that is 0);
+/// switched on or off — it eases over the plain fade (<see cref="Amber.Fade.DefaultSeconds"/>);
 /// advanced filters fade at their edges by themselves. The live preview is shown as it is, and releasing it snaps
 /// straight back to the real state.
 /// </summary>
@@ -38,6 +38,9 @@ public sealed class TintPlan
         }
 
         if (target is not null) _lastTint = target;
+        // A fade that starts from rest begins with one small step: the time spent standing still before it doesn't
+        // count, or switching on after a quiet minute would jump straight to the full tint.
+        if (!IsFading) seconds = Math.Min(seconds, Amber.Fade.Tick(fadeSeconds).TotalSeconds);
         Fade = Amber.Fade.Step(Fade, target is not null, seconds, fadeSeconds);
 
         if (_lastTint is null || Fade <= 0) return null;

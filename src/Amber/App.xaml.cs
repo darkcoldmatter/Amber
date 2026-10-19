@@ -23,8 +23,6 @@ public partial class App : Application
 #if DEBUG
     readonly bool _pretending;
     bool _pretendNotes;
-    // The e-ink experiment picked from the tray, shown instead of the tint (test builds only, never saved).
-    EInkLook? _eink;
 #endif
     // "New in this version" bullets waiting for the window to show them; null once they have been closed, or if none.
     IReadOnlyList<string>? _notes;
@@ -108,10 +106,14 @@ public partial class App : Application
         };
         _tray.QuitRequested += () => Shutdown();
 #if DEBUG
+        // The e-ink experiment (EInkExperiment): the tray and Simple's chips pick the same look; the ticked one again leaves it.
         _tray.EInkRequested += look =>
         {
-            _eink = look == _eink ? null : look;
-            _tray.EInk = _eink;
+            if (!_settings.IsAdvanced) EInkExperiment.Look = look == EInkExperiment.Look ? null : look;
+        };
+        EInkExperiment.Changed += () =>
+        {
+            _tray.EInk = EInkExperiment.Look;
             ApplyTint();
         };
 #endif
@@ -123,6 +125,10 @@ public partial class App : Application
             // Only one mode runs at a time: switching one on switches the other off.
             if (e.PropertyName == nameof(Settings.IsOn) && _settings.IsOn) _settings.AdvancedIsOn = false;
             if (e.PropertyName == nameof(Settings.AdvancedIsOn) && _settings.AdvancedIsOn) _settings.IsOn = false;
+#if DEBUG
+            // The e-ink experiment exists only in Simple: switching to Advanced leaves it.
+            if (e.PropertyName == nameof(Settings.IsAdvanced) && _settings.IsAdvanced) EInkExperiment.Look = null;
+#endif
 
             ApplyTint();
             _saveTimer.Stop(); // Save once changes settle, not on every slider step.
@@ -232,6 +238,9 @@ public partial class App : Application
         }
 
         _tray?.SetOn(IsOn);
+#if DEBUG
+        if (_tray is not null) _tray.EInkAvailable = !_settings.IsAdvanced;
+#endif
         RunScheduleTimer();
     }
 
@@ -242,17 +251,31 @@ public partial class App : Application
     float[]? TintNow()
     {
         if (_previewing)
+        {
+#if DEBUG
+            // Dragging Simple's slider while an e-ink look is picked: the look with that much amber.
+            if (_previewMode is null && EInkExperiment.Look is { } preview) return TintMatrix.EInk(preview, EInkExperiment.Amber);
+#endif
             return _previewMode is { } mode
                 ? TintMatrix.Build(mode, _previewLevel, _previewHue)
                 : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
-
-#if DEBUG
-        if (_eink is not null) return TintMatrix.EInk(_eink);
-#endif
+        }
 
         if (!IsOn) return null;
 
         if (_settings.IsAdvanced) return AdvancedSchedule.Matrix(_settings.Filters, TimeOnly.FromDateTime(DateTime.Now));
+
+#if DEBUG
+        // An e-ink look replaces Simple's tint, with the schedule and its transition applied just the same.
+        if (EInkExperiment.Look is { } look)
+        {
+            var eink = TintMatrix.EInk(look, EInkExperiment.Amber);
+            if (!_settings.ScheduleEnabled) return eink;
+            var einkStrength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
+                _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
+            return einkStrength > 0 ? TintMatrix.Mix([(eink, einkStrength)]) : null;
+        }
+#endif
 
         if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
 

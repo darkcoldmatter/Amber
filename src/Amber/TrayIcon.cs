@@ -27,6 +27,8 @@ sealed class TrayIcon : IDisposable
     public Amber.Tint.EInkLook? EInk { get; set; }
     /// <summary>An e-ink look was picked from the menu: show it, or stop showing it if it is the one showing.</summary>
     public event Action<Amber.Tint.EInkLook>? EInkRequested;
+    /// <summary>The looks can be picked only in Simple; in Advanced they are greyed out.</summary>
+    public bool EInkAvailable { get; set; } = true;
 #endif
 
     public TrayIcon()
@@ -101,7 +103,8 @@ sealed class TrayIcon : IDisposable
         for (var k = 0; k < Amber.Tint.EInkLook.All.Length; k++)
         {
             var look = Amber.Tint.EInkLook.All[k];
-            AppendMenu(menu, MF_STRING | (look == EInk ? MF_CHECKED : 0), (nint)Command.EInkFirst + k, look.Name + " (test)");
+            AppendMenu(menu, MF_STRING | (look == EInk ? MF_CHECKED : 0) | (EInkAvailable ? 0 : MF_GRAYED),
+                (nint)Command.EInkFirst + k, look.Name + " (test)");
         }
 #endif
         AppendMenu(menu, MF_SEPARATOR, 0, null);
@@ -139,7 +142,7 @@ sealed class TrayIcon : IDisposable
     const int NIM_ADD = 0, NIM_MODIFY = 1, NIM_DELETE = 2, NIM_SETVERSION = 4, NOTIFYICON_VERSION_4 = 4;
     const int NIF_MESSAGE = 0x1, NIF_ICON = 0x2, NIF_TIP = 0x4, NIF_SHOWTIP = 0x80;
     const int WM_CONTEXTMENU = 0x007B, WM_LBUTTONDBLCLK = 0x0203;
-    const uint MF_STRING = 0x0, MF_CHECKED = 0x8, MF_SEPARATOR = 0x800;
+    const uint MF_STRING = 0x0, MF_GRAYED = 0x1, MF_CHECKED = 0x8, MF_SEPARATOR = 0x800;
     const uint TPM_RIGHTBUTTON = 0x2, TPM_NONOTIFY = 0x80, TPM_RETURNCMD = 0x100;
     const uint IMAGE_ICON = 1, LR_LOADFROMFILE = 0x10;
     const int SM_CXSMICON = 49;

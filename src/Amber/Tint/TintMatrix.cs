@@ -170,6 +170,27 @@ public static class TintMatrix
         }
         return m;
     }
+
+    /// <summary>
+    /// The e-ink look with Amber on top (an experiment, Debug builds only for now): <paramref name="amber"/> 0–100 is how
+    /// strongly Amber's level-100 look covers it, 0 being the plain e-ink look and 100 the full Amber look over it.
+    /// </summary>
+    public static float[] EInk(EInkLook look, double amber) =>
+        Multiply(EInk(look), Blend(TintMode.Amber, 100, amber / 100));
+
+    /// <summary>One matrix that does <paramref name="a"/> first and then <paramref name="b"/> (the product a × b, since colours are row vectors).</summary>
+    public static float[] Multiply(float[] a, float[] b)
+    {
+        var m = new float[25];
+        for (var i = 0; i < 5; i++)
+            for (var j = 0; j < 5; j++)
+            {
+                var sum = 0.0;
+                for (var k = 0; k < 5; k++) sum += (double)a[i * 5 + k] * b[k * 5 + j];
+                m[i * 5 + j] = (float)sum;
+            }
+        return m;
+    }
 }
 
 /// <summary>The darkest and lightest an e-ink look shows (0–1 per channel), and the brightness range it spreads between them.</summary>

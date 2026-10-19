@@ -20,7 +20,7 @@
                          Value="{Binding CustomHue}" AutomationProperties.Name="Color" />
 
         <StackPanel x:Name="Chips" Canvas.Top="230" Width="724">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <StackPanel x:Name="ChipRow" Orientation="Horizontal" HorizontalAlignment="Center">
                 <RadioButton x:Name="GoldenHourChip" Style="{StaticResource ModeChip}" Content="Golden hour" Checked="OnModeChecked"
                              AutomationProperties.Name="Golden hour" />
                 <RadioButton x:Name="AmberChip" Style="{StaticResource ModeChip}" Content="Amber" Margin="16,0,0,0" Checked="OnModeChecked"

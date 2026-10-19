@@ -2,6 +2,11 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+#if DEBUG
+using System.Windows.Automation;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
+#endif
 using Amber.Controls;
 using Amber.Tint;
 
@@ -16,6 +21,15 @@ public partial class SimpleView : UserControl
 
     readonly Settings _settings;
     readonly Dictionary<TintMode, RadioButton> _chips;
+#if DEBUG
+    // The e-ink experiment's chips, after Custom (test builds only). While one is picked the slider and the big number
+    // are its amber amount, kept in EInkExperiment and never in the settings.
+    readonly Dictionary<EInkLook, RadioButton> _einkChips = [];
+    bool _switchingSlider;
+    static bool EInkPicked => EInkExperiment.Look is not null;
+#else
+    static bool EInkPicked => false;
+#endif
 
     public SimpleView(Settings settings, Updates updates)
     {
@@ -31,6 +45,11 @@ public partial class SimpleView : UserControl
             [TintMode.Custom] = CustomChip,
         };
 
+#if DEBUG
+        AddEInkChips();
+        if (EInkPicked) ShowEInk();
+        else
+#endif
         _chips[settings.Mode].IsChecked = true;
         ShowLevel();
         ShowSchedule();
@@ -41,7 +60,59 @@ public partial class SimpleView : UserControl
         Hue.PreviewEnded += (_, _) => App.Current.EndPreview();
         settings.PropertyChanged += OnSettingChanged;
         Unloaded += (_, _) => settings.PropertyChanged -= OnSettingChanged;
+#if DEBUG
+        EInkExperiment.Changed += ShowEInk;
+        Unloaded += (_, _) => EInkExperiment.Changed -= ShowEInk;
+#endif
     }
+
+#if DEBUG
+    void AddEInkChips()
+    {
+        var style = (Style)FindResource("ModeChip");
+        for (var k = 0; k < EInkLook.All.Length; k++)
+        {
+            var look = EInkLook.All[k];
+            var chip = new RadioButton { Style = style, Content = $"E-ink {k + 1}", Margin = new Thickness(16, 0, 0, 0) };
+            AutomationProperties.SetName(chip, $"E-ink {k + 1}");
+            chip.Checked += (_, _) => EInkExperiment.Look = look;
+            ChipRow.Children.Add(chip);
+            _einkChips[look] = chip;
+        }
+
+        Level.ValueChanged += (_, e) =>
+        {
+            if (_switchingSlider || !EInkPicked) return;
+            EInkExperiment.Amber = e.NewValue;
+            ShowLevel();
+        };
+    }
+
+    /// <summary>
+    /// Picking an e-ink look (here or in the tray) ticks its chip and hands the slider to the amber amount: unbound from
+    /// the level first, so nothing reaches the settings. Leaving it ticks the saved tint's chip and binds the slider back.
+    /// </summary>
+    void ShowEInk()
+    {
+        _switchingSlider = true;
+        if (EInkExperiment.Look is { } look)
+        {
+            _einkChips[look].IsChecked = true;
+            var amber = EInkExperiment.Amber;
+            BindingOperations.ClearBinding(Level, RangeBase.ValueProperty);
+            Level.Value = amber;
+        }
+        else
+        {
+            _chips[_settings.Mode].IsChecked = true;
+            if (!BindingOperations.IsDataBound(Level, RangeBase.ValueProperty))
+                Level.SetBinding(RangeBase.ValueProperty, new Binding(nameof(Settings.Level)));
+        }
+        _switchingSlider = false;
+        ShowLevel();
+        ShowLayout();
+    }
+#endif
 
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -63,11 +134,26 @@ public partial class SimpleView : UserControl
         }
     }
 
-    void OnModeChecked(object sender, RoutedEventArgs e) =>
+    void OnModeChecked(object sender, RoutedEventArgs e)
+    {
         _settings.Mode = _chips.First(chip => chip.Value == sender).Key;
+#if DEBUG
+        EInkExperiment.Look = null; // a real tint again
+#endif
+    }
 
     /// <summary>The big number follows the slider live, also while dragging.</summary>
-    void ShowLevel() => Percent.Text = _settings.Level.ToString("0", CultureInfo.InvariantCulture) + "%";
+    void ShowLevel()
+    {
+#if DEBUG
+        if (EInkPicked)
+        {
+            Percent.Text = EInkExperiment.Amber.ToString("0", CultureInfo.InvariantCulture) + "%";
+            return;
+        }
+#endif
+        Percent.Text = _settings.Level.ToString("0", CultureInfo.InvariantCulture) + "%";
+    }
 
     /// <summary>
     /// Custom's colour bar shows only while Custom is the tint, and the schedule rows only while the schedule is on; the
@@ -75,7 +161,7 @@ public partial class SimpleView : UserControl
     /// </summary>
     void ShowLayout()
     {
-        var custom = _settings.Mode == TintMode.Custom;
+        var custom = _settings.Mode == TintMode.Custom && !EInkPicked;
         var room = custom ? HueRoom : 0;
         Hue.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
         Canvas.SetTop(Chips, ChipsTop + room);

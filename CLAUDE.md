@@ -53,8 +53,15 @@ public and the first release come next.
 - **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved): `TintMatrix.EInk` turns
   every colour grey by luma and spreads it from an ink colour to a paper colour with the matrix's offset row, so
   there's no pure black or white. Two looks in `EInkLook`: *Crisp* (Claude's take: cream paper, near-black ink, a bit
-  more contrast) and *Soft* (as discussed: 15 % charcoal to 88 % paper). Picked from the tray menu; it replaces the
-  tint while shown.
+  more contrast) and *Soft* (as discussed: 15 % charcoal to 88 % paper). `TintMatrix.EInk(look, amber)` puts Amber's
+  level-100 look on top at strength amber / 100 (`TintMatrix.Multiply`: one matrix, then the other); 0 is the plain look.
+  Picked with Simple's "E-ink 1" / "E-ink 2" chips after Custom, or the tray menu (the two stay in sync; the ticked one
+  again in the tray leaves it; greyed out in Advanced, and switching to Advanced leaves it). While one is picked it
+  replaces Simple's tint and the level slider and big % are the amber amount: shown only while ON, with the schedule
+  and transition as for any tint, and dragging previews it live. **Never saved:** the look and amber amount live only
+  in `EInkExperiment` (in memory, starts at none / 0); the slider is unbound from `Settings.Level` while one is
+  picked, so `Mode` and `Level` stay untouched — the installed Release Amber shares the settings file and would reset
+  on an unknown tint. Only the engine (`EInk`, `EInkLook`, `Multiply`) is in Release builds, for the tests.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
@@ -172,7 +179,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 238 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 250 of them; 246 in Release builds): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 

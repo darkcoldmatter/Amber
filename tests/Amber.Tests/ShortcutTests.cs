@@ -172,6 +172,27 @@ public class ShortcutTests
         Assert.Equal(label, ShortcutSettings.Label(action));
     }
 
+    [Fact]
+    public void Each_tint_has_its_shortcut()
+    {
+        var shortcuts = new ShortcutSettings();
+
+        Assert.Equal(TintMode.DeepNight, ShortcutSettings.TintOf(ShortcutAction.DeepNight));
+        Assert.Null(ShortcutSettings.TintOf(ShortcutAction.LevelUp));
+        Assert.Equal("Ctrl+Alt+1", shortcuts.ForTint(TintMode.GoldenHour)!.ToString());
+        Assert.Equal("Ctrl+Alt+4", shortcuts.ForTint(TintMode.Custom)!.ToString());
+    }
+
+    [Fact]
+    public void Chips_show_their_keys_only_while_shortcuts_are_on()
+    {
+        var shortcuts = new ShortcutSettings().With(ShortcutAction.DeepNight, null);
+
+        Assert.Equal("Ctrl + Alt + 2", SimpleView.ChipKeys(shortcuts, TintMode.Amber));
+        Assert.Null(SimpleView.ChipKeys(shortcuts, TintMode.DeepNight));
+        Assert.Null(SimpleView.ChipKeys(shortcuts with { Enabled = false }, TintMode.Amber));
+    }
+
     // What a press does
 
     [Fact]

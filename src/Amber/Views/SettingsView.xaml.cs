@@ -6,6 +6,8 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using Amber.Tint;
 
 namespace Amber.Views;
 
@@ -80,9 +82,19 @@ public partial class SettingsView : UserControl
 
     void AddShortcutRow(ShortcutAction action)
     {
-        var label = new TextBlock { Style = (Style)FindResource("LabelText"), FontSize = 14, Margin = new(24, -1, 0, 1),
+        var text = new TextBlock { Style = (Style)FindResource("LabelText"), FontSize = 14, Margin = new(0, -1, 0, 1),
             VerticalAlignment = VerticalAlignment.Center };
-        SetText(label, ShortcutSettings.Label(action));
+        SetText(text, ShortcutSettings.Label(action));
+        var label = new StackPanel { Orientation = Orientation.Horizontal, Margin = new(24, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        if (ShortcutSettings.TintOf(action) is { } tint)
+        {
+            // The tints are their own group, under a divider, each with its dome as in the tint menus (19 px, 10 px to the name).
+            if (tint == TintMode.GoldenHour)
+                ShortcutList.Children.Add(new Rectangle { Style = (Style)FindResource("Divider"), Margin = new(0, 4, 0, 4) });
+            label.Children.Add(new Path { Data = (Geometry)FindResource("IconDome"), Fill = (Brush)FindResource(tint + "Accent"),
+                Margin = new(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center });
+        }
+        label.Children.Add(text);
         var pill = new Button { Style = (Style)FindResource("ShortcutPill"), Margin = new(0, 0, 24, 0),
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
             Content = new TextBlock { Margin = new(0, -1, 0, 1) } };
@@ -104,7 +116,7 @@ public partial class SettingsView : UserControl
         row.Children.Add(label);
         row.Children.Add(pill);
         row.Children.Add(note);
-        ShortcutRows.Children.Add(row);
+        ShortcutList.Children.Add(row);
         _rows[action] = (pill, note);
     }
 
@@ -120,6 +132,8 @@ public partial class SettingsView : UserControl
         ShortcutsSwitch.IsChecked = shortcuts.Enabled;
         ShortcutList.IsEnabled = shortcuts.Enabled;
         ShortcutList.Opacity = shortcuts.Enabled ? 1 : 0.4;
+        ResetRow.IsEnabled = shortcuts.Enabled;
+        ResetRow.Opacity = ShortcutList.Opacity;
         foreach (var (action, (pill, note)) in _rows)
         {
             var listening = _listening == action;
@@ -202,15 +216,17 @@ public partial class SettingsView : UserControl
 
     void OnResetShortcutsClick(object sender, RoutedEventArgs e) => _settings.Shortcuts = new();
 
-    /// <summary>Plus Jakarta Sans for the words, Onest for the numbers: "Ctrl + Alt + 1", "F12".</summary>
-    void SetText(TextBlock block, string text)
+    /// <summary>
+    /// Plus Jakarta Sans for the words, Onest for the numbers: "Ctrl + Alt + 1", "F12". Also the keys under Simple's tint chips.
+    /// </summary>
+    public static void SetText(TextBlock block, string text)
     {
         block.Inlines.Clear();
         var at = 0;
         foreach (Match number in NumberPattern().Matches(text))
         {
             if (number.Index > at) block.Inlines.Add(new Run(text[at..number.Index]));
-            block.Inlines.Add(new Run(number.Value) { FontFamily = (FontFamily)FindResource("NumberFont") });
+            block.Inlines.Add(new Run(number.Value) { FontFamily = (FontFamily)block.FindResource("NumberFont") });
             at = number.Index + number.Length;
         }
         if (at < text.Length) block.Inlines.Add(new Run(text[at..]));

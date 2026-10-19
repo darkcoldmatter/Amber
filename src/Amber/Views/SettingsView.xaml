@@ -43,7 +43,8 @@
 
                 <!--
                     Keyboard shortcuts (no Figma frame yet): a switch row like "Start with Windows", then one 44 px row per
-                    shortcut, label on the left and its keys in a tan pill on the right (rows built in SettingsView.xaml.cs).
+                    shortcut, label on the left and its keys in a tan pill on the right (rows built in SettingsView.xaml.cs);
+                    a divider sets the four tint rows apart, each with its dome as in the tint menus.
                     A short note shows under a row when keys were refused or another app holds them.
                 -->
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
@@ -55,14 +56,13 @@
                                           AutomationProperties.Name="Keyboard shortcuts" />
                             <Rectangle Style="{StaticResource Divider}" Margin="0,67,0,0" />
                         </Grid>
-                        <StackPanel x:Name="ShortcutList" Margin="0,4,0,0">
-                            <StackPanel x:Name="ShortcutRows" />
-                            <TextBlock Style="{StaticResource CaptionText}" Margin="24,4,0,18" HorizontalAlignment="Left">
-                                <Hyperlink x:Name="ResetLink" Style="{StaticResource UnderlinedCaptionLink}" Click="OnResetShortcutsClick">Reset to defaults</Hyperlink>
-                            </TextBlock>
-                        </StackPanel>
+                        <StackPanel x:Name="ShortcutList" Margin="0,4,0,4" />
                     </StackPanel>
                 </Border>
+                <!-- Outside the card, centred under it. Dims with the list while shortcuts are off. -->
+                <TextBlock x:Name="ResetRow" Style="{StaticResource CaptionText}" Margin="0,16,0,0" HorizontalAlignment="Center">
+                    <Hyperlink Style="{StaticResource UnderlinedCaptionLink}" Click="OnResetShortcutsClick">Reset to defaults</Hyperlink>
+                </TextBlock>
             </StackPanel>
         </ScrollViewer>
     </Grid>

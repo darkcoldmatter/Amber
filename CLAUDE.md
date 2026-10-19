@@ -192,7 +192,7 @@ Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them an
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 311 of them; 308 in Release builds): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 313 of them; 310 in Release builds): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -208,9 +208,11 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   a second card 16 px under the first. A 68 px "Keyboard shortcuts" row with the same switch as "Start with Windows"
   and a divider, then a 44 px row per shortcut (Turn on / off, Level up, Level down, Golden hour, Amber,
   Deep night, Custom): 14 px label on the left, the keys in a 36 px tan pill on the right
-  (`ShortcutPill`, "Ctrl + Alt + A", "Not set" in grey for none; Onest for
-  digits), and "Reset to defaults" (About's underlined caption link) at the bottom. With the switch off the list
-  dims to 40 % and can't be used. The window grows to 738 px tall (699 inside) for it in both widths (no scrolling).
+  (`ShortcutPill`, "Ctrl + Alt + A", "Not set" in grey for none; Onest for digits). A full-width divider (4 px
+  above and below) sets the four tint rows apart, and each tint name has its dome in front, as in the tint menus
+  (`IconDome` in the menu colour, Custom's rainbow; 10 px to the name). "Reset to defaults" (About's underlined
+  caption link) sits outside the card, centred, 16 px under it. With the switch off the list and the link dim to
+  40 % and can't be used. The window grows to 745 px tall (706 inside) for it in both widths (no scrolling).
   Click a pill → "Press keys…" with an ink ring; the next key-down with modifiers is the new shortcut (lone
   modifiers are ignored), Esc cancels, Backspace / Delete clears it; clicking it again or anywhere that takes focus
   cancels too. While it listens every global shortcut is let go, so the press reaches the window. A refused press keeps the pill listening and says why in a small orange
@@ -226,6 +228,13 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   for the mode you're in.
 - Simple mode: big level % above the level slider, tint chips at the bottom (Golden hour, Amber, Deep night,
   Custom); with the schedule on, the timeline, the from/to time fields and Transition below.
+- **Shortcut labels under the tint chips** (owner's request, no Figma frame): while shortcuts are on, each chip has
+  its shortcut under it ("Ctrl + Alt + 1", as in the Settings pills: words in Plus Jakarta Sans, digits in Onest),
+  12 px Medium, ink at 50 %, centred on the chip, 2 px under it on a 16 px line. The labels never move the chips
+  (they may reach 40 px past them). A tint without a shortcut keeps an empty label's room while another has one; with
+  shortcuts off (or none set) the row goes. While it shows the window is 18 px taller and everything below moves
+  down by 18 (Simple 352 → 370 tall inside, 512 → 530 with the schedule, 386 → 404 with Custom's colour bar,
+  546 → 564 with both). It follows a shortcut change at once.
 - **Custom's colour bar** (no Figma frame — built from the owner's description): only while Custom is the tint, 12 px
   under the level slider and as wide (400 Simple / 270 Advanced), 22 px tall and fully rounded: the level slider's
   tan track with the rainbow 2 px inside it (18 px, hue 0 → 360 between the handle's centres at either end). The
@@ -235,7 +244,7 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   round the circle, so each disc fades out over the handle's last 4 px towards it (`HueBar.EndOpacities`). It feels
   like the level slider: press anywhere and drag (presses count 6 px above and below what's drawn, 34 px in all), the
   same double-arrow cursor over the handle and while dragging. The window grows by 34 px while it shows (Simple:
-  352 → 386 tall, 512 → 546 with the schedule).
+  352 → 386 tall, 512 → 546 with the schedule; 18 more each with the chips' shortcut labels).
 - Advanced mode: the timeline's bars show a dome in the bar colour (`#FFE063` / `#FFAE5D` / `#FF7C7C` —
   brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`; a Custom filter uses its own colour
   as the screen shows it, C′) and the level, or a small curve

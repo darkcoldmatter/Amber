@@ -57,6 +57,19 @@ public sealed record ShortcutSettings
     public ShortcutAction? UsedBy(ShortcutAction action, Shortcut keys) =>
         Bindings().FirstOrDefault(b => b.Action != action && b.Keys == keys)?.Action;
 
+    /// <summary>The tint a tint shortcut picks, or null for the others.</summary>
+    public static TintMode? TintOf(ShortcutAction action) => action switch
+    {
+        ShortcutAction.GoldenHour => TintMode.GoldenHour,
+        ShortcutAction.Amber => TintMode.Amber,
+        ShortcutAction.DeepNight => TintMode.DeepNight,
+        ShortcutAction.Custom => TintMode.Custom,
+        _ => null,
+    };
+
+    /// <summary>The shortcut that picks a tint: shown under its chip on Simple's home screen while shortcuts are on.</summary>
+    public Shortcut? ForTint(TintMode mode) => Get(Enum.GetValues<ShortcutAction>().First(a => TintOf(a) == mode));
+
     /// <summary>The words Settings uses for an action, also in "Already used for …".</summary>
     public static string Label(ShortcutAction action) => action switch
     {
@@ -94,10 +107,7 @@ public static class ShortcutCommands
         {
             case ShortcutAction.LevelUp: settings.Level = Step(settings.Level, +LevelStep); break;
             case ShortcutAction.LevelDown: settings.Level = Step(settings.Level, -LevelStep); break;
-            case ShortcutAction.GoldenHour: settings.Mode = TintMode.GoldenHour; break;
-            case ShortcutAction.Amber: settings.Mode = TintMode.Amber; break;
-            case ShortcutAction.DeepNight: settings.Mode = TintMode.DeepNight; break;
-            case ShortcutAction.Custom: settings.Mode = TintMode.Custom; break;
+            default: settings.Mode = ShortcutSettings.TintOf(action)!.Value; break;
         }
     }
 

@@ -9,9 +9,9 @@ public static class Fade
 {
     /// <summary>
     /// How long a plain fade takes, in seconds — on/off in both modes, and a schedule transition set to "Off".
-    /// A quick 0.2 s (the owner's choice), so the tint glides in and out instead of switching hard.
+    /// 0 means no fade at all (the owner's choice).
     /// </summary>
-    public const double DefaultSeconds = 0.2;
+    public const double DefaultSeconds = 0;
 
 
     /// <param name="current">where the fade is now</param>

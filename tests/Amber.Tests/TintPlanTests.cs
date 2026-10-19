@@ -45,12 +45,12 @@ public class TintPlanTests
     {
         // The app passes the time since the screen last changed, which can be minutes when the tint sat still.
         var plan = new TintPlan();
-        plan.Next(Target, eased: true, 90, Fade.DefaultSeconds);
+        plan.Next(Target, eased: true, 90, fadeSeconds: 2);
         Assert.True(plan.IsFading);
         Assert.True(plan.Fade < 0.1, "switching on should begin a fade, not jump to the full tint");
 
         plan.SnapTo(Target);
-        plan.Next(null, eased: true, 90, Fade.DefaultSeconds);
+        plan.Next(null, eased: true, 90, fadeSeconds: 2);
         Assert.True(plan.IsFading);
         Assert.True(plan.Fade > 0.9, "switching off should begin a fade too");
     }

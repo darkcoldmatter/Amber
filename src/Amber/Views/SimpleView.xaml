@@ -15,7 +15,11 @@
         <controls:LevelSlider x:Name="Level" Canvas.Left="162" Canvas.Top="133" Width="400" Style="{StaticResource LevelSlider}"
                               Value="{Binding Level}" AutomationProperties.Name="Level" />
 
-        <StackPanel Canvas.Top="230" Width="724">
+        <!-- Custom only: its colour bar, 12 px under the level slider; everything below moves down to make room. -->
+        <controls:HueBar x:Name="Hue" Canvas.Left="162" Canvas.Top="187" Width="400" Style="{StaticResource HueBar}"
+                         Value="{Binding CustomHue}" AutomationProperties.Name="Colour" />
+
+        <StackPanel x:Name="Chips" Canvas.Top="230" Width="724">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <RadioButton x:Name="GoldenHourChip" Style="{StaticResource ModeChip}" Content="Golden hour" Checked="OnModeChecked"
                              AutomationProperties.Name="Golden hour" />
@@ -23,6 +27,8 @@
                              AutomationProperties.Name="Amber" />
                 <RadioButton x:Name="DeepNightChip" Style="{StaticResource ModeChip}" Content="Deep night" Margin="16,0,0,0" Checked="OnModeChecked"
                              AutomationProperties.Name="Deep night" />
+                <RadioButton x:Name="CustomChip" Style="{StaticResource ModeChip}" Content="Custom" Margin="16,0,0,0" Checked="OnModeChecked"
+                             AutomationProperties.Name="Custom" />
             </StackPanel>
         </StackPanel>
 

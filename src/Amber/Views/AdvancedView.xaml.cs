@@ -111,7 +111,7 @@ public partial class AdvancedView : UserControl
 
     IEnumerable<(int Start, int End)> Ranges() => _settings.Filters.Select(filter => filter.Range);
 
-    /// <summary>The add menu: the three modes, with a + on hover; all faded when there is no free stretch of 15 minutes left.</summary>
+    /// <summary>The add menu: the four tints, with a + on hover; all faded when there is no free stretch of 15 minutes left.</summary>
     void OnAddClick(object sender, RoutedEventArgs e)
     {
         var room = FilterLayout.HasRoom(Ranges());

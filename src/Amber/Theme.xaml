@@ -22,6 +22,19 @@
     <SolidColorBrush x:Key="GoldenHourAccent" Color="#FEC960" />
     <SolidColorBrush x:Key="AmberAccent" Color="#F99E43" />
     <SolidColorBrush x:Key="DeepNightAccent" Color="#FD867F" />
+    <!--
+        Custom has no colour of its own: its menu mark is the rainbow of the colour bar. Hues 0 to 360 at full strength;
+        straight lines between these six colours in sRGB are exactly the hues between them.
+    -->
+    <LinearGradientBrush x:Key="CustomAccent" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF0000" Offset="0" />
+        <GradientStop Color="#FFFF00" Offset="0.16667" />
+        <GradientStop Color="#00FF00" Offset="0.33333" />
+        <GradientStop Color="#00FFFF" Offset="0.5" />
+        <GradientStop Color="#0000FF" Offset="0.66667" />
+        <GradientStop Color="#FF00FF" Offset="0.83333" />
+        <GradientStop Color="#FF0000" Offset="1" />
+    </LinearGradientBrush>
     <!-- Brighter versions on the advanced timeline's bars and under the curve. -->
     <SolidColorBrush x:Key="GoldenHourBar" Color="#FFE063" />
     <SolidColorBrush x:Key="AmberBar" Color="#FFAE5D" />
@@ -704,6 +717,54 @@
                                 <Thumb Style="{StaticResource SliderGrip}" />
                             </Track.Thumb>
                         </Track>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Custom's colour bar: the level slider's size and corners, filled with the rainbow, and a 42 px handle with the same
+        corners and a 6 px white border, filled with the picked colour. The handle's centre is the hue, so the rainbow runs
+        between the handle's centres at either end (21 px in); both ends are red, so the corners outside that are too.
+        The handle's white reaches 1 px past the bar all round (44 px, radius 15): drawn exactly on the bar's rounded ends,
+        the bar's red showed as a thin rim round the handle's corners.
+    -->
+    <Style x:Key="HueHandle" TargetType="Thumb">
+        <Setter Property="Width" Value="42" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border CornerRadius="15" BorderBrush="White" BorderThickness="7" Background="{TemplateBinding Background}" Margin="-1" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="HueBar" TargetType="controls:HueBar">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="360" />
+        <Setter Property="SmallChange" Value="1" />
+        <Setter Property="LargeChange" Value="30" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:HueBar">
+                    <Border CornerRadius="14" Background="#FF0000">
+                        <Grid>
+                            <Rectangle Margin="21,0" Fill="{StaticResource CustomAccent}" />
+                            <Track x:Name="PART_Track" IsHitTestVisible="False">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource SliderRest}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource SliderRest}" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource HueHandle}" Background="{TemplateBinding HandleBrush}" />
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

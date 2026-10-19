@@ -126,6 +126,13 @@ public class AdvancedTimeline : FrameworkElement
         return new Point(bar.Left + bar.Width / 2, TrackTop - HintGap);
     }
 
+    /// <summary>
+    /// The colour a filter is drawn in (its bar's dome, its curve's fill): its tint's bar colour, or a Custom filter's own colour.
+    /// </summary>
+    internal static Brush BarBrush(FrameworkElement owner, Filter filter) => filter.Mode == TintMode.Custom
+        ? Timeline.Frozen(new SolidColorBrush(HueBar.ColorOf(filter.Hue)))
+        : (Brush)owner.FindResource(filter.Mode + "Bar");
+
     void Attach()
     {
         if (_attached || _filters is null) return;
@@ -354,7 +361,7 @@ public class AdvancedTimeline : FrameworkElement
 
         var middle = bar.Left + bar.Width / 2;
         dc.PushTransform(new TranslateTransform(Math.Floor(middle - DomeWidth / 2), bar.Top + DomeTop));
-        dc.DrawGeometry((Brush)FindResource(filter.Mode + "Bar"), null, (Geometry)FindResource("IconDomeBar"));
+        dc.DrawGeometry(BarBrush(this, filter), null, (Geometry)FindResource("IconDomeBar"));
         dc.Pop();
 
         if (level is not null)

@@ -5,6 +5,8 @@ public enum TintMode
     GoldenHour,
     Amber,
     DeepNight,
+    /// <summary>A colour the user picks on the colour bar, kept as a hue (0–360) next to the mode.</summary>
+    Custom,
 }
 
 public static class TintModeNames
@@ -14,6 +16,7 @@ public static class TintModeNames
     {
         TintMode.GoldenHour => "Golden hour",
         TintMode.Amber => "Amber",
-        _ => "Deep night",
+        TintMode.DeepNight => "Deep night",
+        _ => "Custom",
     };
 }

@@ -34,8 +34,17 @@ public and the first release come next.
   | Amber | 1.00, 0.93, 0.82, 0.00 | 1.00, 0.45, 0.02, 0.85 |
   | Deep night | 1.00, 0.92, 0.90, 0.15 | 1.00, 0.25, 0.05, 1.00 |
 
+  | Custom (colour C) | 1 + 0.15 · (C − 1) per channel, 0.00 | C, 0.85 |
+
   The Deep night level-100 matrix (the mode was called "Astronomic" before Design 3.0) is the one the owner
   tested before this project started; don't "improve" these numbers without asking — they were tuned on his screen.
+  **Custom** takes its colour from a **hue, 0–360** (a double; 0 = red, the default): C = HSV(hue, 1, 1) → RGB
+  (`TintMatrix.HueColor`; 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta, 360 red again). Level 0 is a faint
+  wash of the colour, level 100 the colour itself, as monochrome as Amber's strong look so text stays readable
+  whatever the hue. Its numbers are **a first guess, to be tuned by eye** — named constants at the top of
+  `TintMatrix` (`CustomWeakAmount`, `CustomWeakMono`, `CustomStrongMono`). `Build` and `Blend` take the hue as an
+  optional last argument, which the other tints ignore; everything that builds a look (screen, preview, advanced
+  mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
@@ -48,8 +57,10 @@ public and the first release come next.
   centred on it (starts 5 s before, done 5 s after). Two filters that touch run their ramps over the same
   10 s with weights adding up to 1 — a cross-fade, so the screen never goes untinted between them. Any real
   gap (15 min at least) fades out to clear and back in.
-- **Live preview:** while dragging a level slider or a curve point, the screen shows that tint immediately,
-  whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
+- **Live preview:** while dragging a level slider, Custom's colour bar or a curve point, the screen shows that tint
+  immediately, whatever the on/off state. Releasing snaps straight back to the real state (`TintPlan.SnapTo`).
+  An advanced filter's colour bar previews at the level the filter shows now (its flat level, or its curve's level
+  at this moment, held at the nearest end outside its hours).
 - Applying is skipped when the matrix barely changed (`TintMatrix.Differs`, 0.001 — a quarter of one 8-bit
   colour step), so a slow fade doesn't hammer the display pipeline but no 1 % step is ever swallowed.
 - **Every visible change moves in steps of at most ~1 % (owner's rule).** The timer checks every 5 s, and not
@@ -69,15 +80,16 @@ public and the first release come next.
   tint then appears only when the schedule says so. There is deliberately no "tint right now" override;
   users switch the schedule off for that.
 - The tray's "Turn on/off" acts on whichever mode is current.
-- **Simple mode:** one mode at a time (Golden hour / Amber / Deep night), one level, and an optional
+- **Simple mode:** one tint at a time (Golden hour / Amber / Deep night / Custom), one level, and an optional
   schedule of one range, switched on and off by the header's Schedule button (a first-time schedule is
-  12:00–13:00). The schedule and level belong
-  to the screen, not to the mode: switching mode keeps them. The range snaps to 15 minutes, may run past
+  12:00–13:00). The schedule, the level and Custom's colour (`CustomHue`) belong
+  to the screen, not to the tint: switching tint keeps them. The range snaps to 15 minutes, may run past
   midnight, is never shorter than 15 minutes, and start == end means the whole 24 h. An edge never jumps
   over the other one — you fill the day by dragging the long way round. **Transition** is one dropdown that
   mixes units — Off, 10 s, 30 s, 1, 2, 5, 10, 15, 30 min — never more than half the range; "Off" uses the
   fade constant (instant). Stored in seconds.
-- **Advanced mode:** several filters, each a time range with a mode and either a flat level or a curve.
+- **Advanced mode:** several filters, each a time range with a tint and either a flat level or a curve.
+  A Custom filter has its own colour (`Filter.Hue`); a new filter starts at red (0).
   - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
     When no free stretch of 15 min is left, the add menu greys out.
   - Filters never overlap: dragging an edge stops at the neighbour. Touching bars share one border line.
@@ -101,10 +113,10 @@ public and the first release come next.
 {
   "SettingsVersion": 1, "SkippedVersion": null, "NotesShownVersion": null,
   "IsAdvanced": false, "AdvancedIsOn": false, "AdvancedIntroClosed": false, "FilterHintDone": false,
-  "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "16:00:00",
+  "Filters": [ { "Mode": "GoldenHour", "Hue": 0, "Start": "08:00:00", "End": "16:00:00",
                  "Level": 50, "CurveEnabled": true,
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
-  "IsOn": false, "Mode": "Amber", "Level": 50,
+  "IsOn": false, "Mode": "Amber", "Level": 50, "CustomHue": 0,
   "ScheduleEnabled": false, "ScheduleStart": "12:00:00", "ScheduleEnd": "13:00:00",
   "TransitionSeconds": 0
 }
@@ -113,8 +125,9 @@ public and the first release come next.
 `SettingsVersion` (always written first) is for future format changes: old files without it read 0 and
 still load. `SkippedVersion` is the update the user dismissed with ✕ — not announced again.
 `NotesShownVersion` is the version whose "New in this version" window was closed (null in files from before it).
-`Mode` is one of `GoldenHour`, `Amber`, `DeepNight` (an old file that still says `Astronomic` fails to
-parse and loads as defaults). Curve points are minutes from the filter's start.
+`Mode` is one of `GoldenHour`, `Amber`, `DeepNight`, `Custom` (an old file that still says `Astronomic` fails to
+parse and loads as defaults). `CustomHue` (Simple) and each filter's `Hue` are Custom's colour, 0–360; files from
+before Custom have neither and load as 0 (red). Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
 filters silently fail to load.
 
@@ -127,7 +140,7 @@ filters silently fail to load.
 | `App.xaml.cs` | Decides what the screen should show, the timer, tray wiring, single instance, preview |
 | `TintPlan.cs`, `Fade.cs` | Eases the tint in/out; snaps back after a preview |
 | `Schedule.cs` | Simple mode: strength at a moment, with the transition fades |
-| `AdvancedSchedule.cs` | Advanced mode: which filters show at a moment and how strongly |
+| `AdvancedSchedule.cs` | Advanced mode: which filters show at a moment and how strongly, and the mixed matrix (`Matrix`) |
 | `ScheduleRange.cs` | Range maths on the 24 h clock (length, snapping, moving an edge) |
 | `FilterLayout.cs` | Where a new filter fits; edges stopping at neighbours |
 | `CurveMath.cs` | Add / remove / move curve points, snapping, refitting after a range change |
@@ -139,7 +152,7 @@ filters silently fail to load.
 | `PretendUpdates.cs` | Debug-only previews: `--pretend-update` (the update notice) and `--pretend-notes` ("New in this version") |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
-| `Controls/*` | Level slider; simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
+| `Controls/*` | Level slider and Custom's colour bar (`HueBar`, a level slider with a rainbow and a colour handle); simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
 | `Views/*` | `SimpleView`, `AdvancedView` (intro card, timeline, add menu or `FilterPanel`), `SettingsView`, `AboutView`, `WhatsNewView` ("New in this version") |
 | `MainWindow`, `Theme.xaml` | The shell (header, width switch, overlays) and all styles/icons (icons are exact Figma geometry) |
 | `tools/make-icons.ps1` | Regenerates the tray/app icons from the logo shape |
@@ -148,7 +161,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 207 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 227 of them): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -166,12 +179,22 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
   it sits above Settings/About and the update notice.
 - Header: settings and about buttons, the "Advanced" switch, the Schedule button (Simple only), and ON/OFF
   for the mode you're in.
-- Simple mode: big level % above the level slider, mode chips at the bottom; with the schedule on, the
-  timeline, the from/to time fields and Transition below.
+- Simple mode: big level % above the level slider, tint chips at the bottom (Golden hour, Amber, Deep night,
+  Custom); with the schedule on, the timeline, the from/to time fields and Transition below.
+- **Custom's colour bar** (no Figma frame — built from the owner's description): only while Custom is the tint, 12 px
+  under the level slider, the same width, 42 px height and 14 px corners as its track, filled with the rainbow
+  (hue 0 → 360, between the handle's centres at either end). The handle is the bar's height with the same corners,
+  a 6 px white border and the picked colour inside; its white reaches 1 px past the bar all round (44 px), because
+  drawn exactly on the bar's rounded ends the bar's red showed as a rim. It feels like the level slider: press
+  anywhere and drag, the same double-arrow cursor over the handle and while dragging. The window grows by 54 px
+  while it shows (Simple: 352 → 406 tall, 512 → 566 with the schedule).
 - Advanced mode: the timeline's bars show a dome in the bar colour (`#FFE063` / `#FFAE5D` / `#FF7C7C` —
-  brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`) and the level, or a small curve
+  brighter than the menu's mode colours `#FEC960` / `#F99E43` / `#FD867F`; a Custom filter uses its own colour,
+  full strength) and the level, or a small curve
   icon when the curve is on; content hides when it doesn't fit. Selected bar white with a trash icon, the
-  others at 70 %. The curve opens as a white graph card under the filter panel (the slider hides).
+  others at 70 %. The curve opens as a white graph card under the filter panel (the slider hides), filled in the
+  same colour. In the menus Custom's mark is the rainbow. A selected Custom filter shows its colour bar under the
+  level slider (the panel grows by 54 px); with the curve on, the colour bar takes the slider's row.
 - Fonts: **Plus Jakarta Sans** for words, **Onest** for every number (both SIL OFL, bundled, licences in
   `Licenses.txt`). The Figma file uses Satoshi, whose licence doesn't allow shipping it — never use it.
   WPF has no letter-spacing, so tracked text goes through `TrackedText`.
@@ -192,12 +215,12 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
   (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
-**Words (use them everywhere, UI and docs):** *tint* = Golden hour / Amber / Deep night, and the effect on the
+**Words (use them everywhere, UI and docs):** *tint* = Golden hour / Amber / Deep night / Custom, and the effect on the
 screen; *level* = its strength, 0–100 %; *filter* = one scheduled block in Advanced; *schedule* and
 *transition* = Simple's time range and its fade; *mode* only for Simple and Advanced. Never "display mode",
 "display filter" or "dynamic tint". (In code the tints are still `TintMode`.)
 
-Copy rules: improve the English of any UI text, **except** the mode names (Golden hour, Amber, Deep night),
+Copy rules: improve the English of any UI text, **except** the tint names (Golden hour, Amber, Deep night, Custom),
 which stay exactly as they are. The About screen names no creator (owner's choice: GitHub tells that story).
 **Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, notices, installer
 publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team

@@ -16,6 +16,7 @@ namespace Amber.Views;
 public partial class FilterPanel : UserControl
 {
     static readonly TintMode[] Modes = Enum.GetValues<TintMode>();
+    const double RowHeight = 42, RowGap = 12;
 
     Filter? _filter;
     bool _filling, _previewing;
@@ -32,22 +33,39 @@ public partial class FilterPanel : UserControl
         {
             if (_filter is not { } filter) return;
             _previewing = true;
-            App.Current.StartPreview(filter.Mode, Level.Value);
+            App.Current.StartPreview(filter.Mode, Level.Value, filter.Hue);
         };
         Level.ValueChanged += (_, _) =>
         {
-            if (_previewing && _filter is { } filter) App.Current.UpdatePreview(filter.Mode, Level.Value);
+            if (_previewing && _filter is { } filter) App.Current.UpdatePreview(filter.Mode, Level.Value, filter.Hue);
         };
-        Level.PreviewEnded += (_, _) =>
+        Level.PreviewEnded += (_, _) => EndPreview();
+
+        // Custom's colour bar the same way, at the level the filter shows now (its flat level, or its curve's level now).
+        Hue.PreviewStarted += (_, _) =>
         {
-            if (!_previewing) return;
-            _previewing = false;
-            App.Current.EndPreview();
+            if (_filter is not { } filter) return;
+            _previewing = true;
+            App.Current.StartPreview(filter.Mode, LevelNow(filter), Hue.Value);
         };
+        Hue.ValueChanged += (_, _) =>
+        {
+            if (_previewing && _filter is { } filter) App.Current.UpdatePreview(filter.Mode, LevelNow(filter), Hue.Value);
+        };
+        Hue.PreviewEnded += (_, _) => EndPreview();
 
         // Let go of the filter when the panel leaves the window, so a closed window can be freed.
         Unloaded += (_, _) => Filter = null;
     }
+
+    void EndPreview()
+    {
+        if (!_previewing) return;
+        _previewing = false;
+        App.Current.EndPreview();
+    }
+
+    static double LevelNow(Filter filter) => AdvancedSchedule.LevelAt(filter, TimeOnly.FromDateTime(DateTime.Now));
 
     /// <summary>All the filters: a time can only move as far as the neighbours allow.</summary>
     public IReadOnlyList<Filter> Filters { get; set; } = [];
@@ -59,9 +77,13 @@ public partial class FilterPanel : UserControl
         set
         {
             if (value == _filter) return;
-            // The filter can change while its level is being dragged (Esc, Delete): letting go of the slider first ends
-            // the preview, so the slider never previews or moves a filter that has gone.
-            if (_previewing) Level.ReleaseMouseCapture();
+            // The filter can change while its level or colour is being dragged (Esc, Delete): letting go of the slider
+            // first ends the preview, so the slider never previews or moves a filter that has gone.
+            if (_previewing)
+            {
+                Level.ReleaseMouseCapture();
+                Hue.ReleaseMouseCapture();
+            }
             if (_filter is not null) _filter.PropertyChanged -= OnFilterChanged;
             _filter = value;
             DataContext = value;
@@ -96,7 +118,26 @@ public partial class FilterPanel : UserControl
         }
     }
 
-    void ShowMode() => ModeField.Content = _filter!.Mode.DisplayName();
+    void ShowMode()
+    {
+        ModeField.Content = _filter!.Mode.DisplayName();
+        ShowHue(animate: false);
+    }
+
+    /// <summary>
+    /// Custom's colour bar: under the level slider, or in the slider's row while the curve is on. The panel grows by a
+    /// row while it sits under the slider.
+    /// </summary>
+    void ShowHue(bool animate)
+    {
+        var custom = _filter!.Mode == TintMode.Custom;
+        var inSliderRow = _filter.CurveEnabled;
+        Hue.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
+        Grid.SetRow(Hue, inSliderRow ? 0 : 1);
+        Hue.Margin = new Thickness(40, inSliderRow ? 0 : RowGap, 76, 0);
+        Rows.Height = custom && !inSliderRow ? 2 * RowHeight + RowGap : RowHeight;
+        if (custom) Fade(Hue, 0, 1, animate);
+    }
 
     void ShowTimes()
     {
@@ -121,8 +162,11 @@ public partial class FilterPanel : UserControl
 
         GraphCard.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         if (show) Fade(GraphCard, 0, 1, animate);
-        Fade(LevelGroup, LevelGroup.Opacity, show ? 0 : 1, animate);
+        // Custom's colour bar moves up into the slider's row: the slider leaves at once rather than fading under it.
+        var hueMovesUp = show && _filter.Mode == TintMode.Custom;
+        Fade(LevelGroup, LevelGroup.Opacity, show ? 0 : 1, animate && !hueMovesUp);
         LevelGroup.IsHitTestVisible = !show;
+        ShowHue(animate);
     }
 
     static void Fade(UIElement element, double from, double to, bool animate) =>

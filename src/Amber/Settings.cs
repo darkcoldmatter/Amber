@@ -63,6 +63,10 @@ public sealed class Settings : INotifyPropertyChanged
     public bool IsOn { get; set => Set(ref field, value); }
     public TintMode Mode { get; set => Set(ref field, value); }
     public double Level { get; set => Set(ref field, value); } = 50;
+
+    /// <summary>Custom's colour in simple mode, as a hue of 0–360 (red by default). Like the level, switching tints keeps it.</summary>
+    public double CustomHue { get; set => Set(ref field, value); }
+
     public bool ScheduleEnabled { get; set => Set(ref field, value); }
     public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(12, 0);
     public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(13, 0);

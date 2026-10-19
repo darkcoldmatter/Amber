@@ -187,4 +187,39 @@ public class SettingsTests : IDisposable
         Assert.False(settings.AdvancedIntroClosed);
         Assert.False(settings.FilterHintDone);
     }
+
+    [Fact]
+    public void Custom_and_its_colours_are_saved_and_read_back()
+    {
+        var settings = new Settings { Mode = TintMode.Custom, CustomHue = 200 };
+        settings.Filters.Add(new Filter { Mode = TintMode.Custom, Hue = 300, Start = new TimeOnly(8, 0), End = new TimeOnly(9, 0) });
+        settings.Save(SettingsPath);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Contains("\"Mode\": \"Custom\"", File.ReadAllText(SettingsPath));
+        Assert.Equal(TintMode.Custom, loaded.Mode);
+        Assert.Equal(200, loaded.CustomHue);
+        var filter = Assert.Single(loaded.Filters);
+        Assert.Equal(TintMode.Custom, filter.Mode);
+        Assert.Equal(300, filter.Hue);
+    }
+
+    [Fact]
+    public void A_file_from_before_Custom_loads_with_red()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "SettingsVersion": 1, "Mode": "Amber", "Level": 30,
+              "Filters": [ { "Mode": "GoldenHour", "Start": "08:00:00", "End": "09:00:00", "Level": 50 } ] }
+            """);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Equal(TintMode.Amber, loaded.Mode);
+        Assert.Equal(0, loaded.CustomHue);
+        Assert.Equal(0, Assert.Single(loaded.Filters).Hue);
+        Assert.Equal(0, new Settings().CustomHue);
+        Assert.Equal(0, new Filter().Hue);
+    }
 }

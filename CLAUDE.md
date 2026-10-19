@@ -85,6 +85,18 @@ public and the first release come next.
   tint then appears only when the schedule says so. There is deliberately no "tint right now" override;
   users switch the schedule off for that.
 - The tray's "Turn on/off" acts on whichever mode is current.
+- **Keyboard shortcuts** (global, `RegisterHotKey`, so they work from the tray too; on by default, a switch in
+  Settings turns them all off). Defaults: Ctrl+Alt+A turn on / off (the current mode, exactly like the tray);
+  Ctrl+Alt+= / Ctrl+Alt+- level up / down by 1 % (holding repeats at Windows' key-repeat rate — the only ones without
+  `MOD_NOREPEAT`); Ctrl+Alt+1 … 9, 0 jump to 10 … 90, 100 %; Ctrl+Alt+Shift+1 / 2 / 3 / 4 pick Golden hour / Amber /
+  Deep night / Custom. Level and tint shortcuts act on Simple (`Level`, `Mode`) and do nothing while Advanced is the
+  current mode; they never switch the tint on (while OFF they only change the setting). Level is rounded, then
+  stepped, within 0–100. Ctrl+Alt was chosen over Win because Windows owns Win+A, Win+1…0 and Win+= / Win+-.
+  A shortcut is modifiers + one key: a letter, a digit, =, - or F1–F12, always with Ctrl, Alt or Win (a lone key
+  or Shift+key would take over typing). Any shortcut may be none. Registered at startup while the switch is on,
+  again whenever a shortcut or the switch changes, all let go on exit, while switched off, and while Settings
+  listens for new keys. A combination another app holds can't be registered: it's kept, shown as "In use by
+  another app", and just doesn't fire until it's free.
 - **Simple mode:** one tint at a time (Golden hour / Amber / Deep night / Custom), one level, and an optional
   schedule of one range, switched on and off by the header's Schedule button (a first-time schedule is
   12:00–13:00). The schedule, the level and Custom's colour (`CustomHue`) belong
@@ -123,7 +135,10 @@ public and the first release come next.
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
   "IsOn": false, "Mode": "Amber", "Level": 50, "CustomHue": 0,
   "ScheduleEnabled": false, "ScheduleStart": "12:00:00", "ScheduleEnd": "13:00:00",
-  "TransitionSeconds": 0
+  "TransitionSeconds": 0,
+  "Shortcuts": { "Enabled": true, "Toggle": "Ctrl+Alt+A", "LevelUp": "Ctrl+Alt+=", "LevelDown": "Ctrl+Alt+-",
+                 "LevelJump": "Ctrl+Alt", "GoldenHour": "Ctrl+Alt+Shift+1", "Amber": "Ctrl+Alt+Shift+2",
+                 "DeepNight": "Ctrl+Alt+Shift+3", "Custom": "Ctrl+Alt+Shift+4" }
 }
 ```
 
@@ -135,6 +150,11 @@ parse and loads as defaults). `CustomHue` (Simple) and each filter's `Hue` are C
 before Custom have neither and load as 0 (red). Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
 filters silently fail to load.
+`Shortcuts` holds readable text (modifiers in the order Ctrl, Alt, Shift, Win; the file is written with relaxed
+escaping so `+` isn't saved as `\u002B`); `null` is no shortcut. `LevelJump` is only the modifiers of the ten jump
+shortcuts (digits 1–9 and 0 are fixed). A file from before shortcuts, or a missing entry, gets the defaults; an
+unreadable entry (or `LevelJump` without Ctrl/Alt/Win) loads as none and never breaks the rest of the file. An older
+Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them and the defaults come back.
 
 ## Code map
 
@@ -157,6 +177,9 @@ filters silently fail to load.
 | `PretendUpdates.cs` | Debug-only previews: `--pretend-update` (the update notice) and `--pretend-notes` ("New in this version") |
 | `DotWave.cs`, `Controls/DotWaveLayer.cs` | The halftone dot wave across the window when the tint turns on or off: the maths (constants at the top) and the drawing (runs only while the wave plays) |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
+| `Shortcut.cs` | One keyboard shortcut: parse / format its text, which keys are allowed, JSON converters |
+| `Shortcuts.cs` | The shortcut settings (defaults, the 17 combinations, duplicates), what a press does (`ShortcutCommands`), reading a key press in Settings (`ShortcutCapture`) |
+| `GlobalHotkeys.cs` | `RegisterHotKey` on a hidden message-only window; which combinations failed; suspending while Settings listens |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider and Custom's colour bar (`HueBar`, a level slider with a rainbow and a colour handle); simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
 | `Views/*` | `SimpleView`, `AdvancedView` (intro card, timeline, add menu or `FilterPanel`), `SettingsView`, `AboutView`, `WhatsNewView` ("New in this version") |
@@ -167,7 +190,7 @@ filters silently fail to load.
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 238 of them): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 314 of them; 311 in Release builds): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -179,6 +202,21 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Light theme only, not resizable. **724 px wide in Simple, 848 px in Advanced**: the window sizes itself to
   its content (so the inside matches the Figma frame) and keeps its centre when the width changes. Max 800 px
   tall; the header stays put and the rest scrolls. Settings and About cover the whole window and close with ✕.
+- **Settings → Keyboard shortcuts** (no Figma frame — designed to match the Settings card; the owner will fix details):
+  a second card 16 px under the first. A 68 px "Keyboard shortcuts" row with the same switch as "Start with Windows"
+  and a divider, then a 44 px row per shortcut (Turn on / off, Level up, Level down, Jump to level 10–100%, Golden
+  hour, Amber, Deep night, Custom): 14 px label on the left, the keys in a 36 px tan pill on the right
+  (`ShortcutPill`, "Ctrl + Alt + A", "Ctrl + Alt + 1 … 0" for the jump row, "Not set" in grey for none; Onest for
+  digits), and "Reset to defaults" (About's underlined caption link) at the bottom. With the switch off the list
+  dims to 40 % and can't be used. The window grows to ~782 px tall for it in both widths (no scrolling).
+  Click a pill → "Press keys…" with an ink ring; the next key-down with modifiers is the new shortcut (lone
+  modifiers are ignored), Esc cancels, Backspace / Delete clears it; clicking it again or anywhere that takes focus
+  cancels too. While it listens every global shortcut is let go, so the press reaches the window. The jump row takes
+  the modifiers of a press with a digit. A refused press keeps the pill listening and says why in a small orange
+  note under the row, right-aligned (`#B34B00`): "Add Ctrl, Alt or Win", "Use a letter, a digit, =, - or F1–F12",
+  "Hold the keys and press a digit", or "Already used for Turn on / off" (duplicates within Amber are refused,
+  not swapped). A shortcut another app holds shows "In use by another app" there. The tray's "Turn on" / "Turn
+  off" shows the on/off shortcut right-aligned while shortcuts are on, it's set, and it registered.
 - "New in this version" (Figma `132:4828`): an amber scrim (`#F99E43` at 40 %) over the whole window, header
   included, and a 350 px white card centred on it: title, the bullets, a divider and a dark Close button. Only the
   list's height changes the card's height. Close or Esc closes it; nothing behind it can be clicked or typed into;

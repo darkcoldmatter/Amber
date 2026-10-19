@@ -222,4 +222,81 @@ public class SettingsTests : IDisposable
         Assert.Equal(0, new Settings().CustomHue);
         Assert.Equal(0, new Filter().Hue);
     }
+
+    [Fact]
+    public void Shortcuts_are_saved_as_readable_text_and_read_back()
+    {
+        var shortcuts = new ShortcutSettings { Enabled = false }
+            .With(ShortcutAction.Toggle, Shortcut.Parse("Win+Shift+T"))
+            .With(ShortcutAction.LevelUp, Shortcut.Parse("Ctrl+F12"))
+            .With(ShortcutAction.LevelJump, Shortcut.Parse("Alt+Win+1"))
+            .With(ShortcutAction.Custom, null);
+        new Settings { Shortcuts = shortcuts }.Save(SettingsPath);
+
+        var text = File.ReadAllText(SettingsPath);
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Contains("\"Toggle\": \"Shift+Win+T\"", text);
+        Assert.Contains("\"LevelDown\": \"Ctrl+Alt+-\"", text);
+        Assert.Contains("\"LevelJump\": \"Alt+Win\"", text);
+        Assert.Contains("\"Custom\": null", text);
+        Assert.Equal(shortcuts, loaded.Shortcuts);
+    }
+
+    [Fact]
+    public void A_file_from_before_shortcuts_loads_the_defaults()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """{ "SettingsVersion": 1, "Mode": "Amber", "Level": 30 }""");
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Equal(new ShortcutSettings(), loaded.Shortcuts);
+        Assert.True(loaded.Shortcuts.Enabled);
+        Assert.Equal(30, loaded.Level);
+    }
+
+    [Fact]
+    public void Unreadable_shortcuts_are_none_and_the_rest_still_loads()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "Level": 30, "Shortcuts": { "Toggle": "Banana", "LevelUp": 5, "LevelDown": { "x": 1 }, "LevelJump": "Shift",
+              "Amber": "A", "SomethingNew": "Ctrl+Alt+Q" } }
+            """);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.Equal(30, loaded.Level);
+        Assert.Null(loaded.Shortcuts.Toggle);
+        Assert.Null(loaded.Shortcuts.LevelUp);
+        Assert.Null(loaded.Shortcuts.LevelDown);
+        Assert.Equal(System.Windows.Input.ModifierKeys.None, loaded.Shortcuts.LevelJump); // Shift + digits would take over typing
+        Assert.Null(loaded.Shortcuts.Amber);
+        Assert.Equal(new ShortcutSettings().GoldenHour, loaded.Shortcuts.GoldenHour); // missing: its default
+        Assert.True(loaded.Shortcuts.Enabled);
+    }
+
+    [Fact]
+    public void Null_shortcuts_load_the_defaults()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """{ "Shortcuts": null }""");
+
+        Assert.Equal(new ShortcutSettings(), Settings.Load(SettingsPath).Shortcuts);
+    }
+
+    [Fact]
+    public void A_shortcut_change_is_announced_once()
+    {
+        var settings = new Settings();
+        var changes = new List<string?>();
+        settings.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
+
+        settings.Shortcuts = settings.Shortcuts.With(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+T"));
+        settings.Shortcuts = settings.Shortcuts.With(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+T")); // the same again
+        settings.Shortcuts = new ShortcutSettings().With(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+T")); // equal value
+
+        Assert.Equal([nameof(Settings.Shortcuts)], changes);
+    }
 }

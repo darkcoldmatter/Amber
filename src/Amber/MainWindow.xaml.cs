@@ -16,14 +16,16 @@ public partial class MainWindow : Window
 
     readonly Settings _settings;
     readonly Updates _updates;
+    readonly GlobalHotkeys _hotkeys;
 
-    public MainWindow(Settings settings, Updates updates)
+    public MainWindow(Settings settings, Updates updates, GlobalHotkeys hotkeys)
     {
         // The window is built afresh each time it opens: pick up a change to Windows' clock (12- or 24-hour) since last time.
         TimeFormat.Refresh();
         InitializeComponent();
         _settings = settings;
         _updates = updates;
+        _hotkeys = hotkeys;
         DataContext = settings;
         ShowAppMode();
 
@@ -91,7 +93,7 @@ public partial class MainWindow : Window
 
     void OnOpenSettings(object sender, RoutedEventArgs e)
     {
-        var view = new SettingsView(_updates);
+        var view = new SettingsView(_settings, _updates, _hotkeys);
         view.CloseRequested += (_, _) => CloseOverlay();
         ShowOverlay(view);
     }

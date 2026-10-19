@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Amber.Tint;
@@ -17,6 +18,8 @@ public sealed class Settings : INotifyPropertyChanged
     static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
+        // Keeps shortcuts readable ("Ctrl+Alt+A"): the default writes + as an escape code, which only matters inside HTML.
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         Converters = { new JsonStringEnumConverter() },
     };
 
@@ -73,6 +76,12 @@ public sealed class Settings : INotifyPropertyChanged
 
     /// <summary>Schedule fade length in seconds; 0 ("Off") falls back to <see cref="Fade.DefaultSeconds"/>.</summary>
     public int TransitionSeconds { get; set => Set(ref field, value); }
+
+    /// <summary>
+    /// The global keyboard shortcuts (<see cref="ShortcutSettings"/>). Files from before them have none and load the
+    /// defaults; an older Amber ignores this object, and drops it if it saves the file (the defaults come back).
+    /// </summary>
+    public ShortcutSettings Shortcuts { get; set => Set(ref field, value ?? new()); } = new();
 
     /// <summary>The update version the user chose to skip, so it isn't announced again (<see cref="Updates.Skip"/>).</summary>
     public string? SkippedVersion { get; set => Set(ref field, value); }

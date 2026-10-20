@@ -336,8 +336,10 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 ## Where things stand
 
-Released: v1.0.0 and v1.0.1 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
+Released: v1.0.0, v1.0.1, v1.2.0 and v1.3.0 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
 wave (7a), "New in this version" (7b) and the Custom tint with its colour bar and brightness floor (8a).
+v1.3.0 adds global keyboard shortcuts, editable in Settings (10a). The e-ink experiment (`step-9a-eink-experiment`)
+is not merged: the owner is still deciding.
 
 Next ideas: tune Custom's numbers on the owner's screen; SignPath signing once the repo has some history; the
 owner's new app and tray icons.

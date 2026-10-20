@@ -26,6 +26,8 @@ just to make it work but to make it pleasant and easy to use.
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
 - **Advanced mode:** several filters across the day, each with its own tint and either a steady level
   or a curve you draw. Neighboring filters cross-fade, so the screen never flashes back to blue.
+- **Keyboard shortcuts** that work from anywhere, even with Amber in the tray: Ctrl+Alt+A turns the tint on or
+  off, Ctrl+Alt+= / Ctrl+Alt+- change the level, and Ctrl+Alt+1–4 switch tints. Change or turn them off in Settings.
 - Starts with Windows if you like, and follows your 12- or 24-hour clock automatically.
 
 **Tint types**

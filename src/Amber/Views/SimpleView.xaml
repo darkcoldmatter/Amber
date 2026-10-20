@@ -19,45 +19,16 @@
         <controls:HueBar x:Name="Hue" Canvas.Left="162" Canvas.Top="187" Width="400" Style="{StaticResource HueBar}"
                          Value="{Binding CustomHue}" AutomationProperties.Name="Color" />
 
-        <!--
-            Under each chip, while shortcuts are on, the keys that pick it ("Ctrl + Alt + 1"): 12 px ink at 50 %, 2 px under
-            the chip, 16 px line. The labels reach 40 px past their chip on each side, so a wide label never moves the chips.
-        -->
         <StackPanel x:Name="Chips" Canvas.Top="230" Width="724">
-            <StackPanel.Resources>
-                <Style x:Key="ChipKeys" TargetType="TextBlock">
-                    <Setter Property="FontSize" Value="12" />
-                    <Setter Property="FontWeight" Value="Medium" />
-                    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-                    <Setter Property="Opacity" Value="0.5" />
-                    <Setter Property="TextAlignment" Value="Center" />
-                    <Setter Property="LineHeight" Value="16" />
-                    <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
-                    <Setter Property="Margin" Value="-40,2,-40,0" />
-                    <Setter Property="IsHitTestVisible" Value="False" />
-                </Style>
-            </StackPanel.Resources>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <StackPanel>
-                    <RadioButton x:Name="GoldenHourChip" Style="{StaticResource ModeChip}" Content="Golden hour" Checked="OnModeChecked"
-                                 AutomationProperties.Name="Golden hour" />
-                    <TextBlock x:Name="GoldenHourKeys" Style="{StaticResource ChipKeys}" />
-                </StackPanel>
-                <StackPanel Margin="16,0,0,0">
-                    <RadioButton x:Name="AmberChip" Style="{StaticResource ModeChip}" Content="Amber" Checked="OnModeChecked"
-                                 AutomationProperties.Name="Amber" />
-                    <TextBlock x:Name="AmberKeys" Style="{StaticResource ChipKeys}" />
-                </StackPanel>
-                <StackPanel Margin="16,0,0,0">
-                    <RadioButton x:Name="DeepNightChip" Style="{StaticResource ModeChip}" Content="Deep night" Checked="OnModeChecked"
-                                 AutomationProperties.Name="Deep night" />
-                    <TextBlock x:Name="DeepNightKeys" Style="{StaticResource ChipKeys}" />
-                </StackPanel>
-                <StackPanel Margin="16,0,0,0">
-                    <RadioButton x:Name="CustomChip" Style="{StaticResource ModeChip}" Content="Custom" Checked="OnModeChecked"
-                                 AutomationProperties.Name="Custom" />
-                    <TextBlock x:Name="CustomKeys" Style="{StaticResource ChipKeys}" />
-                </StackPanel>
+                <RadioButton x:Name="GoldenHourChip" Style="{StaticResource ModeChip}" Content="Golden hour" Checked="OnModeChecked"
+                             AutomationProperties.Name="Golden hour" />
+                <RadioButton x:Name="AmberChip" Style="{StaticResource ModeChip}" Content="Amber" Margin="16,0,0,0" Checked="OnModeChecked"
+                             AutomationProperties.Name="Amber" />
+                <RadioButton x:Name="DeepNightChip" Style="{StaticResource ModeChip}" Content="Deep night" Margin="16,0,0,0" Checked="OnModeChecked"
+                             AutomationProperties.Name="Deep night" />
+                <RadioButton x:Name="CustomChip" Style="{StaticResource ModeChip}" Content="Custom" Margin="16,0,0,0" Checked="OnModeChecked"
+                             AutomationProperties.Name="Custom" />
             </StackPanel>
         </StackPanel>
 

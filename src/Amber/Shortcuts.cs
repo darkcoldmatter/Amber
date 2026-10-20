@@ -67,9 +67,6 @@ public sealed record ShortcutSettings
         _ => null,
     };
 
-    /// <summary>The shortcut that picks a tint: shown under its chip on Simple's home screen while shortcuts are on.</summary>
-    public Shortcut? ForTint(TintMode mode) => Get(Enum.GetValues<ShortcutAction>().First(a => TintOf(a) == mode));
-
     /// <summary>The words Settings uses for an action, also in "Already used for …".</summary>
     public static string Label(ShortcutAction action) => action switch
     {

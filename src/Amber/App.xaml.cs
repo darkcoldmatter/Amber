@@ -34,6 +34,7 @@ public partial class App : Application
     float[]? _shown;
     DateTime _lastFadeStep = DateTime.UtcNow;
     TrayIcon? _tray;
+    GlobalHotkeys? _hotkeys;
     MainWindow? _window;
 
     [STAThread]
@@ -99,12 +100,14 @@ public partial class App : Application
 
         _tray = new TrayIcon();
         _tray.OpenRequested += ShowWindow;
-        _tray.ToggleRequested += () =>
-        {
-            if (_settings.IsAdvanced) _settings.AdvancedIsOn = !_settings.AdvancedIsOn;
-            else _settings.IsOn = !_settings.IsOn;
-        };
+        _tray.ToggleRequested += () => ShortcutCommands.Run(ShortcutAction.Toggle, _settings);
         _tray.QuitRequested += () => Shutdown();
+
+        // Global keyboard shortcuts, working with the window closed too.
+        _hotkeys = new GlobalHotkeys();
+        _hotkeys.Pressed += binding => ShortcutCommands.Run(binding.Action, _settings);
+        _hotkeys.Changed += ShowTrayShortcut;
+        UseShortcuts();
 
         _saveTimer.Tick += (_, _) => SaveSettings();
         _scheduleTimer.Tick += (_, _) => ApplyTint();
@@ -113,6 +116,8 @@ public partial class App : Application
             // Only one mode runs at a time: switching one on switches the other off.
             if (e.PropertyName == nameof(Settings.IsOn) && _settings.IsOn) _settings.AdvancedIsOn = false;
             if (e.PropertyName == nameof(Settings.AdvancedIsOn) && _settings.AdvancedIsOn) _settings.IsOn = false;
+
+            if (e.PropertyName == nameof(Settings.Shortcuts)) UseShortcuts();
 
             ApplyTint();
             _saveTimer.Stop(); // Save once changes settle, not on every slider step.
@@ -136,6 +141,7 @@ public partial class App : Application
         ScreenTint.Reset();
         _scheduleTimer.Stop();
         if (_saveTimer.IsEnabled) SaveSettings();
+        _hotkeys?.Dispose();
         _tray?.Dispose();
         base.OnExit(e);
     }
@@ -144,6 +150,22 @@ public partial class App : Application
     public static new App Current => (App)Application.Current;
 
     public Updates Updates => _updates;
+
+    /// <summary>Registers the shortcuts the settings ask for: all that are set while the switch is on, none while it's off.</summary>
+    void UseShortcuts()
+    {
+        var shortcuts = _settings.Shortcuts;
+        _hotkeys!.Use(shortcuts.Enabled ? shortcuts.Bindings() : []);
+        ShowTrayShortcut();
+    }
+
+    /// <summary>The tray menu shows the on/off shortcut while it works: shortcuts on, that one set, and not held by another app.</summary>
+    void ShowTrayShortcut()
+    {
+        var shortcuts = _settings.Shortcuts;
+        var works = shortcuts.Enabled && shortcuts.Toggle is not null && !_hotkeys!.Failed.Contains(ShortcutAction.Toggle);
+        _tray?.SetToggleShortcut(works ? shortcuts.Toggle!.ToString() : null);
+    }
 
     /// <summary>Looks for a new version now. The timer runs this too: a minute after start, then daily.</summary>
     public async Task CheckForUpdates(bool userAsked)
@@ -327,7 +349,7 @@ public partial class App : Application
         if (_window is null)
         {
             // Closing the window frees it; Amber keeps running in the tray.
-            _window = new MainWindow(_settings, _updates);
+            _window = new MainWindow(_settings, _updates, _hotkeys!);
             _window.Closed += (_, _) =>
             {
                 _window = null;

@@ -40,7 +40,7 @@ just to make it work but to make it pleasant and easy to use.
 - **E-ink:** a grayscale screen like an e-reader, with soft blacks and paper-white whites, plus as much amber warmth as
   you like. A switch turns it into classic black & white. In Simple mode.
 
-![Tint types: Golden hour (yellow), Amber (orange), Deep night (red), plus a custom color](docs/images/tint-types.png)
+![Tint types: Golden hour (yellow), Amber (orange), Deep night (red), E-ink (gray), plus a custom color](docs/images/tint-types.png)
 
 ## Download
 

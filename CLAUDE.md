@@ -1,7 +1,7 @@
 # Amber — project notes
 
 Amber is a lightweight Windows 10/11 app that reduces blue light by tinting the whole screen.
-C# / WPF on .NET 10, x64. It lives in the tray; the window is optional.
+C# / WPF on .NET 10; released for x64 and Windows on ARM (arm64). It lives in the tray; the window is optional.
 
 **Owner:** Dmitriy (designer, not a developer). Explain things plainly, keep changes small, and don't
 start the next step until he has checked the current one. He tests every step by hand on his own PC.
@@ -335,6 +335,12 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
   per-user install to `%LocalAppData%\Amber` (no admin), Start-menu shortcut, uninstall from Windows Settings →
   Apps (it also removes the "Start with Windows" entry; settings stay). Setup ≈ 69 MB; updates download as
   small deltas. Publisher shown: "Dmitriy Ratushniak and Claude" (no "&": vpk writes it raw into XML and the pack fails).
+- **Two builds per release:** x64 (`Amber-win-Setup.exe`, Velopack's default channel `win`) and Windows on ARM
+  (`Amber-win-arm64-Setup.exe`, channel `win-arm64`), cross-compiled on the same x64 runner. An installed copy updates
+  from the channel it was packed with (Velopack's default, no code needed), so ARM stays ARM. The x64 draft is created
+  by `vpk upload`; the ARM files are then added with `gh release upload` (only that version's files plus the channel's
+  `RELEASES-win-arm64` and `releases.win-arm64.json`). The first ARM release has no earlier ARM build, so its delta
+  download is allowed to find nothing. Nobody has run the ARM build on real ARM hardware yet (this PC is x64).
 - An installed Amber checks GitHub a minute after it starts, then every 24 h, and when Settings → Check is
   clicked. Automatic failures are silent (retried after an hour). Installing resets the tint, quits, lets the
   updater swap the app and restarts it — into the tray if the window was closed.
@@ -361,10 +367,11 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 ## Where things stand
 
-Released: v1.0.0, v1.0.1, v1.2.0, v1.3.0 and v1.4.0 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
+Released: v1.0.0, v1.0.1, v1.2.0, v1.3.0, v1.4.0 and v1.4.5 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
 wave (7a), "New in this version" (7b) and the Custom tint with its colour bar and brightness floor (8a).
 v1.3.0 adds global keyboard shortcuts, editable in Settings (10a). v1.4.0 adds E-ink (a Simple-only tint with
-fixed greys, a classic black & white switch and a Ctrl+Alt+5 shortcut; steps 9a–9c).
+fixed greys, a classic black & white switch and a Ctrl+Alt+5 shortcut; steps 9a–9c). v1.4.5 adds the Windows on ARM build (11a);
+waiting for feedback from ARM users, since nobody here has ARM hardware.
 
 Next ideas: tune Custom's and E-ink's numbers on the owner's screen; SignPath signing once the repo has some history; the
 owner's new app and tray icons.

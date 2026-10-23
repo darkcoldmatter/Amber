@@ -1,5 +1,5 @@
-## 1.4.0
+## 1.4.5
 
-- **New tint: E-ink.** A grayscale screen like an e-reader, with soft blacks and paper-white whites
-- The level slider adds amber warmth to it; a switch turns it into classic black & white
-- Ctrl+Alt+5 picks E-ink (in Simple mode)
+- **Windows on ARM:** Amber now has a native build for ARM PCs, such as Snapdragon laptops
+- ARM PCs: install it with Amber-win-arm64-Setup.exe from the release page
+- The ARM build is new and hasn't been tested on many devices yet: if something looks wrong, please use Report a bug in About

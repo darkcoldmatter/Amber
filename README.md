@@ -1,8 +1,8 @@
 # Amber — blue light filter for Windows 10 and 11
 
-![Amber — free app for flexible blue light reduction, Windows 10/11](docs/images/cover.png)
+![Amber — free app for flexible blue light reduction, Windows 10/11 (x64, ARM)](docs/images/cover.png)
 
-Amber is a free, open-source **blue light filter for Windows 10 and 11**. It tints the whole screen warmer to
+Amber is a free, open-source **blue light filter for Windows 10 and 11**, on x64 and ARM PCs. It tints the whole screen warmer to
 reduce eye strain during long days and late-night work — a more flexible alternative to Windows Night light
 and f.lux. It lives in the system tray, uses almost no memory or CPU (3–5 MB in the background), and needs no
 admin rights.
@@ -48,6 +48,9 @@ Get **`Amber-win-Setup.exe`** from the [latest release](https://github.com/darkc
 and run it. Amber installs for your user only (no admin prompt) and updates itself: it checks for a new
 version when it starts and once a day, and asks before installing. Uninstall it from Windows Settings → Apps.
 
+On a **Windows on ARM** PC (Snapdragon laptops, Surface Pro with an ARM chip), get **`Amber-win-arm64-Setup.exe`**
+instead. It runs natively, and it updates to ARM builds only.
+
 ## How it works
 
 Amber uses the Windows Magnification API (`MagSetFullscreenColorEffect`) to apply a color matrix to the
@@ -76,7 +79,8 @@ No. Amber has no analytics or telemetry. It only goes online to check this proje
 updates.
 
 **Which versions of Windows does it support?**
-Windows 10 and Windows 11, 64-bit.
+Windows 10 and Windows 11, 64-bit, on Intel and AMD PCs (x64) and on Windows on ARM (arm64), each with its own
+installer.
 
 **How do I uninstall it?**
 From Windows Settings → Apps: find Amber and choose Uninstall. Your settings stay in

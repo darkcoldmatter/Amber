@@ -7,7 +7,6 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using Amber.Tint;
 
 namespace Amber.Views;
 
@@ -86,12 +85,14 @@ public partial class SettingsView : UserControl
             VerticalAlignment = VerticalAlignment.Center };
         SetText(text, ShortcutSettings.Label(action));
         var label = new StackPanel { Orientation = Orientation.Horizontal, Margin = new(24, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        if (ShortcutSettings.TintOf(action) is { } tint)
+        if (ShortcutSettings.PicksTint(action))
         {
-            // The tints are their own group, under a divider, each with its dome as in the tint menus (19 px, 10 px to the name).
-            if (tint == TintMode.GoldenHour)
+            // The tints are their own group, under a divider, each with its dome as in the tint menus (19 px, 10 px to the
+            // name); E-ink, which has no menu, has a grey one.
+            if (action == ShortcutAction.GoldenHour)
                 ShortcutList.Children.Add(new Rectangle { Style = (Style)FindResource("Divider"), Margin = new(0, 4, 0, 4) });
-            label.Children.Add(new Path { Data = (Geometry)FindResource("IconDome"), Fill = (Brush)FindResource(tint + "Accent"),
+            var accent = ShortcutSettings.TintOf(action) is { } tint ? tint + "Accent" : "EInkAccent";
+            label.Children.Add(new Path { Data = (Geometry)FindResource("IconDome"), Fill = (Brush)FindResource(accent),
                 Margin = new(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center });
         }
         label.Children.Add(text);

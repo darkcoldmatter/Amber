@@ -149,35 +149,34 @@ public static class TintMatrix
     }
 
     /// <summary>
-    /// An e-ink look (an experiment, Debug builds only for now): every colour turns grey by its brightness (luma), and
-    /// that grey is spread from <see cref="EInkLook.Ink"/> to <see cref="EInkLook.Paper"/>, so the screen has no pure
-    /// black and no pure white. Brightness <see cref="EInkLook.Low"/> shows as ink and <see cref="EInkLook.High"/> as paper:
-    /// a range narrower than 0–1 makes the line steeper, for more contrast. The line carries on past both ends (the
-    /// screen only clips at 0 and 1), so then black comes out a little darker than the ink and white a little lighter.
+    /// E-ink's darkest and lightest grey (0–1): pure black shows as this charcoal and pure white as this soft paper grey,
+    /// so the screen has no pure black and no pure white. The owner picked them on his screen (black 70 %, white 25 % on
+    /// the experiment's test sliders); don't change them without asking.
     /// </summary>
-    public static float[] EInk(EInkLook look)
+    public const double EInkInk = 0.105, EInkPaper = 0.925;
+
+    /// <summary>
+    /// E-ink: every colour turns grey by its brightness (luma), spread from <see cref="EInkInk"/> to <see cref="EInkPaper"/>
+    /// (classic: plain greyscale, black 0 to white 1), with Amber's level-100 look on top by <paramref name="level"/>
+    /// (0 = the plain grey look, 100 = full Amber over it). Simple mode only.
+    /// </summary>
+    public static float[] EInk(double level, bool classic) =>
+        Multiply(Grey(classic ? 0 : EInkInk, classic ? 1 : EInkPaper),
+            Blend(TintMode.Amber, 100, Math.Clamp(level, 0, 100) / 100));
+
+    /// <summary>Every colour turned grey by its luma, on a straight line from <paramref name="ink"/> (black) to <paramref name="paper"/> (white).</summary>
+    static float[] Grey(double ink, double paper)
     {
-        // output[j] = ink[j] + (paper[j] - ink[j]) * (luma - low) / (high - low), a straight line in luma:
-        // the luma weights go into the colour rows and the constant into the last row, which adds a fixed amount.
-        double[] ink = [look.Ink.R, look.Ink.G, look.Ink.B];
-        double[] paper = [look.Paper.R, look.Paper.G, look.Paper.B];
+        // output = ink + (paper - ink) * luma: the luma weights go into the colour rows, and the ink into the last row,
+        // which adds a fixed amount.
         var m = Identity;
         for (var j = 0; j < 3; j++)
         {
-            var slope = (paper[j] - ink[j]) / (look.High - look.Low);
-            for (var i = 0; i < 3; i++) m[i * 5 + j] = (float)(slope * Luma[i]);
-            m[20 + j] = (float)(ink[j] - slope * look.Low);
+            for (var i = 0; i < 3; i++) m[i * 5 + j] = (float)((paper - ink) * Luma[i]);
+            m[20 + j] = (float)ink;
         }
         return m;
     }
-
-    /// <summary>
-    /// The e-ink look with Amber on top (an experiment, Debug builds only for now): <paramref name="amber"/> 0–100 is the
-    /// slider, 0 being the plain e-ink look and 100 Amber's level-100 look over it at the look's
-    /// <see cref="EInkLook.MaxAmber"/> strength, so the whole slider covers the useful range.
-    /// </summary>
-    public static float[] EInk(EInkLook look, double amber) =>
-        Multiply(EInk(look), Blend(TintMode.Amber, 100, Math.Clamp(amber, 0, 100) / 100 * look.MaxAmber / 100));
 
     /// <summary>One matrix that does <paramref name="a"/> first and then <paramref name="b"/> (the product a × b, since colours are row vectors).</summary>
     public static float[] Multiply(float[] a, float[] b)
@@ -192,18 +191,4 @@ public static class TintMatrix
             }
         return m;
     }
-}
-
-/// <summary>The darkest and lightest an e-ink look shows (0–1 per channel), and the brightness range it spreads between them.</summary>
-/// <param name="MaxAmber">how strong Amber gets at the end of the slider, 0–100 % (a crisper look, since dropped, used 40 %)</param>
-public sealed record EInkLook(string Name, (double R, double G, double B) Ink, (double R, double G, double B) Paper, double Low, double High,
-    double MaxAmber)
-{
-    /// <summary>
-    /// Variant 2: black lifted to charcoal (15 % grey) and white kept pure white (the owner's change; it was a soft 88 %
-    /// paper), everything else spread evenly in between — gentler blacks, full whites. Its slider goes up to full amber.
-    /// </summary>
-    public static readonly EInkLook Soft = new("E-ink", (0.15, 0.15, 0.15), (1, 1, 1), 0, 1, 100);
-
-    public static readonly EInkLook[] All = [Soft];
 }

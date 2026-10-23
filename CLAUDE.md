@@ -50,17 +50,17 @@ public and the first release come next.
   `CustomStrongMono`, `CustomMinBrightness`). `Build` and `Blend` take the hue as an
   optional last argument, which the other tints ignore; everything that builds a look (screen, preview, advanced
   mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
-- **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved — the owner is still
-  deciding): `TintMatrix.EInk` turns every colour grey by luma and spreads it from an ink grey to a paper grey with the
-  matrix's offset row. One look left, "E-ink" (`EInkLook.Soft`: 15 % charcoal to pure white; a crisper cream "E-ink 1"
-  was dropped). `TintMatrix.EInk(look, amber)` puts Amber's level-100 look on top (`TintMatrix.Multiply`); the level
-  slider is the amber amount while E-ink is picked. A plain **test panel** under the level slider (`SimpleView`, plain
-  WPF controls): Black 0–100 % (pure black → 15 % grey, `EInkExperiment.InkGrey`), White 0–100 % (pure white → 70 %
-  grey, `PaperGrey`), labels with the slider % and the grey, and "Classic black & white" (plain greyscale, black 0 to
-  white 1, sliders ignored) to compare. Picked with Simple's "E-ink" chip after Custom or the tray. Shown only while
-  ON, schedule and transition as for any tint; dragging the amber slider previews. **Never saved:** everything lives
-  in `EInkExperiment` (memory only) — the installed Release Amber shares the settings file and would reset on an
-  unknown tint. Only the engine (`EInk`, `EInkLook`, `Multiply`) is in Release builds, for the tests.
+- **E-ink** (Simple only; the owner's pick after the step-9a experiment): `TintMatrix.EInk(level, classic)` turns
+  every colour grey by its luma and spreads it from an ink grey to a paper grey with the matrix's offset row:
+  `TintMatrix.EInkInk` = 0.105 (pure black shows as charcoal) and `EInkPaper` = 0.925 (pure white as a soft paper
+  grey) — fixed, not adjustable, picked on his screen (black 70 % / white 25 % on the experiment's test sliders);
+  don't change them without asking. **Classic black & white** is plain greyscale instead (ink 0, paper 1). The
+  level is the warmth on top: Amber's level-100 look over the grey at strength level / 100 (`TintMatrix.Multiply`
+  with `Blend(Amber, 100, …)`), so level 0 is the plain grey look and 100 full amber paper. E-ink is **not** a
+  `TintMode`: it's the `EInk` flag in the settings (`Mode` keeps the last other tint underneath), because an older
+  Amber can't parse an unknown `Mode` and would reset every setting, filters included, while it ignores unknown
+  properties. Shown only while ON; the schedule and its transition apply as for any tint (`TintMatrix.Mix`); dragging
+  the level slider previews it. Advanced never shows it (no menu item, no filter can use it).
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted
@@ -100,7 +100,8 @@ public and the first release come next.
   Settings turns them all off). Defaults: Ctrl+Alt+A turn on / off (the current mode, exactly like the tray);
   Ctrl+Alt+= / Ctrl+Alt+- level up / down by 2 % (`ShortcutCommands.LevelStep`; holding repeats at Windows'
   key-repeat rate — the only ones without `MOD_NOREPEAT`); Ctrl+Alt+1 / 2 / 3 / 4 pick Golden hour / Amber / Deep night /
-  Custom (no Shift — the owner's change). Level and tint shortcuts act on Simple (`Level`, `Mode`) and do nothing while
+  Custom (no Shift — the owner's change) and turn E-ink off; Ctrl+Alt+5 picks E-ink (sets `EInk`, keeps `Mode`).
+  Level and tint shortcuts act on Simple (`Level`, `Mode`, `EInk`) and do nothing while
   Advanced is the current mode; they never switch the tint on (while OFF they only change the setting). Level is
   rounded, then stepped by 2 within 0–100, so an odd level stays odd (37 → 39 / 35) and only the ends clip (99 → 100).
   There is no jump-to-level shortcut (tried with Ctrl+Alt+1…0, dropped by the owner). Ctrl+Alt was chosen over Win
@@ -110,15 +111,17 @@ public and the first release come next.
   again whenever a shortcut or the switch changes, all let go on exit, while switched off, and while Settings
   listens for new keys. A combination another app holds can't be registered: it's kept, shown as "In use by
   another app", and just doesn't fire until it's free.
-- **Simple mode:** one tint at a time (Golden hour / Amber / Deep night / Custom), one level, and an optional
+- **Simple mode:** one tint at a time (Golden hour / Amber / Deep night / Custom / E-ink), one level, and an optional
   schedule of one range, switched on and off by the header's Schedule button (a first-time schedule is
-  12:00–13:00). The schedule, the level and Custom's colour (`CustomHue`) belong
-  to the screen, not to the tint: switching tint keeps them. The range snaps to 15 minutes, may run past
+  12:00–13:00). The schedule, the level, Custom's colour (`CustomHue`) and E-ink's classic switch (`EInkClassic`)
+  belong to the screen, not to the tint: switching tint keeps them. Picking E-ink sets `EInk`; picking any other
+  tint (chip or shortcut) clears it and sets `Mode`. Switching to Advanced leaves `EInk` as it is for coming back. The range snaps to 15 minutes, may run past
   midnight, is never shorter than 15 minutes, and start == end means the whole 24 h. An edge never jumps
   over the other one — you fill the day by dragging the long way round. **Transition** is one dropdown that
   mixes units — Off, 10 s, 30 s, 1, 2, 5, 10, 15, 30 min — never more than half the range; "Off" uses the
   fade constant (instant). Stored in seconds.
-- **Advanced mode:** several filters, each a time range with a tint and either a flat level or a curve.
+- **Advanced mode:** several filters, each a time range with a tint (Golden hour / Amber / Deep night / Custom —
+  never E-ink) and either a flat level or a curve.
   A Custom filter has its own colour (`Filter.Hue`); a new filter starts at red (0).
   - Adding puts a 1 h filter in the left-most free slot, shorter if that's all that fits, minimum 15 min.
     When no free stretch of 15 min is left, the add menu greys out.
@@ -146,11 +149,12 @@ public and the first release come next.
   "Filters": [ { "Mode": "GoldenHour", "Hue": 0, "Start": "08:00:00", "End": "16:00:00",
                  "Level": 50, "CurveEnabled": true,
                  "Curve": [ { "Minutes": 0, "Level": 50 }, { "Minutes": 480, "Level": 75 } ] } ],
-  "IsOn": false, "Mode": "Amber", "Level": 50, "CustomHue": 0,
+  "IsOn": false, "Mode": "Amber", "Level": 50, "CustomHue": 0, "EInk": false, "EInkClassic": false,
   "ScheduleEnabled": false, "ScheduleStart": "12:00:00", "ScheduleEnd": "13:00:00",
   "TransitionSeconds": 0,
   "Shortcuts": { "Enabled": true, "Toggle": "Ctrl+Alt+A", "LevelUp": "Ctrl+Alt+=", "LevelDown": "Ctrl+Alt+-",
-                 "GoldenHour": "Ctrl+Alt+1", "Amber": "Ctrl+Alt+2", "DeepNight": "Ctrl+Alt+3", "Custom": "Ctrl+Alt+4" }
+                 "GoldenHour": "Ctrl+Alt+1", "Amber": "Ctrl+Alt+2", "DeepNight": "Ctrl+Alt+3", "Custom": "Ctrl+Alt+4",
+                 "EInk": "Ctrl+Alt+5" }
 }
 ```
 
@@ -159,7 +163,10 @@ still load. `SkippedVersion` is the update the user dismissed with ✕ — not a
 `NotesShownVersion` is the version whose "New in this version" window was closed (null in files from before it).
 `Mode` is one of `GoldenHour`, `Amber`, `DeepNight`, `Custom` (an old file that still says `Astronomic` fails to
 parse and loads as defaults). `CustomHue` (Simple) and each filter's `Hue` are Custom's colour, 0–360; files from
-before Custom have neither and load as 0 (red). Curve points are minutes from the filter's start.
+before Custom have neither and load as 0 (red). `EInk` is true while E-ink is Simple's tint (then `Mode` is the
+tint underneath) and `EInkClassic` is its classic switch; files from before E-ink have neither and load as false.
+Amber ≤ 1.3.0 ignores both, so it shows `Mode`; if it saves the file it drops them, and E-ink is unpicked again.
+Curve points are minutes from the filter's start.
 `Filters` is a read-only collection, so it needs `[JsonObjectCreationHandling(Populate)]` — without it,
 filters silently fail to load.
 `Shortcuts` holds readable text (modifiers in the order Ctrl, Alt, Shift, Win; the file is written with relaxed
@@ -167,14 +174,15 @@ escaping so `+` isn't saved as `\u002B`); `null` is no shortcut. A file from bef
 gets the defaults; an unreadable entry loads as none and never breaks the rest of the file. A `LevelJump` entry
 (from the first shortcuts build) is ignored, and that build's Ctrl+Alt+Shift tint shortcuts stay as saved until
 "Reset to defaults". An older
-Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them and the defaults come back.
+Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them and the defaults come back. The `EInk`
+shortcut is newer (1.4.0): a file without it gets Ctrl+Alt+5, and Amber 1.3.0 drops it if it saves the file.
 
 ## Code map
 
 | File | What it does |
 |---|---|
 | `Tint/ScreenTint.cs` | Magnification API calls; apply and reset |
-| `Tint/TintMatrix.cs` | Builds, blends and mixes the colour matrices |
+| `Tint/TintMatrix.cs` | Builds, blends and mixes the colour matrices; E-ink's grey look (`EInk`, `Multiply`) |
 | `App.xaml.cs` | Decides what the screen should show, the timer, tray wiring, single instance, preview |
 | `TintPlan.cs`, `Fade.cs` | Eases the tint in/out; snaps back after a preview |
 | `Schedule.cs` | Simple mode: strength at a moment, with the transition fades |
@@ -191,7 +199,7 @@ Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them an
 | `DotWave.cs`, `Controls/DotWaveLayer.cs` | The halftone dot wave across the window when the tint turns on or off: the maths (constants at the top) and the drawing (runs only while the wave plays) |
 | `TrayIcon.cs` | `Shell_NotifyIcon` interop, native right-click menu (no WinForms) |
 | `Shortcut.cs` | One keyboard shortcut: parse / format its text, which keys are allowed, JSON converters |
-| `Shortcuts.cs` | The shortcut settings (defaults, the 7 combinations, duplicates), what a press does (`ShortcutCommands`), reading a key press in Settings (`ShortcutCapture`) |
+| `Shortcuts.cs` | The shortcut settings (defaults, the 8 combinations, duplicates), what a press does (`ShortcutCommands`), reading a key press in Settings (`ShortcutCapture`) |
 | `GlobalHotkeys.cs` | `RegisterHotKey` on a hidden message-only window; which combinations failed; suspending while Settings listens |
 | `StartupRegistration.cs` | "Start with Windows" via the HKCU Run key, launching with `--tray` |
 | `Controls/*` | Level slider and Custom's colour bar (`HueBar`, a level slider with a rainbow and a colour handle); simple (`ScheduleBar`) and advanced (`AdvancedTimeline`) timelines on the shared drawing (`Timeline`); `CurveEditor`; `TimeField`, `DropdownList`, `TrackedText` (letter-spacing), `Glow`, `HintBubble` |
@@ -203,7 +211,7 @@ Amber (≤ 1.2.0) ignores `Shortcuts`, but if it saves the file it drops them an
 | `dotnet-tools.json` | Pins the `vpk` packaging tool (Velopack) used locally and in CI |
 | `.github/workflows/release.yml` | Builds, packs and uploads a draft GitHub release when a `v*.*.*` tag is pushed |
 
-**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 325 of them; 321 in Release builds; on `main`, without the e-ink experiment, 312 / 309): matrices, schedule,
+**Everything with real logic is covered by tests** (`tests/Amber.Tests`, 335 of them; 332 in Release builds): matrices, schedule,
 ranges, layout, curve maths, fades, settings round-trip. Keep it that way — the owner can't review code,
 so tests are the safety net. UI drawing code isn't tested; it's checked by screenshot.
 
@@ -218,12 +226,13 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - **Settings → Keyboard shortcuts** (no Figma frame — designed to match the Settings card; the owner will fix details):
   a second card 16 px under the first. A 68 px "Keyboard shortcuts" row with the same switch as "Start with Windows"
   and a divider, then a 44 px row per shortcut (Turn on / off, Level up, Level down, Golden hour, Amber,
-  Deep night, Custom): 14 px label on the left, the keys in a 36 px tan pill on the right
+  Deep night, Custom, E-ink): 14 px label on the left, the keys in a 36 px tan pill on the right
   (`ShortcutPill`, "Ctrl + Alt + A", "Not set" in grey for none; Onest for digits). A full-width divider (4 px
-  above and below) sets the four tint rows apart, and each tint name has its dome in front, as in the tint menus
-  (`IconDome` in the menu colour, Custom's rainbow; 10 px to the name). "Reset to defaults" (About's underlined
+  above and below) sets the five tint rows apart, and each tint name has its dome in front, as in the tint menus
+  (`IconDome` in the menu colour, Custom's rainbow, E-ink — in no menu — a plain grey `EInkAccent` `#A3A3A3`;
+  10 px to the name). "Reset to defaults" (About's underlined
   caption link) sits outside the card, centred, 16 px under it. With the switch off the list and the link dim to
-  40 % and can't be used. The window grows to 745 px tall (706 inside) for it in both widths (no scrolling).
+  40 % and can't be used. The window grows to 789 px tall (750 inside) for it in both widths (no scrolling).
   Click a pill → "Press keys…" with an ink ring; the next key-down with modifiers is the new shortcut (lone
   modifiers are ignored), Esc cancels, Backspace / Delete clears it; clicking it again or anywhere that takes focus
   cancels too. While it listens every global shortcut is let go, so the press reaches the window. A refused press keeps the pill listening and says why in a small orange
@@ -238,7 +247,12 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Header: settings and about buttons, the "Advanced" switch, the Schedule button (Simple only), and ON/OFF
   for the mode you're in.
 - Simple mode: big level % above the level slider, tint chips at the bottom (Golden hour, Amber, Deep night,
-  Custom); with the schedule on, the timeline, the from/to time fields and Transition below.
+  Custom, E-ink — five, centred, x 132–591 of 724); with the schedule on, the timeline, the from/to time fields and
+  Transition below.
+- **E-ink's "Classic black & white" switch** (no Figma frame — built like the header's "Advanced" switch): only while
+  E-ink is the tint, a centred row 12 px under the level slider: the label (14 px Plus Jakarta SemiBold, ink), 12 px,
+  then the same 40×20 `Switch` (`ClassicRow` in `SimpleView`, x 265–459, 20 px tall). The window grows by 32 px while
+  it shows (Simple: 352 → 384 tall, 512 → 544 with the schedule). Custom's colour bar hides while E-ink is picked.
 - **Custom's colour bar** (no Figma frame — built from the owner's description): only while Custom is the tint, 12 px
   under the level slider and as wide (400 Simple / 270 Advanced), 22 px tall and fully rounded: the level slider's
   tan track with the rainbow 2 px inside it (18 px, hue 0 → 360 between the handle's centres at either end). The
@@ -280,13 +294,13 @@ page `5:2086`). Before any UI work, re-read the Figma frames — don't trust pix
 - Text is grey-smoothed with `TextHintingMode="Animated"`, made the default for every element at startup
   (`TextLook`): plain grayscale snaps letters to pixels and looks jagged at 100 % scaling.
 
-**Words (use them everywhere, UI and docs):** *tint* = Golden hour / Amber / Deep night / Custom, and the effect on the
-screen; *level* = its strength, 0–100 %; *filter* = one scheduled block in Advanced; *schedule* and
+**Words (use them everywhere, UI and docs):** *tint* = Golden hour / Amber / Deep night / Custom / E-ink (Advanced
+filters use the first four), and the effect on the screen; *level* = its strength, 0–100 %; *filter* = one scheduled block in Advanced; *schedule* and
 *transition* = Simple's time range and its fade; *mode* only for Simple and Advanced. Never "display mode",
 "display filter" or "dynamic tint". (In code the tints are still `TintMode`.)
 
 Copy rules: **American English** everywhere — UI, README, release notes (color, license, optimized; owner's choice, it
-matches how people search). Improve the English of any UI text, **except** the tint names (Golden hour, Amber, Deep night, Custom),
+matches how people search). Improve the English of any UI text, **except** the tint names (Golden hour, Amber, Deep night, Custom, E-ink),
 which stay exactly as they are. The About screen names no creator (owner's choice: GitHub tells that story).
 **Amber is openly "vibe coded"** (owner's wish): wherever the creator is named — README, notices, installer
 publisher — credit Dmitriy and Claude together. The legal copyright line and SignPath's team
@@ -349,8 +363,9 @@ dotnet test --artifacts-path <temp folder>     # build + tests, without touching
 
 Released: v1.0.0, v1.0.1, v1.2.0 and v1.3.0 (public repo `darkcoldmatter/Amber`, installs update themselves). v1.2.0 adds the dot
 wave (7a), "New in this version" (7b) and the Custom tint with its colour bar and brightness floor (8a).
-v1.3.0 adds global keyboard shortcuts, editable in Settings (10a). The e-ink experiment (`step-9a-eink-experiment`)
-is not merged: the owner is still deciding.
+v1.3.0 adds global keyboard shortcuts, editable in Settings (10a). E-ink (a Simple-only tint with fixed greys, a
+classic black & white switch and a Ctrl+Alt+5 shortcut; step 9c, built on `step-9a-eink-experiment`) is meant
+for 1.4.0.
 
 Next ideas: tune Custom's numbers on the owner's screen; SignPath signing once the repo has some history; the
 owner's new app and tray icons.

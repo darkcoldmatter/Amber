@@ -102,18 +102,6 @@ public partial class App : Application
         _tray.OpenRequested += ShowWindow;
         _tray.ToggleRequested += () => ShortcutCommands.Run(ShortcutAction.Toggle, _settings);
         _tray.QuitRequested += () => Shutdown();
-#if DEBUG
-        // The e-ink experiment (EInkExperiment): the tray and Simple's chips pick the same look; the ticked one again leaves it.
-        _tray.EInkRequested += look =>
-        {
-            if (!_settings.IsAdvanced) EInkExperiment.Look = look == EInkExperiment.Look ? null : look;
-        };
-        EInkExperiment.Changed += () =>
-        {
-            _tray.EInk = EInkExperiment.Look;
-            ApplyTint();
-        };
-#endif
 
         // Global keyboard shortcuts, working with the window closed too.
         _hotkeys = new GlobalHotkeys();
@@ -128,10 +116,6 @@ public partial class App : Application
             // Only one mode runs at a time: switching one on switches the other off.
             if (e.PropertyName == nameof(Settings.IsOn) && _settings.IsOn) _settings.AdvancedIsOn = false;
             if (e.PropertyName == nameof(Settings.AdvancedIsOn) && _settings.AdvancedIsOn) _settings.IsOn = false;
-#if DEBUG
-            // The e-ink experiment exists only in Simple: switching to Advanced leaves it.
-            if (e.PropertyName == nameof(Settings.IsAdvanced) && _settings.IsAdvanced) EInkExperiment.Look = null;
-#endif
 
             if (e.PropertyName == nameof(Settings.Shortcuts)) UseShortcuts();
 
@@ -260,9 +244,6 @@ public partial class App : Application
         }
 
         _tray?.SetOn(IsOn);
-#if DEBUG
-        if (_tray is not null) _tray.EInkAvailable = !_settings.IsAdvanced;
-#endif
         RunScheduleTimer();
     }
 
@@ -273,38 +254,28 @@ public partial class App : Application
     float[]? TintNow()
     {
         if (_previewing)
-        {
-#if DEBUG
-            // Dragging Simple's slider while an e-ink look is picked: the look with that much amber.
-            if (_previewMode is null && EInkExperiment.Look is { } preview) return EInkExperiment.Matrix(preview);
-#endif
             return _previewMode is { } mode
                 ? TintMatrix.Build(mode, _previewLevel, _previewHue)
-                : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
-        }
+                : SimpleLook();
 
         if (!IsOn) return null;
 
         if (_settings.IsAdvanced) return AdvancedSchedule.Matrix(_settings.Filters, TimeOnly.FromDateTime(DateTime.Now));
 
-#if DEBUG
-        // An e-ink look replaces Simple's tint, with the schedule and its transition applied just the same.
-        if (EInkExperiment.Look is { } look)
-        {
-            var eink = EInkExperiment.Matrix(look);
-            if (!_settings.ScheduleEnabled) return eink;
-            var einkStrength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
-                _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
-            return einkStrength > 0 ? TintMatrix.Mix([(eink, einkStrength)]) : null;
-        }
-#endif
-
-        if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
+        if (!_settings.ScheduleEnabled) return SimpleLook();
 
         var strength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
             _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
-        return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength, _settings.CustomHue) : null;
+        if (strength <= 0) return null;
+        return _settings.EInk
+            ? TintMatrix.Mix([(SimpleLook(), strength)])
+            : TintMatrix.Blend(_settings.Mode, _settings.Level, strength, _settings.CustomHue);
     }
+
+    /// <summary>Simple's full look: E-ink (with the level as its warmth) while it is picked, else the tint at its level.</summary>
+    float[] SimpleLook() => _settings.EInk
+        ? TintMatrix.EInk(_settings.Level, _settings.EInkClassic)
+        : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
 
     float[]? Faded(float[]? target)
     {

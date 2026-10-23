@@ -8,7 +8,7 @@ namespace Amber;
 /// <summary>Notification-area icon. Double-click opens the window; right-click shows a native menu.</summary>
 sealed class TrayIcon : IDisposable
 {
-    enum Command { Toggle = 1, Open, Quit, EInkFirst = 100 }
+    enum Command { Toggle = 1, Open, Quit }
 
     const int CallbackMessage = 0x8001; // WM_APP + 1
     static readonly int TaskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
@@ -23,14 +23,6 @@ sealed class TrayIcon : IDisposable
     public event Action? OpenRequested;
     public event Action? ToggleRequested;
     public event Action? QuitRequested;
-#if DEBUG
-    /// <summary>The e-ink experiment showing now, ticked in the menu (Debug builds only).</summary>
-    public Amber.Tint.EInkLook? EInk { get; set; }
-    /// <summary>An e-ink look was picked from the menu: show it, or stop showing it if it is the one showing.</summary>
-    public event Action<Amber.Tint.EInkLook>? EInkRequested;
-    /// <summary>The looks can be picked only in Simple; in Advanced they are greyed out.</summary>
-    public bool EInkAvailable { get; set; } = true;
-#endif
 
     public TrayIcon()
     {
@@ -103,16 +95,6 @@ sealed class TrayIcon : IDisposable
         var toggle = _isOn ? "Turn off" : "Turn on";
         AppendMenu(menu, MF_STRING, (nint)Command.Toggle, _toggleShortcut is null ? toggle : $"{toggle}\t{_toggleShortcut}");
         AppendMenu(menu, MF_STRING, (nint)Command.Open, "Open Amber");
-#if DEBUG
-        // Test builds only: the e-ink experiments, to compare by eye in any app.
-        AppendMenu(menu, MF_SEPARATOR, 0, null);
-        for (var k = 0; k < Amber.Tint.EInkLook.All.Length; k++)
-        {
-            var look = Amber.Tint.EInkLook.All[k];
-            AppendMenu(menu, MF_STRING | (look == EInk ? MF_CHECKED : 0) | (EInkAvailable ? 0 : MF_GRAYED),
-                (nint)Command.EInkFirst + k, look.Name + " (test)");
-        }
-#endif
         AppendMenu(menu, MF_SEPARATOR, 0, null);
         AppendMenu(menu, MF_STRING, (nint)Command.Quit, "Quit");
         SetMenuDefaultItem(menu, (uint)Command.Open, 0); // Bold, since double-click does the same.
@@ -127,11 +109,6 @@ sealed class TrayIcon : IDisposable
             case Command.Toggle: ToggleRequested?.Invoke(); break;
             case Command.Open: OpenRequested?.Invoke(); break;
             case Command.Quit: QuitRequested?.Invoke(); break;
-#if DEBUG
-            case >= Command.EInkFirst when command - Command.EInkFirst < Amber.Tint.EInkLook.All.Length:
-                EInkRequested?.Invoke(Amber.Tint.EInkLook.All[command - Command.EInkFirst]);
-                break;
-#endif
         }
     }
 
@@ -148,7 +125,7 @@ sealed class TrayIcon : IDisposable
     const int NIM_ADD = 0, NIM_MODIFY = 1, NIM_DELETE = 2, NIM_SETVERSION = 4, NOTIFYICON_VERSION_4 = 4;
     const int NIF_MESSAGE = 0x1, NIF_ICON = 0x2, NIF_TIP = 0x4, NIF_SHOWTIP = 0x80;
     const int WM_CONTEXTMENU = 0x007B, WM_LBUTTONDBLCLK = 0x0203;
-    const uint MF_STRING = 0x0, MF_GRAYED = 0x1, MF_CHECKED = 0x8, MF_SEPARATOR = 0x800;
+    const uint MF_STRING = 0x0, MF_SEPARATOR = 0x800;
     const uint TPM_RIGHTBUTTON = 0x2, TPM_NONOTIFY = 0x80, TPM_RETURNCMD = 0x100;
     const uint IMAGE_ICON = 1, LR_LOADFROMFILE = 0x10;
     const int SM_CXSMICON = 49;

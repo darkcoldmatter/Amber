@@ -48,6 +48,9 @@ Get **`Amber-win-Setup.exe`** from the [latest release](https://github.com/darkc
 and run it. Amber installs for your user only (no admin prompt) and updates itself: it checks for a new
 version when it starts and once a day, and asks before installing. Uninstall it from Windows Settings → Apps.
 
+On a **Windows on ARM** PC (Snapdragon laptops, Surface Pro with an ARM chip), get **`Amber-win-arm64-Setup.exe`**
+instead. It runs natively, and it updates to ARM builds only.
+
 ## How it works
 
 Amber uses the Windows Magnification API (`MagSetFullscreenColorEffect`) to apply a color matrix to the
@@ -76,7 +79,8 @@ No. Amber has no analytics or telemetry. It only goes online to check this proje
 updates.
 
 **Which versions of Windows does it support?**
-Windows 10 and Windows 11, 64-bit.
+Windows 10 and Windows 11, 64-bit, on Intel and AMD PCs (x64) and on Windows on ARM (arm64), each with its own
+installer.
 
 **How do I uninstall it?**
 From Windows Settings → Apps: find Amber and choose Uninstall. Your settings stay in

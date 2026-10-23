@@ -1,5 +1,5 @@
-# Builds a release when a version tag is pushed (v1.0.0, matching <Version> in src/Amber/Amber.csproj and the
-# "## 1.0.0" line of src/Amber/ReleaseNotes.md) and uploads it to GitHub Releases as a DRAFT, its notes taken from the
+# Builds a release, for x64 and for Windows on ARM, when a version tag is pushed (v1.0.0, matching <Version> in
+# src/Amber/Amber.csproj and the "## 1.0.0" line of src/Amber/ReleaseNotes.md) and uploads it to GitHub Releases as a DRAFT, its notes taken from the
 # bullets of ReleaseNotes.md. Installed copies only see a release once the owner has reviewed the draft (its notes)
 # and pressed Publish. To re-run by hand: Actions > Release > Run workflow, and pick the version tag under
 # "Use workflow from".
@@ -89,3 +89,39 @@ jobs:
         run: >-
           dotnet vpk upload github --repoUrl $env:REPO_URL -o releases
           --tag $env:TAG --releaseName "Amber $env:VERSION"
+
+      # ---- Windows on ARM: the same app built for arm64, packed as its own Velopack channel (win-arm64), so it gets its
+      # own setup (Amber-win-arm64-Setup.exe) and an installed ARM copy only ever updates to ARM builds. Built on this
+      # x64 runner (cross-compiled; the tests above cover the same code). Its files go into the same draft release.
+
+      - name: Publish (self-contained, win-arm64)
+        run: dotnet publish src/Amber/Amber.csproj -c Release -r win-arm64 --self-contained -o publish-arm64
+
+      # The first ARM release has no earlier ARM build to download, so this may find nothing: that only means no delta.
+      - name: Download the previous ARM release (for its delta update)
+        continue-on-error: true
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: dotnet vpk download github --repoUrl $env:REPO_URL --channel win-arm64 -o releases-arm64
+
+      - name: Pack (ARM)
+        run: >-
+          dotnet vpk pack --packId Amber --packVersion $env:VERSION --packTitle Amber
+          --packAuthors "Dmitriy Ratushniak and Claude" --shortcuts StartMenuRoot
+          --packDir publish-arm64 --mainExe Amber.exe --icon src/Amber/Assets/amber.ico
+          --runtime win-arm64 --channel win-arm64 --noPortable -o releases-arm64
+          --releaseNotes $env:RUNNER_TEMP/release-notes.md
+
+      # ---- SIGNING, part 3 (later, SignPath): sign releases-arm64/Amber-win-arm64-Setup.exe, as in part 2.
+
+      # Added to the draft the step above created. gh finds a draft by its tag; only this version's files go up (the
+      # folder also holds the previous ARM build downloaded for the delta), plus the channel's two feed files.
+      - name: Add the ARM build to the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $files = Get-ChildItem releases-arm64 | Where-Object {
+            $_.Name -like "*-$env:VERSION-*" -or $_.Name -in 'Amber-win-arm64-Setup.exe', 'RELEASES-win-arm64', 'releases.win-arm64.json'
+          }
+          $files | ForEach-Object { $_.Name }
+          gh release upload $env:TAG ($files.FullName) --repo ${{ github.repository }}

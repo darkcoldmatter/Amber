@@ -50,19 +50,17 @@ public and the first release come next.
   `CustomStrongMono`, `CustomMinBrightness`). `Build` and `Blend` take the hue as an
   optional last argument, which the other tints ignore; everything that builds a look (screen, preview, advanced
   mixing in `AdvancedSchedule.Matrix`, curve preview) passes it.
-- **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved): `TintMatrix.EInk` turns
-  every colour grey by luma and spreads it from an ink colour to a paper colour with the matrix's offset row, so
-  there's no pure black. Two looks in `EInkLook`: *Crisp* (Claude's take: cream paper, near-black ink, a bit more
-  contrast) and *Soft* (15 % charcoal to pure white — the owner's change from an 88 % paper). `TintMatrix.EInk(look,
-  amber)` puts Amber's level-100 look on top (`TintMatrix.Multiply`: one matrix, then the other); the slider's 0–100
-  covers 0 to the look's `MaxAmber` (Crisp 40 %, the owner's ideal range; Soft 100 %); 0 is the plain look.
-  Picked with Simple's "E-ink 1" / "E-ink 2" chips after Custom, or the tray menu (the two stay in sync; the ticked one
-  again in the tray leaves it; greyed out in Advanced, and switching to Advanced leaves it). While one is picked it
-  replaces Simple's tint and the level slider and big % are the amber amount: shown only while ON, with the schedule
-  and transition as for any tint, and dragging previews it live. **Never saved:** the look and amber amount live only
-  in `EInkExperiment` (in memory, starts at none / 0); the slider is unbound from `Settings.Level` while one is
-  picked, so `Mode` and `Level` stay untouched — the installed Release Amber shares the settings file and would reset
-  on an unknown tint. Only the engine (`EInk`, `EInkLook`, `Multiply`) is in Release builds, for the tests.
+- **E-ink experiment** (branch `step-9a-eink-experiment`, Debug builds only, never saved — the owner is still
+  deciding): `TintMatrix.EInk` turns every colour grey by luma and spreads it from an ink grey to a paper grey with the
+  matrix's offset row. One look left, "E-ink" (`EInkLook.Soft`: 15 % charcoal to pure white; a crisper cream "E-ink 1"
+  was dropped). `TintMatrix.EInk(look, amber)` puts Amber's level-100 look on top (`TintMatrix.Multiply`); the level
+  slider is the amber amount while E-ink is picked. A plain **test panel** under the level slider (`SimpleView`, plain
+  WPF controls): Black 0–100 % (pure black → 15 % grey, `EInkExperiment.InkGrey`), White 0–100 % (pure white → 70 %
+  grey, `PaperGrey`), labels with the slider % and the grey, and "Classic black & white" (plain greyscale, black 0 to
+  white 1, sliders ignored) to compare. Picked with Simple's "E-ink" chip after Custom or the tray. Shown only while
+  ON, schedule and transition as for any tint; dragging the amber slider previews. **Never saved:** everything lives
+  in `EInkExperiment` (memory only) — the installed Release Amber shares the settings file and would reset on an
+  unknown tint. Only the engine (`EInk`, `EInkLook`, `Multiply`) is in Release builds, for the tests.
 - **Level is 0–100 everywhere.** **Level 0 is not "no tint"** — it's the weakest look. Anything that fades
   must blend the whole matrix toward identity (`TintMatrix.Blend`), never ramp the level number.
 - **Mixing:** `TintMatrix.Mix` blends several looks by weight and fills leftover weight with an untinted

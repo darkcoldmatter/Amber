@@ -195,22 +195,15 @@ public static class TintMatrix
 }
 
 /// <summary>The darkest and lightest an e-ink look shows (0–1 per channel), and the brightness range it spreads between them.</summary>
-/// <param name="MaxAmber">how strong Amber gets at the end of the slider, 0–100 % (the owner found 40 % plenty for Crisp)</param>
+/// <param name="MaxAmber">how strong Amber gets at the end of the slider, 0–100 % (a crisper look, since dropped, used 40 %)</param>
 public sealed record EInkLook(string Name, (double R, double G, double B) Ink, (double R, double G, double B) Paper, double Low, double High,
     double MaxAmber)
 {
     /// <summary>
-    /// Variant 1, Claude's take on e-ink: warm cream paper and near-black warm ink, like a Kindle page, with a little
-    /// extra contrast so text reads crisply: 5 % grey already shows as ink and 95 % as paper, so black comes out about
-    /// 7 % grey (still not pure black) and white a touch lighter than the paper. Its slider goes up to 40 % amber.
-    /// </summary>
-    public static readonly EInkLook Crisp = new("E-ink 1: crisp paper", (0.12, 0.11, 0.10), (0.96, 0.93, 0.85), 0.05, 0.95, 40);
-
-    /// <summary>
     /// Variant 2: black lifted to charcoal (15 % grey) and white kept pure white (the owner's change; it was a soft 88 %
     /// paper), everything else spread evenly in between — gentler blacks, full whites. Its slider goes up to full amber.
     /// </summary>
-    public static readonly EInkLook Soft = new("E-ink 2: soft", (0.15, 0.15, 0.15), (1, 1, 1), 0, 1, 100);
+    public static readonly EInkLook Soft = new("E-ink", (0.15, 0.15, 0.15), (1, 1, 1), 0, 1, 100);
 
-    public static readonly EInkLook[] All = [Crisp, Soft];
+    public static readonly EInkLook[] All = [Soft];
 }

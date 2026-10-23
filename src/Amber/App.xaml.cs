@@ -276,7 +276,7 @@ public partial class App : Application
         {
 #if DEBUG
             // Dragging Simple's slider while an e-ink look is picked: the look with that much amber.
-            if (_previewMode is null && EInkExperiment.Look is { } preview) return TintMatrix.EInk(preview, EInkExperiment.Amber);
+            if (_previewMode is null && EInkExperiment.Look is { } preview) return EInkExperiment.Matrix(preview);
 #endif
             return _previewMode is { } mode
                 ? TintMatrix.Build(mode, _previewLevel, _previewHue)
@@ -291,7 +291,7 @@ public partial class App : Application
         // An e-ink look replaces Simple's tint, with the schedule and its transition applied just the same.
         if (EInkExperiment.Look is { } look)
         {
-            var eink = TintMatrix.EInk(look, EInkExperiment.Amber);
+            var eink = EInkExperiment.Matrix(look);
             if (!_settings.ScheduleEnabled) return eink;
             var einkStrength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
                 _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);

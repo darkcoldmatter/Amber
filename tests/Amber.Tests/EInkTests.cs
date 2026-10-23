@@ -28,18 +28,6 @@ public class EInkTests
     }
 
     [Fact]
-    public void The_crisp_look_has_more_contrast_but_still_no_pure_black()
-    {
-        var m = TintMatrix.EInk(EInkLook.Crisp);
-        Near(EInkLook.Crisp.Ink, Show(m, 0.05, 0.05, 0.05));     // 5 % grey is the ink
-        Near(EInkLook.Crisp.Paper, Show(m, 0.95, 0.95, 0.95));   // 95 % grey is the paper
-        var black = Show(m, 0, 0, 0);
-        Assert.InRange(black.R, 0.06, 0.08);                    // a touch darker than the ink, still not black
-        var white = Show(m, 1, 1, 1);
-        Assert.True(white.R >= EInkLook.Crisp.Paper.R && white.B < 0.9, "white is paper or a touch lighter, still cream");
-    }
-
-    [Fact]
     public void Colours_of_the_same_brightness_become_the_same_grey()
     {
         foreach (var look in EInkLook.All)
@@ -77,7 +65,7 @@ public class EInkTests
     [Fact]
     public void Multiplying_by_identity_changes_nothing()
     {
-        var m = TintMatrix.EInk(EInkLook.Crisp);
+        var m = TintMatrix.EInk(EInkLook.Soft);
         Assert.Equal(m, TintMatrix.Multiply(m, TintMatrix.Identity));
         Assert.Equal(m, TintMatrix.Multiply(TintMatrix.Identity, m));
     }
@@ -133,15 +121,6 @@ public class EInkTests
             var shown = Show(TintMatrix.EInk(look, 100), paperGrey, paperGrey, paperGrey);
             Near((look.Paper.R * 1.00, look.Paper.G * 0.45, look.Paper.B * 0.02), shown, 0.03);
         }
-    }
-
-    [Fact]
-    public void Crisp_spreads_0_to_40_percent_amber_over_the_whole_slider()
-    {
-        Assert.Equal(40, EInkLook.Crisp.MaxAmber);
-        var plain = TintMatrix.EInk(EInkLook.Crisp);
-        Assert.Equal(TintMatrix.Multiply(plain, TintMatrix.Blend(TintMode.Amber, 100, 0.4)), TintMatrix.EInk(EInkLook.Crisp, 100));
-        Assert.Equal(TintMatrix.Multiply(plain, TintMatrix.Blend(TintMode.Amber, 100, 0.2)), TintMatrix.EInk(EInkLook.Crisp, 50));
     }
 
     [Fact]

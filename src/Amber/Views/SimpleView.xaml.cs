@@ -27,6 +27,13 @@ public partial class SimpleView : UserControl
     readonly Dictionary<EInkLook, RadioButton> _einkChips = [];
     bool _switchingSlider;
     static bool EInkPicked => EInkExperiment.Look is not null;
+    // The e-ink test panel under the level slider: black and white sliders and a plain black & white checkbox.
+    // Deliberately plain WPF controls, for the owner's internal testing only.
+    readonly StackPanel _lab = new() { Width = 400, Visibility = Visibility.Collapsed };
+    readonly TextBlock _blackLabel = LabLabel(), _whiteLabel = LabLabel();
+    readonly Slider _black = LabSlider(EInkExperiment.Black), _white = LabSlider(EInkExperiment.White);
+    readonly CheckBox _classic = new() { Content = "Classic black & white", Margin = new Thickness(0, 8, 0, 0), FontSize = 13 };
+    const double LabRoom = 80;
 #else
     static bool EInkPicked => false;
 #endif
@@ -73,8 +80,8 @@ public partial class SimpleView : UserControl
         for (var k = 0; k < EInkLook.All.Length; k++)
         {
             var look = EInkLook.All[k];
-            var chip = new RadioButton { Style = style, Content = $"E-ink {k + 1}", Margin = new Thickness(16, 0, 0, 0) };
-            AutomationProperties.SetName(chip, $"E-ink {k + 1}");
+            var chip = new RadioButton { Style = style, Content = "E-ink", Margin = new Thickness(16, 0, 0, 0) };
+            AutomationProperties.SetName(chip, "E-ink");
             chip.Checked += (_, _) => EInkExperiment.Look = look;
             ChipRow.Children.Add(chip);
             _einkChips[look] = chip;
@@ -86,6 +93,42 @@ public partial class SimpleView : UserControl
             EInkExperiment.Amber = e.NewValue;
             ShowLevel();
         };
+
+        _lab.Children.Add(LabRow(_blackLabel, _black));
+        _lab.Children.Add(LabRow(_whiteLabel, _white));
+        _lab.Children.Add(_classic);
+        _black.ValueChanged += (_, e) => EInkExperiment.Black = e.NewValue;
+        _white.ValueChanged += (_, e) => EInkExperiment.White = e.NewValue;
+        _classic.IsChecked = EInkExperiment.Classic;
+        _classic.Checked += (_, _) => EInkExperiment.Classic = true;
+        _classic.Unchecked += (_, _) => EInkExperiment.Classic = false;
+        Canvas.SetLeft(_lab, 162);
+        Canvas.SetTop(_lab, 187);
+        Root.Children.Add(_lab);
+        ShowLab();
+    }
+
+    static TextBlock LabLabel() => new() { Width = 190, FontSize = 13, VerticalAlignment = VerticalAlignment.Center };
+
+    static Slider LabSlider(double value) => new()
+    {
+        Minimum = 0, Maximum = 100, Value = value, Width = 210, IsSnapToTickEnabled = true, TickFrequency = 1,
+        SmallChange = 1, LargeChange = 10, VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    static StackPanel LabRow(TextBlock label, Slider slider) =>
+        new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2), Children = { label, slider } };
+
+    /// <summary>The test panel's labels: the slider's % and the grey it gives, so the owner can quote exact values.</summary>
+    void ShowLab()
+    {
+        static string Grey(double grey) => (grey * 100).ToString("0", CultureInfo.InvariantCulture) + " % grey";
+        static string Percent(double value) => value.ToString("0", CultureInfo.InvariantCulture) + " %";
+        _blackLabel.Text = $"Black {Percent(EInkExperiment.Black)}  ({Grey(EInkExperiment.InkGrey(EInkExperiment.Black))})";
+        _whiteLabel.Text = $"White {Percent(EInkExperiment.White)}  ({Grey(EInkExperiment.PaperGrey(EInkExperiment.White))})";
+        // Plain black and white ignores the two sliders.
+        _black.IsEnabled = _white.IsEnabled = !EInkExperiment.Classic;
+        _blackLabel.Opacity = _whiteLabel.Opacity = EInkExperiment.Classic ? 0.4 : 1;
     }
 
     /// <summary>
@@ -109,6 +152,7 @@ public partial class SimpleView : UserControl
                 Level.SetBinding(RangeBase.ValueProperty, new Binding(nameof(Settings.Level)));
         }
         _switchingSlider = false;
+        ShowLab();
         ShowLevel();
         ShowLayout();
     }
@@ -164,6 +208,10 @@ public partial class SimpleView : UserControl
         var custom = _settings.Mode == TintMode.Custom && !EInkPicked;
         var room = custom ? HueRoom : 0;
         Hue.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
+#if DEBUG
+        _lab.Visibility = EInkPicked ? Visibility.Visible : Visibility.Collapsed;
+        if (EInkPicked) room = LabRoom;
+#endif
         Canvas.SetTop(Chips, ChipsTop + room);
         Canvas.SetTop(SchedulePanel, ScheduleTop + room);
         SchedulePanel.Visibility = _settings.ScheduleEnabled ? Visibility.Visible : Visibility.Collapsed;

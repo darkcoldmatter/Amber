@@ -1,8 +1,8 @@
 # Amber — blue light filter for Windows 10 and 11
 
-![Amber — free app for flexible blue light reduction, Windows 10/11](docs/images/cover.png)
+![Amber — free app for flexible blue light reduction, Windows 10/11 (x64, ARM)](docs/images/cover.png)
 
-Amber is a free, open-source **blue light filter for Windows 10 and 11**. It tints the whole screen warmer to
+Amber is a free, open-source **blue light filter for Windows 10 and 11**, on x64 and ARM PCs. It tints the whole screen warmer to
 reduce eye strain during long days and late-night work — a more flexible alternative to Windows Night light
 and f.lux. It lives in the system tray, uses almost no memory or CPU (3–5 MB in the background), and needs no
 admin rights.

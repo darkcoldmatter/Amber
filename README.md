@@ -22,12 +22,12 @@ just to make it work but to make it pleasant and easy to use.
 
 ![Advanced mode: several filters through the day, curve editor](docs/images/advanced-mode.png)
 
-- **Four tints:** Golden hour, Amber, Deep night and Custom (any color you like), each with a level from 0 to 100 %.
+- **Five tints:** Golden hour, Amber, Deep night, Custom (any color you like) and E-ink, each with a level from 0 to 100 %.
 - **Simple mode:** pick a tint and a level, optionally on a daily schedule with a smooth transition.
 - **Advanced mode:** several filters across the day, each with its own tint and either a steady level
   or a curve you draw. Neighboring filters cross-fade, so the screen never flashes back to blue.
 - **Keyboard shortcuts** that work from anywhere, even with Amber in the tray: Ctrl+Alt+A turns the tint on or
-  off, Ctrl+Alt+= / Ctrl+Alt+- change the level, and Ctrl+Alt+1–4 switch tints. Change or turn them off in Settings.
+  off, Ctrl+Alt+= / Ctrl+Alt+- change the level, and Ctrl+Alt+1–5 switch tints. Change or turn them off in Settings.
 - Starts with Windows if you like, and follows your 12- or 24-hour clock automatically.
 
 **Tint types**
@@ -37,6 +37,8 @@ just to make it work but to make it pleasant and easy to use.
 - **Amber:** a stronger, deep orange tint for evening and night work that cuts more blue light.
 - **Deep night:** a red tint inspired by astronomy. Red light doesn't disturb your eyes' adaptation to the dark.
 - **Custom:** any color from the color bar. Dark colors are lightened just enough to keep the screen readable.
+- **E-ink:** a grayscale screen like an e-reader, with soft blacks and paper-white whites, plus as much amber warmth as
+  you like. A switch turns it into classic black & white. In Simple mode.
 
 ![Tint types: Golden hour (yellow), Amber (orange), Deep night (red), plus a custom color](docs/images/tint-types.png)
 
@@ -58,7 +60,7 @@ isn't tinted, and screenshots show your screen without the tint.
 Yes. Amber is free and open source under the GPL-3.0 license, with no ads, accounts or paid features.
 
 **How is Amber different from Windows Night light?**
-Night light has one warm tint with a strength slider and one schedule. Amber has four tints, including any color you choose, a level
+Night light has one warm tint with a strength slider and one schedule. Amber has five tints, including any color you choose and a paper-like E-ink look, a level
 from 0 to 100 %, and an Advanced mode with several filters through the day, each with its own tint and level
 curve. Neighboring filters cross-fade smoothly.
 

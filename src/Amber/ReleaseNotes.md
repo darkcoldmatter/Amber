@@ -1,6 +1,5 @@
-## 1.3.0
+## 1.4.0
 
-- **Keyboard shortcuts** that work from anywhere, even with Amber in the tray
-- Ctrl+Alt+A turns the tint on or off; Ctrl+Alt+= and Ctrl+Alt+- change the level
-- Ctrl+Alt+1, 2, 3 and 4 switch between the tints
-- Change or turn off the shortcuts in Settings
+- **New tint: E-ink.** A grayscale screen like an e-reader, with soft blacks and paper-white whites
+- The level slider adds amber warmth to it; a switch turns it into classic black & white
+- Ctrl+Alt+5 picks E-ink (in Simple mode)

@@ -817,6 +817,57 @@
         </Setter>
     </Style>
 
+    <!--
+        A keyboard shortcut in Settings: the time and transition fields' tan pill, 36 tall so the list stays compact, as
+        wide as its keys ("Ctrl + Alt + A"; words in Plus Jakarta Sans, digits in Onest, set by SettingsView).
+        Tag="Listening" while it waits for keys: an ink ring. Dimmed with the rest of the list while shortcuts are off.
+    -->
+    <Style x:Key="ShortcutPill" TargetType="Button">
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinWidth" Value="87" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.3" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="MouseOver">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border CornerRadius="12" Background="{StaticResource TanBrush}" />
+                        <Border x:Name="Hover" CornerRadius="12" Background="{StaticResource FieldHoverBrush}" Opacity="0" />
+                        <Border x:Name="Ring" CornerRadius="12" BorderBrush="{StaticResource InkBrush}" BorderThickness="1.5" Opacity="0" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Listening">
+                            <Setter TargetName="Ring" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Dark button (Check, GitHub) -->
     <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Height" Value="36" />

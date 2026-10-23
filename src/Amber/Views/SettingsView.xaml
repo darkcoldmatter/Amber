@@ -1,34 +1,69 @@
 <UserControl x:Class="Amber.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Figma 111:9830. Covers the whole window; the card stretches with the window's width. -->
-    <Grid Height="352">
+    <!--
+        Figma 111:9830. Covers the whole window; the cards stretch with the window's width. The title stays put and the
+        cards scroll if the window would pass its 800 px.
+    -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="90" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
         <TextBlock Text="Settings" Style="{StaticResource ScreenTitle}" Margin="24,17,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
         <Button Style="{StaticResource IconButton}" Tag="{StaticResource IconCross}" Margin="0,15,24,0" HorizontalAlignment="Right" VerticalAlignment="Top"
                 Click="OnClose" AutomationProperties.Name="Close" />
 
-        <Border Style="{StaticResource Card}" Margin="24,90,24,0" Height="152" VerticalAlignment="Top">
-            <Grid>
-                <TextBlock Text="Start with Windows" Style="{StaticResource LabelText}" Margin="24,23.35,0,0" VerticalAlignment="Top" />
-                <ToggleButton x:Name="StartWithWindowsSwitch" Style="{StaticResource Switch}" Margin="0,24,24,0"
-                              HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnStartWithWindowsClick"
-                              AutomationProperties.Name="Start with Windows" />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+            <StackPanel Margin="24,0,24,24">
+                <Border Style="{StaticResource Card}" Height="152">
+                    <Grid>
+                        <TextBlock Text="Start with Windows" Style="{StaticResource LabelText}" Margin="24,23.35,0,0" VerticalAlignment="Top" />
+                        <ToggleButton x:Name="StartWithWindowsSwitch" Style="{StaticResource Switch}" Margin="0,24,24,0"
+                                      HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnStartWithWindowsClick"
+                                      AutomationProperties.Name="Start with Windows" />
 
-                <Rectangle Style="{StaticResource Divider}" Margin="0,67,0,0" />
+                        <Rectangle Style="{StaticResource Divider}" Margin="0,67,0,0" />
 
-                <TextBlock Text="Check for updates" Style="{StaticResource LabelText}" Margin="24,99.35,0,0" VerticalAlignment="Top" />
+                        <TextBlock Text="Check for updates" Style="{StaticResource LabelText}" Margin="24,99.35,0,0" VerticalAlignment="Top" />
+                        <!--
+                            A plain stand-in until the update banners are designed: the button says where the update is
+                            (it widens for longer text), and a short note beside it says when something went wrong.
+                        -->
+                        <StackPanel Orientation="Horizontal" Margin="0,92,24,0" HorizontalAlignment="Right" VerticalAlignment="Top">
+                            <TextBlock x:Name="UpdateNote" Style="{StaticResource BodyText}" Margin="0,-1,16,1" VerticalAlignment="Center"
+                                       Visibility="Collapsed" />
+                            <Button x:Name="UpdateButton" Style="{StaticResource PrimaryButton}" MinWidth="100" Click="OnUpdateClick">
+                                <TextBlock x:Name="UpdateText" Margin="16,-1,16,1" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!--
-                    A plain stand-in until the update banners are designed: the button says where the update is
-                    (it widens for longer text), and a short note beside it says when something went wrong.
+                    Keyboard shortcuts (no Figma frame yet): a switch row like "Start with Windows", then one 44 px row per
+                    shortcut, label on the left and its keys in a tan pill on the right (rows built in SettingsView.xaml.cs);
+                    a divider sets the four tint rows apart, each with its dome as in the tint menus.
+                    A short note shows under a row when keys were refused or another app holds them.
                 -->
-                <StackPanel Orientation="Horizontal" Margin="0,92,24,0" HorizontalAlignment="Right" VerticalAlignment="Top">
-                    <TextBlock x:Name="UpdateNote" Style="{StaticResource BodyText}" Margin="0,-1,16,1" VerticalAlignment="Center"
-                               Visibility="Collapsed" />
-                    <Button x:Name="UpdateButton" Style="{StaticResource PrimaryButton}" MinWidth="100" Click="OnUpdateClick">
-                        <TextBlock x:Name="UpdateText" Margin="16,-1,16,1" />
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <Grid Height="68">
+                            <TextBlock Text="Keyboard shortcuts" Style="{StaticResource LabelText}" Margin="24,23.35,0,0" VerticalAlignment="Top" />
+                            <ToggleButton x:Name="ShortcutsSwitch" Style="{StaticResource Switch}" Margin="0,24,24,0"
+                                          HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnShortcutsSwitchClick"
+                                          AutomationProperties.Name="Keyboard shortcuts" />
+                            <Rectangle Style="{StaticResource Divider}" Margin="0,67,0,0" />
+                        </Grid>
+                        <StackPanel x:Name="ShortcutList" Margin="0,4,0,4" />
+                    </StackPanel>
+                </Border>
+                <!-- Outside the card, centred under it. Dims with the list while shortcuts are off. -->
+                <TextBlock x:Name="ResetRow" Style="{StaticResource CaptionText}" Margin="0,16,0,0" HorizontalAlignment="Center">
+                    <Hyperlink Style="{StaticResource UnderlinedCaptionLink}" Click="OnResetShortcutsClick">Reset to defaults</Hyperlink>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

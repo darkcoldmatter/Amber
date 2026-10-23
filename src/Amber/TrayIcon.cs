@@ -18,6 +18,7 @@ sealed class TrayIcon : IDisposable
     readonly IntPtr _iconOn = LoadIcon("amber.ico");
     readonly IntPtr _iconOff = LoadIcon("amber-off.ico");
     bool _isOn;
+    string? _toggleShortcut;
 
     public event Action? OpenRequested;
     public event Action? ToggleRequested;
@@ -44,6 +45,9 @@ sealed class TrayIcon : IDisposable
         var data = CreateData();
         Shell_NotifyIcon(NIM_MODIFY, ref data);
     }
+
+    /// <summary>The on/off shortcut the menu shows beside "Turn on" / "Turn off", e.g. "Ctrl+Alt+A"; null for none.</summary>
+    public void SetToggleShortcut(string? shortcut) => _toggleShortcut = shortcut;
 
     public void Dispose()
     {
@@ -95,7 +99,9 @@ sealed class TrayIcon : IDisposable
     void ShowMenu()
     {
         var menu = CreatePopupMenu();
-        AppendMenu(menu, MF_STRING, (nint)Command.Toggle, _isOn ? "Turn off" : "Turn on");
+        // A tab right-aligns the shortcut, as native menus do.
+        var toggle = _isOn ? "Turn off" : "Turn on";
+        AppendMenu(menu, MF_STRING, (nint)Command.Toggle, _toggleShortcut is null ? toggle : $"{toggle}\t{_toggleShortcut}");
         AppendMenu(menu, MF_STRING, (nint)Command.Open, "Open Amber");
 #if DEBUG
         // Test builds only: the e-ink experiments, to compare by eye in any app.

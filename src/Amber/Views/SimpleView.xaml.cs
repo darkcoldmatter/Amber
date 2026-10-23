@@ -10,9 +10,9 @@ namespace Amber.Views;
 public partial class SimpleView : UserControl
 {
     const double ScheduleHeight = 446, PlainHeight = 286, TransitionListWidth = 75;
-    // Where the chips and the schedule rows sit (as in the XAML), and how far down Custom's colour bar moves them:
-    // its 22 px and the 12 px gap above it.
-    const double ChipsTop = 230, ScheduleTop = 282, HueRoom = 34;
+    // Where the chips and the schedule rows sit (as in the XAML), and how far down Custom's colour bar moves them (its
+    // 22 px and the 12 px gap above it), or E-ink's classic switch (its 20 px and the same gap).
+    const double ChipsTop = 230, ScheduleTop = 282, HueRoom = 34, ClassicRoom = 32;
 
     readonly Settings _settings;
     readonly Dictionary<TintMode, RadioButton> _chips;
@@ -31,7 +31,7 @@ public partial class SimpleView : UserControl
             [TintMode.Custom] = CustomChip,
         };
 
-        _chips[settings.Mode].IsChecked = true;
+        ShowChip();
         ShowLevel();
         ShowSchedule();
 
@@ -48,7 +48,8 @@ public partial class SimpleView : UserControl
         switch (e.PropertyName)
         {
             case nameof(Settings.Mode):
-                _chips[_settings.Mode].IsChecked = true;
+            case nameof(Settings.EInk):
+                ShowChip();
                 ShowLayout();
                 break;
             case nameof(Settings.Level):
@@ -63,21 +64,35 @@ public partial class SimpleView : UserControl
         }
     }
 
-    void OnModeChecked(object sender, RoutedEventArgs e) =>
+    void OnModeChecked(object sender, RoutedEventArgs e)
+    {
         _settings.Mode = _chips.First(chip => chip.Value == sender).Key;
+        _settings.EInk = false;
+    }
+
+    void OnEInkChecked(object sender, RoutedEventArgs e) => _settings.EInk = true;
+
+    /// <summary>Ticks the picked tint's chip: E-ink's while it is picked, else the saved tint's.</summary>
+    void ShowChip()
+    {
+        if (_settings.EInk) EInkChip.IsChecked = true;
+        else _chips[_settings.Mode].IsChecked = true;
+    }
 
     /// <summary>The big number follows the slider live, also while dragging.</summary>
     void ShowLevel() => Percent.Text = _settings.Level.ToString("0", CultureInfo.InvariantCulture) + "%";
 
     /// <summary>
-    /// Custom's colour bar shows only while Custom is the tint, and the schedule rows only while the schedule is on; the
-    /// window grows to fit them.
+    /// Custom's colour bar shows only while Custom is the tint, E-ink's classic switch only while E-ink is, and the
+    /// schedule rows only while the schedule is on; the window grows to fit them.
     /// </summary>
     void ShowLayout()
     {
-        var custom = _settings.Mode == TintMode.Custom;
-        var room = custom ? HueRoom : 0;
+        var eink = _settings.EInk;
+        var custom = _settings.Mode == TintMode.Custom && !eink;
+        var room = custom ? HueRoom : eink ? ClassicRoom : 0;
         Hue.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
+        ClassicRow.Visibility = eink ? Visibility.Visible : Visibility.Collapsed;
         Canvas.SetTop(Chips, ChipsTop + room);
         Canvas.SetTop(SchedulePanel, ScheduleTop + room);
         SchedulePanel.Visibility = _settings.ScheduleEnabled ? Visibility.Visible : Visibility.Collapsed;

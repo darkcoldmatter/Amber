@@ -4,7 +4,7 @@ using Amber.Tint;
 namespace Amber;
 
 /// <summary>What a global shortcut does.</summary>
-public enum ShortcutAction { Toggle, LevelUp, LevelDown, GoldenHour, Amber, DeepNight, Custom }
+public enum ShortcutAction { Toggle, LevelUp, LevelDown, GoldenHour, Amber, DeepNight, Custom, EInk }
 
 /// <summary>One combination to register and what it does.</summary>
 public sealed record ShortcutBinding(ShortcutAction Action, Shortcut Keys);
@@ -25,6 +25,7 @@ public sealed record ShortcutSettings
     public Shortcut? Amber { get; init; } = new(CtrlAlt, Key.D2);
     public Shortcut? DeepNight { get; init; } = new(CtrlAlt, Key.D3);
     public Shortcut? Custom { get; init; } = new(CtrlAlt, Key.D4);
+    public Shortcut? EInk { get; init; } = new(CtrlAlt, Key.D5);
 
     public Shortcut? Get(ShortcutAction action) => action switch
     {
@@ -34,7 +35,8 @@ public sealed record ShortcutSettings
         ShortcutAction.GoldenHour => GoldenHour,
         ShortcutAction.Amber => Amber,
         ShortcutAction.DeepNight => DeepNight,
-        _ => Custom,
+        ShortcutAction.Custom => Custom,
+        _ => EInk,
     };
 
     /// <summary>A copy with one action's shortcut changed (null = none).</summary>
@@ -46,7 +48,8 @@ public sealed record ShortcutSettings
         ShortcutAction.GoldenHour => this with { GoldenHour = keys },
         ShortcutAction.Amber => this with { Amber = keys },
         ShortcutAction.DeepNight => this with { DeepNight = keys },
-        _ => this with { Custom = keys },
+        ShortcutAction.Custom => this with { Custom = keys },
+        _ => this with { EInk = keys },
     };
 
     /// <summary>Every combination that is set, whether or not shortcuts are switched on.</summary>
@@ -57,7 +60,10 @@ public sealed record ShortcutSettings
     public ShortcutAction? UsedBy(ShortcutAction action, Shortcut keys) =>
         Bindings().FirstOrDefault(b => b.Action != action && b.Keys == keys)?.Action;
 
-    /// <summary>The tint a tint shortcut picks, or null for the others.</summary>
+    /// <summary>Whether the action picks a tint: the four <see cref="TintOf"/> tints and E-ink, after them.</summary>
+    public static bool PicksTint(ShortcutAction action) => action == ShortcutAction.EInk || TintOf(action) is not null;
+
+    /// <summary>The tint a tint shortcut picks, or null for the others (E-ink isn't a <see cref="TintMode"/>).</summary>
     public static TintMode? TintOf(ShortcutAction action) => action switch
     {
         ShortcutAction.GoldenHour => TintMode.GoldenHour,
@@ -76,7 +82,8 @@ public sealed record ShortcutSettings
         ShortcutAction.GoldenHour => TintMode.GoldenHour.DisplayName(),
         ShortcutAction.Amber => TintMode.Amber.DisplayName(),
         ShortcutAction.DeepNight => TintMode.DeepNight.DisplayName(),
-        _ => TintMode.Custom.DisplayName(),
+        ShortcutAction.Custom => TintMode.Custom.DisplayName(),
+        _ => "E-ink",
     };
 }
 
@@ -104,7 +111,11 @@ public static class ShortcutCommands
         {
             case ShortcutAction.LevelUp: settings.Level = Step(settings.Level, +LevelStep); break;
             case ShortcutAction.LevelDown: settings.Level = Step(settings.Level, -LevelStep); break;
-            default: settings.Mode = ShortcutSettings.TintOf(action)!.Value; break;
+            case ShortcutAction.EInk: settings.EInk = true; break;
+            default:
+                settings.Mode = ShortcutSettings.TintOf(action)!.Value;
+                settings.EInk = false;
+                break;
         }
     }
 

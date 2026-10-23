@@ -35,6 +35,8 @@
         <GradientStop Color="#FF00FF" Offset="0.83333" />
         <GradientStop Color="#FF0000" Offset="1" />
     </LinearGradientBrush>
+    <!-- E-ink (Simple only, so in no menu): a plain mid grey, for its dome in Settings' shortcut list. -->
+    <SolidColorBrush x:Key="EInkAccent" Color="#A3A3A3" />
     <!-- Brighter versions on the advanced timeline's bars and under the curve. -->
     <SolidColorBrush x:Key="GoldenHourBar" Color="#FFE063" />
     <SolidColorBrush x:Key="AmberBar" Color="#FFAE5D" />

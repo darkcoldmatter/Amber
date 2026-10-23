@@ -224,13 +224,53 @@ public class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void E_ink_is_a_flag_of_its_own_and_the_tint_underneath_is_kept()
+    {
+        new Settings { Mode = TintMode.DeepNight, Level = 40, EInk = true, EInkClassic = true }.Save(SettingsPath);
+
+        var text = File.ReadAllText(SettingsPath);
+        var loaded = Settings.Load(SettingsPath);
+
+        // Mode stays a tint every Amber can read; E-ink is only the two extra flags.
+        Assert.Contains("\"Mode\": \"DeepNight\"", text);
+        Assert.Contains("\"EInk\": true", text);
+        Assert.Contains("\"EInkClassic\": true", text);
+        Assert.DoesNotContain(Enum.GetNames<TintMode>(), name => name.Contains("Ink", StringComparison.OrdinalIgnoreCase));
+        Assert.True(loaded.EInk);
+        Assert.True(loaded.EInkClassic);
+        Assert.Equal(TintMode.DeepNight, loaded.Mode);
+        Assert.Equal(40, loaded.Level);
+    }
+
+    [Fact]
+    public void A_file_from_before_E_ink_loads_without_it()
+    {
+        Directory.CreateDirectory(_folder);
+        File.WriteAllText(SettingsPath, """
+            { "SettingsVersion": 1, "Mode": "Custom", "Level": 30, "CustomHue": 120,
+              "Filters": [ { "Mode": "Amber", "Start": "08:00:00", "End": "09:00:00", "Level": 50 } ] }
+            """);
+
+        var loaded = Settings.Load(SettingsPath);
+
+        Assert.False(loaded.EInk);
+        Assert.False(loaded.EInkClassic);
+        Assert.Equal(TintMode.Custom, loaded.Mode);
+        Assert.Equal(120, loaded.CustomHue);
+        Assert.Single(loaded.Filters);
+        Assert.False(new Settings().EInk);
+        Assert.False(new Settings().EInkClassic);
+    }
+
+    [Fact]
     public void Shortcuts_are_saved_as_readable_text_and_read_back()
     {
         var shortcuts = new ShortcutSettings { Enabled = false }
             .With(ShortcutAction.Toggle, Shortcut.Parse("Win+Shift+T"))
             .With(ShortcutAction.LevelUp, Shortcut.Parse("Ctrl+F12"))
             .With(ShortcutAction.Amber, Shortcut.Parse("Alt+Win+1"))
-            .With(ShortcutAction.Custom, null);
+            .With(ShortcutAction.Custom, null)
+            .With(ShortcutAction.EInk, Shortcut.Parse("Ctrl+Alt+E"));
         new Settings { Shortcuts = shortcuts }.Save(SettingsPath);
 
         var text = File.ReadAllText(SettingsPath);
@@ -241,6 +281,7 @@ public class SettingsTests : IDisposable
         Assert.Contains("\"Amber\": \"Alt+Win+1\"", text);
         Assert.DoesNotContain("LevelJump", text);
         Assert.Contains("\"Custom\": null", text);
+        Assert.Contains("\"EInk\": \"Ctrl+Alt+E\"", text);
         Assert.Equal(shortcuts, loaded.Shortcuts);
     }
 
@@ -294,7 +335,8 @@ public class SettingsTests : IDisposable
         Assert.True(loaded.Shortcuts.Enabled);
         Assert.Equal("Ctrl+Alt+A", loaded.Shortcuts.Toggle!.ToString());
         Assert.Equal("Ctrl+Alt+Shift+2", loaded.Shortcuts.Amber!.ToString());
-        Assert.Equal(7, loaded.Shortcuts.Bindings().Count());
+        Assert.Equal(8, loaded.Shortcuts.Bindings().Count());   // its seven, and E-ink's default
+        Assert.Equal("Ctrl+Alt+5", loaded.Shortcuts.EInk!.ToString());
     }
 
     [Fact]

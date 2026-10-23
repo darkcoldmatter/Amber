@@ -70,6 +70,16 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>Custom's colour in simple mode, as a hue of 0–360 (red by default). Like the level, switching tints keeps it.</summary>
     public double CustomHue { get; set => Set(ref field, value); }
 
+    /// <summary>
+    /// E-ink is Simple's tint (<see cref="TintMatrix.EInk"/>), with the level as its warmth. A flag of its own, not a
+    /// <see cref="TintMode"/>: an older Amber can't read an unknown mode and would reset every setting, while it simply
+    /// ignores this. <see cref="Mode"/> keeps the last other tint underneath. Advanced filters never use it.
+    /// </summary>
+    public bool EInk { get; set => Set(ref field, value); }
+
+    /// <summary>E-ink's "Classic black & white" switch: plain greyscale, black to white, instead of charcoal to paper grey.</summary>
+    public bool EInkClassic { get; set => Set(ref field, value); }
+
     public bool ScheduleEnabled { get; set => Set(ref field, value); }
     public TimeOnly ScheduleStart { get; set => Set(ref field, value); } = new(12, 0);
     public TimeOnly ScheduleEnd { get; set => Set(ref field, value); } = new(13, 0);

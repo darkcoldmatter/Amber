@@ -147,4 +147,48 @@ public static class TintMatrix
                 m[i * 5 + j] = (float)(color[j] * ((i == j ? 1 - mono : 0) + mono * Luma[i]));
         return m;
     }
+
+    /// <summary>
+    /// E-ink's darkest and lightest grey (0–1): pure black shows as this charcoal and pure white as this soft paper grey,
+    /// so the screen has no pure black and no pure white. The owner picked them on his screen (black 70 %, white 25 % on
+    /// the experiment's test sliders); don't change them without asking.
+    /// </summary>
+    public const double EInkInk = 0.105, EInkPaper = 0.925;
+
+    /// <summary>
+    /// E-ink: every colour turns grey by its brightness (luma), spread from <see cref="EInkInk"/> to <see cref="EInkPaper"/>
+    /// (classic: plain greyscale, black 0 to white 1), with Amber's level-100 look on top by <paramref name="level"/>
+    /// (0 = the plain grey look, 100 = full Amber over it). Simple mode only.
+    /// </summary>
+    public static float[] EInk(double level, bool classic) =>
+        Multiply(Grey(classic ? 0 : EInkInk, classic ? 1 : EInkPaper),
+            Blend(TintMode.Amber, 100, Math.Clamp(level, 0, 100) / 100));
+
+    /// <summary>Every colour turned grey by its luma, on a straight line from <paramref name="ink"/> (black) to <paramref name="paper"/> (white).</summary>
+    static float[] Grey(double ink, double paper)
+    {
+        // output = ink + (paper - ink) * luma: the luma weights go into the colour rows, and the ink into the last row,
+        // which adds a fixed amount.
+        var m = Identity;
+        for (var j = 0; j < 3; j++)
+        {
+            for (var i = 0; i < 3; i++) m[i * 5 + j] = (float)((paper - ink) * Luma[i]);
+            m[20 + j] = (float)ink;
+        }
+        return m;
+    }
+
+    /// <summary>One matrix that does <paramref name="a"/> first and then <paramref name="b"/> (the product a × b, since colours are row vectors).</summary>
+    public static float[] Multiply(float[] a, float[] b)
+    {
+        var m = new float[25];
+        for (var i = 0; i < 5; i++)
+            for (var j = 0; j < 5; j++)
+            {
+                var sum = 0.0;
+                for (var k = 0; k < 5; k++) sum += (double)a[i * 5 + k] * b[k * 5 + j];
+                m[i * 5 + j] = (float)sum;
+            }
+        return m;
+    }
 }

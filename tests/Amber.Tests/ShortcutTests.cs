@@ -107,15 +107,16 @@ public class ShortcutTests
         Assert.Equal("Ctrl+Alt+2", shortcuts.Amber!.ToString());
         Assert.Equal("Ctrl+Alt+3", shortcuts.DeepNight!.ToString());
         Assert.Equal("Ctrl+Alt+4", shortcuts.Custom!.ToString());
+        Assert.Equal("Ctrl+Alt+5", shortcuts.EInk!.ToString());
     }
 
     [Fact]
-    public void Defaults_make_7_different_combinations()
+    public void Defaults_make_8_different_combinations()
     {
         var bindings = new ShortcutSettings().Bindings().ToList();
 
         Assert.Equal(Enum.GetValues<ShortcutAction>(), bindings.Select(b => b.Action));
-        Assert.Equal(7, bindings.Select(b => b.Keys).Distinct().Count());
+        Assert.Equal(8, bindings.Select(b => b.Keys).Distinct().Count());
     }
 
     [Fact]
@@ -126,7 +127,7 @@ public class ShortcutTests
         Assert.Null(shortcuts.Toggle);
         Assert.Null(shortcuts.DeepNight);
         Assert.DoesNotContain(shortcuts.Bindings(), b => b.Action is ShortcutAction.Toggle or ShortcutAction.DeepNight);
-        Assert.Equal(5, shortcuts.Bindings().Count());
+        Assert.Equal(6, shortcuts.Bindings().Count());
     }
 
     [Fact]
@@ -138,6 +139,8 @@ public class ShortcutTests
         Assert.NotEqual(before, after);
         Assert.Equal("Ctrl+Alt+M", after.Amber!.ToString());
         Assert.Equal(before.Toggle, after.Toggle);
+        Assert.Equal("Ctrl+Alt+E", before.With(ShortcutAction.EInk, Shortcut.Parse("Ctrl+Alt+E")).EInk!.ToString());
+        Assert.Equal(before.Custom, before.With(ShortcutAction.EInk, null).Custom);
         Assert.Equal(new ShortcutSettings(), new ShortcutSettings()); // equal values: no needless re-registering
     }
 
@@ -151,6 +154,8 @@ public class ShortcutTests
         Assert.Equal(ShortcutAction.Toggle, shortcuts.UsedBy(ShortcutAction.Amber, Shortcut.Parse("Ctrl+Alt+A")!));
         Assert.Equal(ShortcutAction.DeepNight, shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+3")!));
         Assert.Null(shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+T")!));
+        Assert.Equal(ShortcutAction.EInk, shortcuts.UsedBy(ShortcutAction.Custom, Shortcut.Parse("Ctrl+Alt+5")!));
+        Assert.Equal(ShortcutAction.Custom, shortcuts.UsedBy(ShortcutAction.EInk, Shortcut.Parse("Ctrl+Alt+4")!));
         Assert.Null(shortcuts.UsedBy(ShortcutAction.Toggle, Shortcut.Parse("Ctrl+Alt+Shift+3")!)); // Shift makes it different
     }
 
@@ -167,6 +172,8 @@ public class ShortcutTests
     [InlineData(ShortcutAction.Toggle, "Turn on / off")]
     [InlineData(ShortcutAction.LevelUp, "Level up")]
     [InlineData(ShortcutAction.DeepNight, "Deep night")]
+    [InlineData(ShortcutAction.Custom, "Custom")]
+    [InlineData(ShortcutAction.EInk, "E-ink")]
     public void Actions_have_their_settings_words(ShortcutAction action, string label)
     {
         Assert.Equal(label, ShortcutSettings.Label(action));
@@ -179,6 +186,11 @@ public class ShortcutTests
         Assert.Equal(TintMode.DeepNight, ShortcutSettings.TintOf(ShortcutAction.DeepNight));
         Assert.Equal(TintMode.Custom, ShortcutSettings.TintOf(ShortcutAction.Custom));
         Assert.Null(ShortcutSettings.TintOf(ShortcutAction.LevelUp));
+        Assert.Null(ShortcutSettings.TintOf(ShortcutAction.EInk));   // not a TintMode
+
+        // The tint rows in Settings: the four tints and E-ink.
+        Assert.Equal([ShortcutAction.GoldenHour, ShortcutAction.Amber, ShortcutAction.DeepNight, ShortcutAction.Custom, ShortcutAction.EInk],
+            Enum.GetValues<ShortcutAction>().Where(ShortcutSettings.PicksTint));
     }
 
     // What a press does
@@ -237,6 +249,35 @@ public class ShortcutTests
         var settings = new Settings { Mode = action == ShortcutAction.Amber ? TintMode.DeepNight : TintMode.Amber };
         ShortcutCommands.Run(action, settings);
         Assert.Equal(mode, settings.Mode);
+        Assert.False(settings.EInk);
+    }
+
+    [Fact]
+    public void The_e_ink_shortcut_picks_e_ink_and_keeps_the_tint_underneath()
+    {
+        var settings = new Settings { Mode = TintMode.DeepNight, Level = 40 };
+        ShortcutCommands.Run(ShortcutAction.EInk, settings);
+
+        Assert.True(settings.EInk);
+        Assert.Equal(TintMode.DeepNight, settings.Mode);
+        Assert.False(settings.IsOn);
+
+        // Level up and down move the same level, now E-ink's warmth.
+        ShortcutCommands.Run(ShortcutAction.LevelUp, settings);
+        Assert.Equal(42, settings.Level);
+        Assert.True(settings.EInk);
+    }
+
+    [Theory]
+    [InlineData(ShortcutAction.GoldenHour, TintMode.GoldenHour)]
+    [InlineData(ShortcutAction.DeepNight, TintMode.DeepNight)]   // the tint E-ink was over: still leaves E-ink
+    public void A_tint_shortcut_leaves_e_ink(ShortcutAction action, TintMode mode)
+    {
+        var settings = new Settings { Mode = TintMode.DeepNight, EInk = true };
+        ShortcutCommands.Run(action, settings);
+
+        Assert.False(settings.EInk);
+        Assert.Equal(mode, settings.Mode);
     }
 
     [Fact]
@@ -260,7 +301,7 @@ public class ShortcutTests
         settings.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
 
         foreach (var action in new[] { ShortcutAction.LevelUp, ShortcutAction.LevelDown,
-                     ShortcutAction.GoldenHour, ShortcutAction.DeepNight, ShortcutAction.Custom })
+                     ShortcutAction.GoldenHour, ShortcutAction.DeepNight, ShortcutAction.Custom, ShortcutAction.EInk })
             ShortcutCommands.Run(action, settings);
 
         Assert.Empty(changes);

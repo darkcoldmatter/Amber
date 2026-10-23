@@ -256,18 +256,26 @@ public partial class App : Application
         if (_previewing)
             return _previewMode is { } mode
                 ? TintMatrix.Build(mode, _previewLevel, _previewHue)
-                : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
+                : SimpleLook();
 
         if (!IsOn) return null;
 
         if (_settings.IsAdvanced) return AdvancedSchedule.Matrix(_settings.Filters, TimeOnly.FromDateTime(DateTime.Now));
 
-        if (!_settings.ScheduleEnabled) return TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
+        if (!_settings.ScheduleEnabled) return SimpleLook();
 
         var strength = Schedule.StrengthAt(TimeOnly.FromDateTime(DateTime.Now),
             _settings.ScheduleStart, _settings.ScheduleEnd, _settings.TransitionSeconds);
-        return strength > 0 ? TintMatrix.Blend(_settings.Mode, _settings.Level, strength, _settings.CustomHue) : null;
+        if (strength <= 0) return null;
+        return _settings.EInk
+            ? TintMatrix.Mix([(SimpleLook(), strength)])
+            : TintMatrix.Blend(_settings.Mode, _settings.Level, strength, _settings.CustomHue);
     }
+
+    /// <summary>Simple's full look: E-ink (with the level as its warmth) while it is picked, else the tint at its level.</summary>
+    float[] SimpleLook() => _settings.EInk
+        ? TintMatrix.EInk(_settings.Level, _settings.EInkClassic)
+        : TintMatrix.Build(_settings.Mode, _settings.Level, _settings.CustomHue);
 
     float[]? Faded(float[]? target)
     {

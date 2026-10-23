@@ -19,6 +19,15 @@
         <controls:HueBar x:Name="Hue" Canvas.Left="162" Canvas.Top="187" Width="400" Style="{StaticResource HueBar}"
                          Value="{Binding CustomHue}" AutomationProperties.Name="Color" />
 
+        <!--
+            E-ink only: its "Classic black &amp; white" switch, 12 px under the level slider and centred, like the header's
+            "Advanced" switch (label 12 px before the 40×20 switch); everything below moves down to make room.
+        -->
+        <Grid x:Name="ClassicRow" Canvas.Top="187" Width="724">
+            <ToggleButton Style="{StaticResource Switch}" Content="Classic black &amp; white" HorizontalAlignment="Center"
+                          IsChecked="{Binding EInkClassic}" AutomationProperties.Name="Classic black and white" />
+        </Grid>
+
         <StackPanel x:Name="Chips" Canvas.Top="230" Width="724">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <RadioButton x:Name="GoldenHourChip" Style="{StaticResource ModeChip}" Content="Golden hour" Checked="OnModeChecked"
@@ -29,6 +38,9 @@
                              AutomationProperties.Name="Deep night" />
                 <RadioButton x:Name="CustomChip" Style="{StaticResource ModeChip}" Content="Custom" Margin="16,0,0,0" Checked="OnModeChecked"
                              AutomationProperties.Name="Custom" />
+                <!-- Not a TintMode: picking it sets Settings.EInk, and Mode keeps the tint underneath. -->
+                <RadioButton x:Name="EInkChip" Style="{StaticResource ModeChip}" Content="E-ink" Margin="16,0,0,0" Checked="OnEInkChecked"
+                             AutomationProperties.Name="E-ink" />
             </StackPanel>
         </StackPanel>
 
